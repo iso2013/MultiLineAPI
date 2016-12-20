@@ -8,15 +8,16 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.events.PacketListener;
 import com.comphenix.protocol.injector.GamePhase;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.plugin.Plugin;
 
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -59,7 +60,7 @@ public class SecondLineManager implements Listener, PacketListener {
 
     public void add(Player p) {
         if (!stacks.containsKey(p.getUniqueId())) {
-            stacks.put(p.getUniqueId(), new Stack(parent, p, defaultMessage));
+            stacks.put(p.getUniqueId(), new Stack(parent, p, defaultMessage, protocol));
         }
     }
 
@@ -79,7 +80,8 @@ public class SecondLineManager implements Listener, PacketListener {
 
     @EventHandler
     public void join(PlayerJoinEvent e) {
-        stacks.put(e.getPlayer().getUniqueId(), new Stack(parent, e.getPlayer(), defaultMessage));
+        Bukkit.getScheduler().runTaskLater(parent, () -> stacks.put(e.getPlayer().getUniqueId(), new Stack(parent, e
+                .getPlayer(), defaultMessage, protocol)), 1L);
     }
 
     @EventHandler
@@ -92,6 +94,27 @@ public class SecondLineManager implements Listener, PacketListener {
         if (e.getEntity().hasMetadata("STACK_ENTITY")) e.setCancelled(true);
     }
 
+    @EventHandler
+    public void move(PlayerMoveEvent e) {
+        if (stacks.containsKey(e.getPlayer().getUniqueId())) {
+            stacks.get(e.getPlayer().getUniqueId()).updateLocs();
+        }
+    }
+
+    @EventHandler
+    public void teleport(PlayerTeleportEvent e) {
+        if (stacks.containsKey(e.getPlayer().getUniqueId())) {
+            stacks.get(e.getPlayer().getUniqueId()).updateLocs();
+        }
+    }
+
+    @EventHandler
+    public void worldChange(PlayerChangedWorldEvent e) {
+        if (stacks.containsKey(e.getPlayer().getUniqueId())) {
+            stacks.get(e.getPlayer().getUniqueId()).updateLocs();
+        }
+    }
+
     public void dispose() {
         stacks.values().forEach(Stack::dispose);
         stacks.clear();
@@ -100,14 +123,33 @@ public class SecondLineManager implements Listener, PacketListener {
     @Override
     public void onPacketSending(PacketEvent packetEvent) {
         PacketContainer packet = packetEvent.getPacket();
-        PacketType type = packetEvent.getPacketType();
-        Stack stack;
-        if ((stack = stacks.get(packetEvent.getPlayer().getUniqueId())) != null) {
-            if (type.equals(PacketType.Play.Server.SPAWN_ENTITY)) {
-                packetEvent.setCancelled(stack.hasEntity(packet.getIntegers().read(0)));
-            } else if (type.equals(PacketType.Play.Server.MOUNT)) {
-                packetEvent.setCancelled(stack.hasEntity(packet.getIntegers().read(0)) || packet.getIntegers().read
-                        (0) == packetEvent.getPlayer().getEntityId());
+        if (packet.getType().equals(PacketType.Play.Server.NAMED_ENTITY_SPAWN)) {
+            UUID sending = packet.getUUIDs().read(0);
+            Bukkit.getScheduler().runTaskLater(parent, () -> {
+                Stack s;
+                if ((s = stacks.get(sending)) != null) {
+                    s.createPairings(packetEvent.getPlayer());
+                }
+            }, 2L);
+        } else if (packet.getType().equals(PacketType.Play.Server.MOUNT)) {
+            Bukkit.getLogger().info("Mount packet");
+            int[] passengers = packet.getIntegerArrays().read(0);
+            int entity = packet.getIntegers().read(0);
+            if (packetEvent.getPlayer().getEntityId() == entity) {
+                return;
+            }
+            if (passengers.length == 0) {
+                Optional<? extends Player> p = Bukkit.getOnlinePlayers().stream()
+                        .filter(ps -> ps.getEntityId() == entity)
+                        .filter(ps -> ps.getWorld().getUID().equals(packetEvent.getPlayer().getWorld().getUID()))
+                        .findAny();
+                if (p.isPresent()) {
+                    Stack s;
+                    if ((s = stacks.get(p.get().getUniqueId())) != null) {
+                        packetEvent.setCancelled(true);
+                        //s.createPairings(packetEvent.getPlayer());
+                    }
+                }
             }
         }
     }
@@ -118,8 +160,8 @@ public class SecondLineManager implements Listener, PacketListener {
     @Override
     public ListeningWhitelist getSendingWhitelist() {
         return ListeningWhitelist.newBuilder().normal().gamePhase(GamePhase.PLAYING).types(
-                PacketType.Play.Server.MOUNT,
-                PacketType.Play.Server.SPAWN_ENTITY
+                PacketType.Play.Server.NAMED_ENTITY_SPAWN,
+                PacketType.Play.Server.MOUNT
         ).build();
     }
 
