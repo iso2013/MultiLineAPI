@@ -1,6 +1,5 @@
 package net.blitzcube.score.secondlineapi.manager;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.*;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.Plugin;
@@ -39,22 +38,22 @@ public class Stack {
         updateLines();
     }
 
+    public String getLine() {
+        return line;
+    }
+
     public void setLine(String line){
         this.line = line;
         updateLines();
     }
 
+    public String getName() {
+        return name;
+    }
+
     public void setName(String name) {
         this.name = name;
         updateLines();
-    }
-
-    public String getLine(){
-        return line;
-    }
-
-    public String getName(){
-        return name;
     }
 
     public void dispose(){
@@ -101,7 +100,7 @@ public class Stack {
                 entities.get(i).setPassenger(entities.get(i + 1));
             }
         }
-        p.setPassenger(entities.get(0));
+        updateLoc();
     }
 
     private Silverfish createGapSilverfish(){
@@ -139,5 +138,9 @@ public class Stack {
         s.setInvulnerable(true);
         s.setMetadata("STACK_ENTITY", new FixedMetadataValue(parent, null));
         return s;
+    }
+
+    void updateLoc() {
+        entities.get(0).teleport(p.getLocation().subtract(0, p.getLocation().getY() + 10, 0));
     }
 }

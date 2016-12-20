@@ -8,14 +8,11 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.events.PacketListener;
 import com.comphenix.protocol.injector.GamePhase;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityTeleportEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.plugin.Plugin;
 
 import java.util.HashMap;
@@ -94,6 +91,27 @@ public class SecondLineManager implements Listener, PacketListener {
         if (e.getEntity().hasMetadata("STACK_ENTITY")) e.setCancelled(true);
     }
 
+    @EventHandler
+    public void move(PlayerMoveEvent e) {
+        if (isEnabled(e.getPlayer())) {
+            stacks.get(e.getPlayer().getUniqueId()).updateLoc();
+        }
+    }
+
+    @EventHandler
+    public void teleport(PlayerTeleportEvent e) {
+        if (isEnabled(e.getPlayer())) {
+            stacks.get(e.getPlayer().getUniqueId()).updateLoc();
+        }
+    }
+
+    @EventHandler
+    public void worldChange(PlayerChangedWorldEvent e) {
+        if (isEnabled(e.getPlayer())) {
+            stacks.get(e.getPlayer().getUniqueId()).updateLoc();
+        }
+    }
+
     public void dispose() {
         stacks.values().forEach(Stack::dispose);
         stacks.clear();
@@ -110,6 +128,11 @@ public class SecondLineManager implements Listener, PacketListener {
             } else if (type.equals(PacketType.Play.Server.MOUNT)) {
                 packetEvent.setCancelled(stack.hasEntity(packet.getIntegers().read(0)) || packet.getIntegers().read
                         (0) == packetEvent.getPlayer().getEntityId());
+            } else if (type.equals(PacketType.Play.Server.NAMED_ENTITY_SPAWN)) {
+                packetEvent.getPlayer().sendMessage("Player spawned!");
+            } else {
+                packetEvent.setCancelled(stack.hasEntity(packet.getIntegers().read(0)) || packet.getIntegers().read
+                        (0) == packetEvent.getPlayer().getEntityId());
             }
         }
     }
@@ -121,7 +144,13 @@ public class SecondLineManager implements Listener, PacketListener {
     public ListeningWhitelist getSendingWhitelist() {
         return ListeningWhitelist.newBuilder().normal().gamePhase(GamePhase.PLAYING).types(
                 PacketType.Play.Server.MOUNT,
-                PacketType.Play.Server.SPAWN_ENTITY
+                PacketType.Play.Server.SPAWN_ENTITY,
+                PacketType.Play.Server.NAMED_ENTITY_SPAWN,
+                PacketType.Play.Server.ENTITY_HEAD_ROTATION,
+                PacketType.Play.Server.ENTITY_LOOK,
+                PacketType.Play.Server.ENTITY_TELEPORT,
+                PacketType.Play.Server.REL_ENTITY_MOVE,
+                PacketType.Play.Server.REL_ENTITY_MOVE_LOOK
         ).build();
     }
 
