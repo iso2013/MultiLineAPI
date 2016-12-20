@@ -105,14 +105,26 @@ public class SecondLineManager implements Listener, PacketListener {
     public void teleport(PlayerTeleportEvent e) {
         if (stacks.containsKey(e.getPlayer().getUniqueId())) {
             stacks.get(e.getPlayer().getUniqueId()).updateLocs();
+            stacks.get(e.getPlayer().getUniqueId()).hideFromPlayer();
         }
+        Bukkit.getScheduler().runTaskLater(parent, () -> stacks.values().stream().filter(s -> Bukkit.getPlayer(s
+                .getOwner()).getWorld().getUID().equals(e.getPlayer()
+                .getWorld().getUID())).forEach(s -> {
+            s.createPairings(e.getPlayer());
+        }), 1L);
     }
 
     @EventHandler
     public void worldChange(PlayerChangedWorldEvent e) {
         if (stacks.containsKey(e.getPlayer().getUniqueId())) {
             stacks.get(e.getPlayer().getUniqueId()).updateLocs();
+            stacks.get(e.getPlayer().getUniqueId()).hideFromPlayer();
         }
+        Bukkit.getScheduler().runTaskLater(parent, () -> stacks.values().stream().filter(s -> Bukkit.getPlayer(s
+                .getOwner()).getWorld().getUID().equals(e.getPlayer()
+                .getWorld().getUID())).forEach(s -> {
+            s.createPairings(e.getPlayer());
+        }), 1L);
     }
 
     public void dispose() {

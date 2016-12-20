@@ -13,6 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Created by iso2013 on 12/19/2016.
@@ -93,7 +94,7 @@ public class Stack {
         }
     }
 
-    private void hideFromPlayer() {
+    void hideFromPlayer() {
         int[] ints = new int[entities.size()];
         for (int i = 0; i < ints.length; i++) {
             ints[i] = entities.get(i).getEntityId();
@@ -186,5 +187,9 @@ public class Stack {
         for (Entity e : entities) {
             e.teleport(p.getLocation().subtract(0, p.getLocation().getY() + 10, 0));
         }
+    }
+
+    public UUID getOwner() {
+        return p.getUniqueId();
     }
 }
