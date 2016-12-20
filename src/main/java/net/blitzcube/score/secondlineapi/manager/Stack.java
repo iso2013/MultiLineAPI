@@ -100,7 +100,7 @@ public class Stack {
                 entities.get(i).setPassenger(entities.get(i + 1));
             }
         }
-        updateLoc();
+        p.setPassenger(entities.get(0));
     }
 
     private Silverfish createGapSilverfish(){
@@ -138,9 +138,5 @@ public class Stack {
         s.setInvulnerable(true);
         s.setMetadata("STACK_ENTITY", new FixedMetadataValue(parent, null));
         return s;
-    }
-
-    void updateLoc() {
-        entities.get(0).teleport(p.getLocation().subtract(0, p.getLocation().getY() + 10, 0));
     }
 }
