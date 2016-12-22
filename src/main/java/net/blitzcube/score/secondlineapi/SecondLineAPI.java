@@ -22,6 +22,10 @@ public final class SecondLineAPI extends JavaPlugin implements Listener {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!sender.hasPermission("secondlineapi.test")) {
+            sender.sendMessage("You do not have permission to use test commands.");
+            return true;
+        }
         if (args.length > 0) {
             switch (args[0].toLowerCase()) {
                 case "name":
@@ -65,7 +69,6 @@ public final class SecondLineAPI extends JavaPlugin implements Listener {
                 case "enable":
                     if (args.length > 1) {
                         manager.add(Bukkit.getPlayer(args[1]));
-
                     }
                     return true;
                 case "testmount":
@@ -74,8 +77,7 @@ public final class SecondLineAPI extends JavaPlugin implements Listener {
                     return true;
                 case "testunmount":
                     Player p2 = Bukkit.getPlayer(args[1]);
-                    p2.sendMessage(p2.eject() + "");
-                    p2.sendMessage("Passenger removed?");
+                    p2.eject();
                     return true;
             }
         }

@@ -82,6 +82,11 @@ public class SecondLineManager implements Listener, PacketListener {
     public void join(PlayerJoinEvent e) {
         Bukkit.getScheduler().runTaskLater(parent, () -> stacks.put(e.getPlayer().getUniqueId(), new Stack(parent, e
                 .getPlayer(), defaultMessage, protocol)), 1L);
+        Bukkit.getScheduler().runTaskLater(parent, () -> stacks.values().stream().filter(s -> Bukkit.getPlayer(s
+                .getOwner()).getWorld().getUID().equals(e.getPlayer()
+                .getWorld().getUID())).forEach(s -> {
+            s.createPairings(e.getPlayer());
+        }), 1L);
     }
 
     @EventHandler
@@ -144,7 +149,6 @@ public class SecondLineManager implements Listener, PacketListener {
                 }
             }, 2L);
         } else if (packet.getType().equals(PacketType.Play.Server.MOUNT)) {
-            Bukkit.getLogger().info("Mount packet");
             int[] passengers = packet.getIntegerArrays().read(0);
             int entity = packet.getIntegers().read(0);
             if (packetEvent.getPlayer().getEntityId() == entity) {
@@ -159,7 +163,7 @@ public class SecondLineManager implements Listener, PacketListener {
                     Stack s;
                     if ((s = stacks.get(p.get().getUniqueId())) != null) {
                         packetEvent.setCancelled(true);
-                        //s.createPairings(packetEvent.getPlayer());
+                        s.createPairings(packetEvent.getPlayer());
                     }
                 }
             }

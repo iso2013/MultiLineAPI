@@ -115,7 +115,6 @@ public class Stack {
             packet.getIntegerArrays().write(0, new int[]{pair.getValue().getEntityId()});
             try {
                 protocol.sendServerPacket(dest, packet);
-                parent.getLogger().info("Sending mount packet!");
             } catch (InvocationTargetException e) {
                 parent.getLogger().info("Failed to send mount packet to " + dest.getName() + "!");
             }
