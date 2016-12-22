@@ -80,8 +80,8 @@ public class SecondLineManager implements Listener, PacketListener {
 
     @EventHandler
     public void join(PlayerJoinEvent e) {
-        Bukkit.getScheduler().runTaskLater(parent, () -> stacks.put(e.getPlayer().getUniqueId(), new Stack(parent, e
-                .getPlayer(), defaultMessage, protocol)), 1L);
+        //Bukkit.getScheduler().runTaskLater(parent, () -> stacks.put(e.getPlayer().getUniqueId(), new Stack(parent, e
+        //        .getPlayer(), defaultMessage, protocol)), 1L);
         Bukkit.getScheduler().runTaskLater(parent, () -> stacks.values().stream().filter(s -> Bukkit.getPlayer(s
                 .getOwner()).getWorld().getUID().equals(e.getPlayer()
                 .getWorld().getUID())).forEach(s -> {
