@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -21,6 +22,8 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
     private PacketHandler pckt;
     //The event handler. Used for automatic enabling, entity relocation, and repairing on teleportation.
     private EventListener evnt;
+    //The plugin registry. Used to store which plugins have which lines.
+    private ArrayList<String> registry;
 
     /*
     I use a constructor for initializing non-Bukkit variables to new objects, and onEnable for setting their values
@@ -29,6 +32,7 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
     public MultiLineAPI() {
         MultiLineAPI.inst = this;
         tags = new HashMap<>();
+        registry = new ArrayList<>();
     }
 
     /**
@@ -54,7 +58,7 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
      */
     public static void enable(Player p) {
         if (!inst.tags.containsKey(p.getUniqueId())) {
-            inst.tags.put(p.getUniqueId(), new Tag(p));
+            inst.tags.put(p.getUniqueId(), new Tag(p, inst.registry.size()));
         }
     }
 
@@ -110,6 +114,28 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
     }
 
     /**
+     * Gets a line by the specified class. This class must be registered, or an error will be thrown.
+     *
+     * @param p      The player to get a line of
+     * @param plugin The class to get the line by
+     * @return The line object that allows editing of the line
+     */
+    public static TagLine getLine(Player p, Class plugin) {
+        return getLine(p, getIndex(plugin));
+    }
+
+    /**
+     * Gets a line by the specified plugin. This plugin must be registered, or an error will be thrown.
+     *
+     * @param p      The player to get a line of
+     * @param plugin The plugin to get the line by
+     * @return The line object that allows editing of the line
+     */
+    public static TagLine getLine(Player p, JavaPlugin plugin) {
+        return getLine(p, plugin.getClass());
+    }
+
+    /**
      * Add a line to the specified player.
      * @param p The player to add a line to
      * @return The line object that allows editing of the new line
@@ -121,7 +147,8 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
     }
 
     /**
-     * Remove a specified line of a player. Be sure the line you remove belongs to your plugin.
+     * Remove a specified line of a player. Be sure the line you remove belongs to your plugin. Recommended to just
+     * set text to null and disable keepSpaceWhenNull if you will ever re-add the line.
      * @param p The player to remove a line of
      * @param lineIndex The index of the line to remove
      */
@@ -129,6 +156,28 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
         if (!inst.tags.containsKey(p.getUniqueId()))
             throw new IllegalArgumentException("Player does not have API enabled!");
         inst.tags.get(p.getUniqueId()).removeLine(lineIndex);
+    }
+
+    /**
+     * Remove a specified line of a player. Be sure the line you remove belongs to your plugin. Recommended to just
+     * set text to null and disable keepSpaceWhenNull if you will ever re-add the line.
+     *
+     * @param p      The player to remove a line of
+     * @param plugin The class of the registered owner
+     */
+    public static void removeLine(Player p, Class plugin) {
+        removeLine(p, getIndex(plugin));
+    }
+
+    /**
+     * Remove a specified line of a player. Be sure the line you remove belongs to your plugin. Recommended to just
+     * set text to null and disable keepSpaceWhenNull if you will ever re-add the line.
+     *
+     * @param p      The player to remove a line of
+     * @param plugin The plugin object of the registered owner
+     */
+    public static void removeLine(Player p, JavaPlugin plugin) {
+        removeLine(p, plugin.getClass());
     }
 
     /**
@@ -192,6 +241,34 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
         inst.tags.get(p.getUniqueId()).updateEntityLoc();
     }
 
+    public static void register(JavaPlugin plugin) {
+        register(plugin.getClass());
+    }
+
+    public static void register(JavaPlugin plugin, int index) {
+        register(plugin.getClass(), index);
+    }
+
+    public static void register(Class plugin) {
+        register(plugin, -1);
+    }
+
+    public static void register(Class plugin, int index) {
+        if (index >= 0) {
+            inst.registry.add(index, plugin.getCanonicalName());
+        } else {
+            inst.registry.add(plugin.getCanonicalName());
+        }
+    }
+
+    public static int getIndex(JavaPlugin plugin) {
+        return getIndex(plugin.getClass());
+    }
+
+    public static int getIndex(Class plugin) {
+        return inst.registry.indexOf(plugin.getCanonicalName());
+    }
+
     /*
     onEnable method for loading the API as a plugin. Used to register the EventListener and the PacketHandler.
      */
@@ -219,9 +296,7 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
     private void refreshView(Player p) {
         tags.values().stream().filter(s -> Bukkit.getPlayer(s
                 .getOwner()).getWorld().getUID().equals(p
-                .getWorld().getUID())).forEach(s -> {
-            createPairs(s, p);
-        });
+                .getWorld().getUID())).forEach(s -> createPairs(s, p));
     }
 
     /*
@@ -241,9 +316,7 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
      */
     private void refreshForEveryone(Player p) {
         Bukkit.getOnlinePlayers().stream().filter(o -> o.getWorld().getUID().equals(p.getWorld().getUID())).forEach(o
-                -> {
-            createPairs(tags.get(p.getUniqueId()), o);
-        });
+                -> createPairs(tags.get(p.getUniqueId()), o));
     }
 
     /*

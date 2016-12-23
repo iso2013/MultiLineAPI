@@ -11,7 +11,10 @@ import java.util.*;
 
 /**
  * Created by iso2013 on 12/22/2016.
+ *
+ * This class is used to represent a player's tag. It can be retrieved by getting a line through MultiLineAPI.
  */
+@SuppressWarnings("unchecked")
 public class Tag {
     //The list of entities that compose the base of the tag. Currently it's just the SILVERFISH entity to separate
     // the player's tag from the player's head.
@@ -39,9 +42,10 @@ public class Tag {
      * class: MultiLineAPI.
      *
      * @param owner The player who owns the tag.
+     * @param size The size of the plugin registry during creation.
      */
     //Constructor just accepts the player who owns the tag, automatically updates the location, and generates the base and pairings.
-    public Tag(Player owner) {
+    public Tag(Player owner, int size) {
         //Initialize lists and maps to empty values.
         baseEntities = new ArrayList<>();
         stack = new ArrayList<>();
@@ -58,6 +62,10 @@ public class Tag {
         name.setText(owner.getName());
         //Generate the base of the tag. Just a silverfish right now.
         genBase();
+        //Generate default TagLines to match size.
+        while (lines.size() < size) {
+            addLine();
+        }
         //Refresh the pairings map so that pairings can be sent.
         refreshPairings();
     }
@@ -189,7 +197,7 @@ public class Tag {
     }
 
     //Method to create a generic LivingEntity with the given entity type.
-    LivingEntity createGenericEntity(EntityType type) {
+    private LivingEntity createGenericEntity(EntityType type) {
         //Create the new entity by spawning it at the entity location.
         LivingEntity e = (LivingEntity) entityLoc.getWorld().spawnEntity(entityLoc, type);
         //Add an invisibility potion effect
@@ -213,7 +221,7 @@ public class Tag {
     }
 
     //Create a slime to go down in the entity stack. Used for generating spaces.
-    LivingEntity createSlime() {
+    private LivingEntity createSlime() {
         //Create a new slime through createGenericEntity and cast it to slime
         Slime s = (Slime) createGenericEntity(EntityType.SLIME);
         //Set slime size to -1
