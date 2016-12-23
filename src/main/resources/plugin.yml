@@ -1,15 +1,6 @@
-name: SecondLineAPI
+name: MultiLineAPI
 version: ${project.version}
-main: net.blitzcube.line2.SecondLineAPI
+main: net.blitzcube.mlapi.MultiLineAPI
 depend: [ProtocolLib]
 authors: [iso2013]
 description: An API which allows you to set text to display below the players name
-commands:
-    secondline:
-        description: SecondLine API Demonstration Command
-        permission: secondlineapi.test
-permissions:
-    secondlineapi:
-        test:
-            default: op
-            description: Allows use of the SecondLine API Demonstration Command

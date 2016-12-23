@@ -1,4 +1,4 @@
-package net.blitzcube.line2.tag;
+package net.blitzcube.mlapi.tag;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;

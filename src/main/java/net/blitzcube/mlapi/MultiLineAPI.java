@@ -1,9 +1,9 @@
-package net.blitzcube.line2;
+package net.blitzcube.mlapi;
 
-import net.blitzcube.line2.listener.EventListener;
-import net.blitzcube.line2.listener.PacketListener;
-import net.blitzcube.line2.tag.Tag;
-import net.blitzcube.line2.tag.TagLine;
+import net.blitzcube.mlapi.listener.EventListener;
+import net.blitzcube.mlapi.listener.PacketListener;
+import net.blitzcube.mlapi.tag.Tag;
+import net.blitzcube.mlapi.tag.TagLine;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -12,8 +12,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.HashMap;
 import java.util.UUID;
 
-public final class SecondLineAPI extends JavaPlugin implements Listener {
-    private static SecondLineAPI inst;
+public final class MultiLineAPI extends JavaPlugin implements Listener {
+    private static MultiLineAPI inst;
     public HashMap<UUID, Tag> tags;
     private PacketListener pckt;
     private EventListener evnt;
@@ -104,7 +104,7 @@ public final class SecondLineAPI extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         tags = new HashMap<>();
-        SecondLineAPI.inst = this;
+        MultiLineAPI.inst = this;
         evnt = new EventListener(this);
         this.getServer().getPluginManager().registerEvents(evnt, this);
         pckt = new PacketListener(this);

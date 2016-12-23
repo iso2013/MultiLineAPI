@@ -4,14 +4,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>net.blitzcube.score</groupId>
-    <artifactId>SecondLineAPI</artifactId>
+    <groupId>net.blitzcube.mlapi</groupId>
+    <artifactId>MultiLineAPI</artifactId>
     <version>0.1</version>
     <packaging>jar</packaging>
 
-    <name>SecondLineAPI</name>
+    <name>MultiLineAPI</name>
 
-    <description>An API which allows you to set text to display below the players name</description>
+    <description>An API which allows you to add multiple lines of player nametags.</description>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>

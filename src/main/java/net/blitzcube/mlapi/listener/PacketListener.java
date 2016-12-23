@@ -1,4 +1,4 @@
-package net.blitzcube.line2.listener;
+package net.blitzcube.mlapi.listener;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
@@ -7,8 +7,8 @@ import com.comphenix.protocol.events.ListeningWhitelist;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.injector.GamePhase;
-import net.blitzcube.line2.SecondLineAPI;
-import net.blitzcube.line2.tag.Tag;
+import net.blitzcube.mlapi.MultiLineAPI;
+import net.blitzcube.mlapi.tag.Tag;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -21,10 +21,10 @@ import java.util.UUID;
  * Created by iso2013 on 12/22/2016.
  */
 public class PacketListener implements com.comphenix.protocol.events.PacketListener {
-    private SecondLineAPI inst;
+    private MultiLineAPI inst;
     private ProtocolManager protocol;
 
-    public PacketListener(SecondLineAPI secondLineAPI) {
+    public PacketListener(MultiLineAPI secondLineAPI) {
         this.inst = secondLineAPI;
         protocol = ProtocolLibrary.getProtocolManager();
         protocol.addPacketListener(this);
