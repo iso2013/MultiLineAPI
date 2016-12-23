@@ -1,6 +1,6 @@
 name: SecondLineAPI
 version: ${project.version}
-main: net.blitzcube.score.secondlineapi.SecondLineAPI
+main: net.blitzcube.line2.SecondLineAPI
 depend: [ProtocolLib]
 authors: [iso2013]
 description: An API which allows you to set text to display below the players name
