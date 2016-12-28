@@ -42,6 +42,7 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
 
     /**
      * Sets whether or not new players should be automatically enabled.
+     *
      * @param val whether or not new players will be automatically enabled
      */
     public static void setAutoEnable(boolean val) {
@@ -50,6 +51,7 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
 
     /**
      * Enables the API for usage on the specified player.
+     *
      * @param p the player to enable
      */
     public static void enable(Player p) {
@@ -60,6 +62,7 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
 
     /**
      * Disables the API for usage on the specified player.
+     *
      * @param p the player to disable
      */
     public static void disable(Player p) {
@@ -78,6 +81,7 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
 
     /**
      * Checks whether a player is enabled.
+     *
      * @param p the player to check the status of
      * @return whether or not the player is enabled
      */
@@ -87,6 +91,7 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
 
     /**
      * Gets the name which the main tag for a player is currently set to.
+     *
      * @param p the player to get the name of
      * @return the player's name
      */
@@ -99,7 +104,8 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
     /**
      * Gets a line by the specified index. Line numbers go from top to bottom, starting at zero and not including the
      * player's nametag. The line must exist in order to be retrieved.
-     * @param p The player to get a line of
+     *
+     * @param p         The player to get a line of
      * @param lineIndex The index of the line to get, starting at zero at the top and goes to the bottom
      * @return The line object that allows editing of the line
      */
@@ -111,18 +117,22 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
 
     /**
      * Add a line to the specified player.
+     *
      * @param p The player to add a line to
      * @return The line object that allows editing of the new line
      */
     public static TagLine addLine(Player p) {
         if (!inst.tags.containsKey(p.getUniqueId()))
             throw new IllegalArgumentException("Player does not have API enabled!");
-        return inst.tags.get(p.getUniqueId()).addLine();
+        TagLine t = inst.tags.get(p.getUniqueId()).addLine();
+        inst.hide(p);
+        return t;
     }
 
     /**
      * Remove a specified line of a player. Be sure the line you remove belongs to your plugin.
-     * @param p The player to remove a line of
+     *
+     * @param p         The player to remove a line of
      * @param lineIndex The index of the line to remove
      */
     public static void removeLine(Player p, int lineIndex) {
@@ -133,7 +143,8 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
 
     /**
      * Remove a specified line of a player. Be sure the line you remove belongs to your plugin.
-     * @param p The player to remove a line of
+     *
+     * @param p    The player to remove a line of
      * @param line The line to remove
      */
     public static void removeLine(Player p, TagLine line) {
@@ -145,6 +156,7 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
     /**
      * Get the number of lines a player's tag has. For appearance purposes, this is recommended to never be higher
      * than 3 or 4.
+     *
      * @param p The player to get the line count of
      * @return The number of lines the player's tag has
      */
@@ -156,6 +168,7 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
 
     /**
      * Refresh a player's tag. Call after any tag addition or removal to update the tag for all players.
+     *
      * @param p The player to refresh
      */
     public static void refresh(Player p) {
@@ -167,6 +180,7 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
     /**
      * Refresh all players in a player's view for the specified player. Used in onWorldChange and onTeleport to
      * repair broken tags.
+     *
      * @param p The player whose view should be refreshed
      */
     public static void refreshOthers(Player p) {
@@ -176,6 +190,7 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
     /**
      * Clear all lines of a player. Be sure you are not removing other plugin's lines. Recommended to use removeLine
      * instead.
+     *
      * @param p The player whose lines should be cleared
      */
     public static void clearLines(Player p) {
@@ -186,6 +201,7 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
      * Update the locations of the entities that correspond to a player. They are always at y=-10 below the player.
      * This is used in onMove, onTeleport, and onWorldChange to ensure the entities are still loaded by all clients
      * who can see the player they correspond to.
+     *
      * @param p The player whose locations should be updated
      */
     public static void updateLocs(Player p) {
@@ -240,14 +256,16 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
     Refreshes a specified player for all viewers. Used internally by #refresh(Player).
      */
     private void refreshForEveryone(Player p) {
-        Bukkit.getOnlinePlayers().stream().filter(o -> o.getWorld().getUID().equals(p.getWorld().getUID())).forEach(o
+        Bukkit.getOnlinePlayers().stream().filter(o -> o.getWorld().getUID().equals(p.getWorld().getUID())).filter(o
+                -> !o.getUniqueId().equals(p.getUniqueId())).forEach(o
                 -> {
             createPairs(tags.get(p.getUniqueId()), o);
         });
     }
 
     /*
-    Used to hide a player's tag from himself, preventing the player's view and interactions from being obstructed by the hitboxes.
+    Used to hide a player's tag from himself, preventing the player's view and interactions from being obstructed by
+    the hitboxes.
      */
     public void hide(Player p) {
         pckt.hide(p, inst.tags.get(p.getUniqueId()).getEntityIds());

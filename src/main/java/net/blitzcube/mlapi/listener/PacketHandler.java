@@ -91,7 +91,8 @@ public class PacketHandler implements com.comphenix.protocol.events.PacketListen
 
     @Override
     public ListeningWhitelist getSendingWhitelist() {
-        //We only need to listen for the sending of player spawn packets and mount packets, so filter those using the ListeningWhitelist.
+        //We only need to listen for the sending of player spawn packets and mount packets, so filter those using the
+        // ListeningWhitelist.
         return ListeningWhitelist.newBuilder().normal().gamePhase(GamePhase.PLAYING).types(
                 PacketType.Play.Server.NAMED_ENTITY_SPAWN,
                 PacketType.Play.Server.MOUNT

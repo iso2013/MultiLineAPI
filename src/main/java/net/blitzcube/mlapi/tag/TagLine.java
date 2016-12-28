@@ -13,6 +13,7 @@ public class TagLine {
     private Entity lineEntity;
     private ArrayList<Entity> spaceEntities;
     private boolean keepSpaceWhenNull;
+    private String text;
 
     /**
      * The default constructor for a TagLine. This should only be called through MultiLineAPI.
@@ -24,10 +25,12 @@ public class TagLine {
         this.lineEntity = parent.createArmorStand();
         this.spaceEntities = parent.createSpace();
         this.keepSpaceWhenNull = false;
+        text = lineEntity.getCustomName();
     }
 
     /**
      * The line entity is the ArmorStand with the text as it's name. Called by MultiLineAPI.
+     *
      * @return The entity that is used to display text
      */
     public Entity getLineEntity() {
@@ -37,6 +40,7 @@ public class TagLine {
     /**
      * The spacing entities are used to separate the armor stands of each tag line. Without them, the text would all
      * show up in the same position and be impossible to read. Called by MultiLineAPI.
+     *
      * @return The list of entities that represent a space
      */
     public ArrayList<Entity> getSpaceEntities() {
@@ -46,6 +50,7 @@ public class TagLine {
     /**
      * Whether or not the line should keep the space between the lines before and after when it's text value is null.
      * This should almost always be false for appearance purposes.
+     *
      * @param b Whether or not the space should be kept when null
      */
     public void setKeepSpaceWhenNull(boolean b) {
@@ -54,6 +59,7 @@ public class TagLine {
 
     /**
      * Gets whether or not the line should keep the space when it's value is null.
+     *
      * @return Whether or not the space will be kept
      */
     public boolean keepSpaceWhenNull() {
@@ -62,6 +68,7 @@ public class TagLine {
 
     /**
      * Get the text value of the line.
+     *
      * @return The text currently being displayed on the line
      */
     public String getText() {
@@ -70,15 +77,18 @@ public class TagLine {
 
     /**
      * Set the text value of the line. Set to a String to display it, or null to hide the TagLine.
+     *
      * @param s The string that should be displayed
      */
     public void setText(String s) {
         lineEntity.setCustomName(s);
         lineEntity.setCustomNameVisible(s != null);
+        text = s;
     }
 
     /**
      * Teleport the entities for this line to the specified location. Should only be called by MultiLineAPI
+     *
      * @param entityLoc The location to teleport the entities to.
      */
     public void teleport(Location entityLoc) {
@@ -92,7 +102,6 @@ public class TagLine {
      * Remove the tag line. Used in onDisable and when disabling the API for a player.
      */
     public void remove() {
-        parent.removeLine(this);
         lineEntity.remove();
         spaceEntities.forEach(Entity::remove);
     }
@@ -104,5 +113,17 @@ public class TagLine {
      */
     public Tag getParent() {
         return parent;
+    }
+
+    public void tempDisable() {
+        lineEntity.remove();
+        spaceEntities.forEach(Entity::remove);
+    }
+
+    public void reEnable() {
+        lineEntity = parent.createArmorStand();
+        lineEntity.setCustomName(text);
+        lineEntity.setCustomNameVisible(text != null);
+        spaceEntities.addAll(parent.createSpace());
     }
 }

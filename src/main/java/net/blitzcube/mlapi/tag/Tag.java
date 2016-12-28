@@ -40,7 +40,8 @@ public class Tag {
      *
      * @param owner The player who owns the tag.
      */
-    //Constructor just accepts the player who owns the tag, automatically updates the location, and generates the base and pairings.
+    //Constructor just accepts the player who owns the tag, automatically updates the location, and generates the
+    // base and pairings.
     public Tag(Player owner) {
         //Initialize lists and maps to empty values.
         baseEntities = new ArrayList<>();
@@ -64,6 +65,7 @@ public class Tag {
 
     /**
      * Retrieves the TagLine object that represents the first line of the nametag.
+     *
      * @return The TagLine name object
      */
     public TagLine getName() {
@@ -72,6 +74,7 @@ public class Tag {
 
     /**
      * Add a new line to the player's tag.
+     *
      * @return The new line that has been added
      */
     public TagLine addLine() {
@@ -83,6 +86,7 @@ public class Tag {
 
     /**
      * Get a line of the player's tag by a specified index.
+     *
      * @param index The index of the tag to retrieve
      * @return The TagLine that has been retrieved
      */
@@ -100,6 +104,7 @@ public class Tag {
 
     /**
      * Get the number of lines a player has.
+     *
      * @return The number of lines a player has
      */
     public int getNumLines() {
@@ -108,6 +113,7 @@ public class Tag {
 
     /**
      * Remove a line from this tag object.
+     *
      * @param line The TagLine to remove from the tag
      */
     public void removeLine(TagLine line) {
@@ -117,6 +123,7 @@ public class Tag {
 
     /**
      * Remove a line from this tag object based on its index.
+     *
      * @param index The index of the TagLine that should be removed
      */
     public void removeLine(int index) {
@@ -128,6 +135,13 @@ public class Tag {
 
     //Gets a list of entity IDs that the stack is comprised of. Is used to hide the tag.
     public int[] getEntityIds() {
+        ArrayList<Entity> stack = new ArrayList<>();
+        stack.add(whoOwns);
+        stack.addAll(baseEntities);
+        for (TagLine line : lines) {
+            stack.add(line.getLineEntity());
+            stack.addAll(line.getSpaceEntities());
+        }
         int[] ints = new int[stack.size()];
         for (int i = 0; i < ints.length; i++) {
             ints[i] = stack.get(i).getEntityId();
@@ -136,7 +150,8 @@ public class Tag {
     }
 
     //Get a 2D integer array that represents the pairings map. Only contains entity IDs. This method is used for
-    // sending the pairings packet. getEntityPairings()[0] is the list of vehicles, and getEntityPairings[1] is the list of passengers.
+    // sending the pairings packet. getEntityPairings()[0] is the list of vehicles, and getEntityPairings[1] is the
+    // list of passengers.
     public int[][] getEntityPairings() {
         int[] keys = new int[pairings.size()];
         int[] vals = new int[pairings.size()];
@@ -207,7 +222,7 @@ public class Tag {
         //Make the entity silent to prevent silverfish sounds
         e.setSilent(true);
         //Add a STACK_ENTITY metadata value so the entity will have damage or death cancelled by the EventListener.
-        e.setMetadata("STACK_ENTITY", new FixedMetadataValue(Bukkit.getPluginManager().getPlugin("SecondLineAPI"),
+        e.setMetadata("STACK_ENTITY", new FixedMetadataValue(Bukkit.getPluginManager().getPlugin("MultiLineAPI"),
                 null));
         return e;
     }
@@ -277,5 +292,24 @@ public class Tag {
         name.remove();
         lines.forEach(TagLine::remove);
         baseEntities.forEach(Entity::remove);
+    }
+
+    public void refresh() {
+        name.tempDisable();
+        lines.forEach(TagLine::tempDisable);
+        baseEntities.forEach(Entity::remove);
+
+        baseEntities.clear();
+        stack.clear();
+        pairings.clear();
+        lines.clear();
+
+        updateEntityLoc();
+
+        name.reEnable();
+        lines.forEach(TagLine::reEnable);
+        genBase();
+
+        refreshPairings();
     }
 }
