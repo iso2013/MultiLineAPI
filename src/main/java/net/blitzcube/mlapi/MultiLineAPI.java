@@ -1,22 +1,25 @@
 package net.blitzcube.mlapi;
 
+import java.util.Map;
+import java.util.UUID;
+
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+
+import com.google.common.collect.Maps;
+
 import net.blitzcube.mlapi.listener.EventListener;
 import net.blitzcube.mlapi.listener.PacketHandler;
 import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.mlapi.tag.TagLine;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
-import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.HashMap;
-import java.util.UUID;
-
-public final class MultiLineAPI extends JavaPlugin implements Listener {
+public final class MultiLineAPI extends JavaPlugin {
+	
     //The static instance of the API.
     private static MultiLineAPI inst;
     //All player's Tag objects that correspond to their players.
-    public HashMap<UUID, Tag> tags;
+    public Map<UUID, Tag> tags;
     //The packet handler for ProtocolLib. Used for controlling mount packets and despawn packets.
     private PacketHandler pckt;
     //The event handler. Used for automatic enabling, entity relocation, and repairing on teleportation.
@@ -28,7 +31,7 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
      */
     public MultiLineAPI() {
         MultiLineAPI.inst = this;
-        tags = new HashMap<>();
+        tags = Maps.newHashMap();
     }
 
     /**
@@ -37,7 +40,7 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
      * @return whether or not new players will be automatically enabled
      */
     public static boolean isAutoEnable() {
-        return inst.evnt.autoEnable;
+        return inst.evnt.isAutoEnable();
     }
 
     /**
@@ -46,7 +49,7 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
      * @param val whether or not new players will be automatically enabled
      */
     public static void setAutoEnable(boolean val) {
-        inst.evnt.autoEnable = val;
+        inst.evnt.setAutoEnable(val);
     }
 
     /**
@@ -216,7 +219,6 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
         evnt = new EventListener(this);
         pckt = new PacketHandler(this);
 
-        evnt.autoEnable = true;
         this.getServer().getPluginManager().registerEvents(evnt, this);
     }
 
@@ -233,11 +235,10 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
     Method for refreshing the view of a specified player. Used internally by #refreshOthers(Player).
      */
     private void refreshView(Player p) {
-        tags.values().stream().filter(s -> Bukkit.getPlayer(s
-                .getOwner()).getWorld().getUID().equals(p
-                .getWorld().getUID())).forEach(s -> {
-            createPairs(s, p);
-        });
+        tags.values().stream()
+        	.filter(s -> s.getOwner().getWorld() == p.getWorld())
+        	.forEach(s -> createPairs(s, p)
+        );
     }
 
     /*
@@ -245,8 +246,8 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
      */
     public void createPairs(Tag t, Player p) {
         t.refreshPairings();
-        int[] keys = t.getEntityPairings()[0];
-        int[] values = t.getEntityPairings()[1];
+        int[][] pairings = t.getEntityPairings();
+        int[] keys = pairings[0], values = pairings[1];
         for (int i = 0; i < keys.length; i++) {
             pckt.sendMountPacket(p, keys[i], values[i]);
         }
@@ -256,11 +257,11 @@ public final class MultiLineAPI extends JavaPlugin implements Listener {
     Refreshes a specified player for all viewers. Used internally by #refresh(Player).
      */
     private void refreshForEveryone(Player p) {
-        Bukkit.getOnlinePlayers().stream().filter(o -> o.getWorld().getUID().equals(p.getWorld().getUID())).filter(o
-                -> !o.getUniqueId().equals(p.getUniqueId())).forEach(o
-                -> {
-            createPairs(tags.get(p.getUniqueId()), o);
-        });
+        Bukkit.getOnlinePlayers().stream()
+        	.filter(o -> o.getWorld() == p.getWorld())
+        	.filter(o -> o == p)
+        	.forEach(o -> createPairs(tags.get(p.getUniqueId()), o)
+        );
     }
 
     /*

@@ -17,35 +17,35 @@ import org.bukkit.scheduler.BukkitTask;
  */
 public class EventListener implements Listener {
     //Whether or not new players should be automatically enabled
-    public boolean autoEnable;
+    private boolean autoEnable;
     //The instance of the API for referencing hide methods
-    private MultiLineAPI inst;
+    private final MultiLineAPI inst;
 
     //Constructor just accepts the API to store in the inst variable
     public EventListener(MultiLineAPI parent) {
         this.inst = parent;
-        //By default, auto enabling is off.
-        autoEnable = false;
+        //By default, auto enabling is on.
+        autoEnable = true;
     }
 
     @EventHandler
     public void join(PlayerJoinEvent e) {
-        //If auto joining is enabled, then schedule a task
-        if (autoEnable) {
+    	if (!autoEnable) return;
+        
+    	//If auto joining is enabled, then schedule a task
+        Bukkit.getScheduler().runTaskLater(inst, () -> {
+            //Enable the player with MultiLineAPI. This has to be done one tick later so all players receive the
+            // entities.
+            MultiLineAPI.enable(e.getPlayer());
+            //Refresh the player to send the mount packets to all players.
+            MultiLineAPI.refresh(e.getPlayer());
+            //Hide the entities one tick later
             Bukkit.getScheduler().runTaskLater(inst, () -> {
-                //Enable the player with MultiLineAPI. This has to be done one tick later so all players receive the
-                // entities.
-                MultiLineAPI.enable(e.getPlayer());
-                //Refresh the player to send the mount packets to all players.
-                MultiLineAPI.refresh(e.getPlayer());
-                //Hide the entities one tick later
-                Bukkit.getScheduler().runTaskLater(inst, () -> {
-                    //This has to be done one tick later to ensure the e.getPlayer() has received all the entities -
-                    // otherwise some will hide and some won't.
-                    inst.hide(e.getPlayer());
-                }, 1L);
+                //This has to be done one tick later to ensure the e.getPlayer() has received all the entities -
+                // otherwise some will hide and some won't.
+                inst.hide(e.getPlayer());
             }, 1L);
-        }
+        }, 1L);
     }
 
     @EventHandler
@@ -106,29 +106,29 @@ public class EventListener implements Listener {
     @EventHandler
     public void sneak(PlayerToggleSneakEvent e) {
         //Just some code for testing on sneak. Nothing to see here.
-        if (MultiLineAPI.getLineCount(e.getPlayer()) < 1) {
-            MultiLineAPI.addLine(e.getPlayer());
-        }
-        TagLine line = MultiLineAPI.getLine(e.getPlayer(), 0);
-        line.setKeepSpaceWhenNull(false);
-        if (e.isSneaking()) {
-            line.setText("Sneaking ☺");
-        } else {
-            line.setText(null);
-        }
-        MultiLineAPI.refresh(e.getPlayer());
+    	if (MultiLineAPI.isEnabled(e.getPlayer())) {
+    		if (MultiLineAPI.getLineCount(e.getPlayer()) < 1) {
+                MultiLineAPI.addLine(e.getPlayer());
+            }
+            TagLine line = MultiLineAPI.getLine(e.getPlayer(), 0);
+            line.setKeepSpaceWhenNull(false);
+            line.setText(e.isSneaking() ? "Sneaking ☺" : null);
+            MultiLineAPI.refresh(e.getPlayer());
+    	}
     }
 
     @EventHandler
     public void chat(AsyncPlayerChatEvent e) {
         Player p = e.getPlayer();
-        String message = e.getMessage();
-        //Run code synchronously.
-        Bukkit.getScheduler().runTask(inst, () -> handleChat(p, message));
+        if (MultiLineAPI.isEnabled(p)) {
+        	String message = e.getMessage();
+            //Run code synchronously.
+            Bukkit.getScheduler().runTask(inst, () -> handleChat(p, message));
+        }
     }
 
     private void handleChat(Player p, String message) {
-        //Chat messages below name.
+		//Chat messages below name.
         if (p.hasMetadata("CHAT_SCHEDULER")) {
             ((BukkitTask) p.getMetadata("CHAT_SCHEDULER").get(0).value()).cancel();
             p.removeMetadata("CHAT_SCHEDULER", inst);
@@ -145,4 +145,12 @@ public class EventListener implements Listener {
         }, 10 * 20)));
         MultiLineAPI.refresh(p);
     }
+    
+    public void setAutoEnable(boolean autoEnable) {
+		this.autoEnable = autoEnable;
+	}
+    
+    public boolean isAutoEnable() {
+		return autoEnable;
+	}
 }

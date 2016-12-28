@@ -1,13 +1,25 @@
 package net.blitzcube.mlapi.tag;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.entity.*;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Slime;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
-import java.util.*;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 /**
  * Created by iso2013 on 12/22/2016.
@@ -15,19 +27,19 @@ import java.util.*;
 public class Tag {
     //The list of entities that compose the base of the tag. Currently it's just the SILVERFISH entity to separate
     // the player's tag from the player's head.
-    private ArrayList<Entity> baseEntities;
+    private List<Entity> baseEntities;
     //The list of entities that make up the actual tag. This changes whenever the tag is refreshed, and is pulled
     // from the TagLine objects. See #refreshPairings()
-    private ArrayList<Entity> stack;
+    private List<Entity> stack;
     //The HashMap that represents pairings of entities that should be mounted on each other. Key is the vehicle,
     // Value is the passenger. This is also updated in #refreshPairings()
-    private HashMap<Entity, Entity> pairings;
+    private Map<Entity, Entity> pairings;
 
     //The TagLine object for the uppermost tag, - the player's name. It cannot be removed.
     private TagLine name;
     //A list of lines to show underneath the player's name. This should only be changed through addLine(), getLine(),
     // clear() and removeLine() methods.
-    private ArrayList<TagLine> lines;
+    private List<TagLine> lines;
 
     //The player whom this tag belongs to.
     private Player whoOwns;
@@ -44,10 +56,10 @@ public class Tag {
     // base and pairings.
     public Tag(Player owner) {
         //Initialize lists and maps to empty values.
-        baseEntities = new ArrayList<>();
-        stack = new ArrayList<>();
-        pairings = new HashMap<>();
-        lines = new ArrayList<>();
+        baseEntities = Lists.newArrayList();
+        stack = Lists.newArrayList();
+        pairings = Maps.newHashMap();
+        lines = Lists.newArrayList();
         //Set whoOwns to the player provided.
         whoOwns = owner;
 
@@ -83,6 +95,19 @@ public class Tag {
         refreshPairings();
         return newLine;
     }
+    
+    /**
+     * Add a new line to the player's tag.
+     *
+     * @param newLine The new line to add
+     * @return The new line that has been added
+     */
+    public TagLine addLine(TagLine newLine) {
+    	Preconditions.checkArgument(lines.contains(newLine), "Cannot add an instance of TagLine to a Tag more than once");
+    	lines.add(newLine);
+    	refreshPairings();
+    	return newLine;
+    }
 
     /**
      * Get a line of the player's tag by a specified index.
@@ -91,6 +116,7 @@ public class Tag {
      * @return The TagLine that has been retrieved
      */
     public TagLine getLine(int index) {
+    	Preconditions.checkArgument(index >= 0 && index < lines.size(), "Index " + index + " was not found in list of size " + lines.size());
         return lines.get(index);
     }
 
@@ -127,15 +153,17 @@ public class Tag {
      * @param index The index of the TagLine that should be removed
      */
     public void removeLine(int index) {
-        if (index < 0 || index >= lines.size()) {
-            throw new IllegalArgumentException("Index " + index + " was not found in list of size " + lines.size());
-        }
+    	Preconditions.checkArgument(index >= 0 && index < lines.size(), "Index " + index + " was not found in list of size " + lines.size());
         lines.remove(index).remove();
     }
 
-    //Gets a list of entity IDs that the stack is comprised of. Is used to hide the tag.
+    /**
+     * Get an array of entity IDs that the stack is comprised of.
+     * 
+     * @return An array of entity IDs
+     */
     public int[] getEntityIds() {
-        ArrayList<Entity> stack = new ArrayList<>();
+        List<Entity> stack = new ArrayList<>();
         stack.add(whoOwns);
         stack.addAll(baseEntities);
         for (TagLine line : lines) {
@@ -149,13 +177,17 @@ public class Tag {
         return ints;
     }
 
-    //Get a 2D integer array that represents the pairings map. Only contains entity IDs. This method is used for
-    // sending the pairings packet. getEntityPairings()[0] is the list of vehicles, and getEntityPairings[1] is the
-    // list of passengers.
+    /** 
+     * Get a 2D integer array that represents the pairings map. Only contains entity IDs
+     * <br> Index 0 is the list of vehicles
+     * <br> Index 1 is the list of passengers
+     * 
+     * @return the entity ID pairing maps
+     */
     public int[][] getEntityPairings() {
         int[] keys = new int[pairings.size()];
         int[] vals = new int[pairings.size()];
-        ArrayList<Map.Entry<Entity, Entity>> entries = new ArrayList<>();
+        List<Map.Entry<Entity, Entity>> entries = new ArrayList<>();
         entries.addAll(pairings.entrySet());
         for (int i = 0; i < keys.length; i++) {
             keys[i] = entries.get(i).getKey().getEntityId();
@@ -180,7 +212,7 @@ public class Tag {
         //Add all of the baseEntities to the stack, after the Player.
         stack.addAll(baseEntities);
         //Reverse the order of the lines, so they are added in the correct order.
-        ArrayList<TagLine> lines = (ArrayList<TagLine>) this.lines.clone();
+        List<TagLine> lines = Lists.newArrayList(this.lines);
         Collections.reverse(lines);
         //For each line the tag contains,
         for (TagLine line : lines) {
@@ -251,9 +283,9 @@ public class Tag {
     }
 
     //Create a space and return it. Used by TagLine objects to generate a space.
-    ArrayList<Entity> createSpace() {
+    List<Entity> createSpace() {
         //Create a new array list to store the entities in.
-        ArrayList<Entity> space = new ArrayList<>();
+        List<Entity> space = new ArrayList<>();
         //Add a slime
         space.add(createSlime());
         //Add two silverfishes. This is the proper amount of spacing to create a decent-sized gap.
@@ -281,19 +313,28 @@ public class Tag {
         }
     }
 
-    //Get the UUID of the player who owns the the Tag.
-    public UUID getOwner() {
-        return whoOwns.getUniqueId();
+    /**
+     * Get the owner of the Tag
+     * 
+     * @return The owner of the Tag
+     */
+    public Player getOwner() {
+        return whoOwns;
     }
 
-    //Remove it by removing the name, lines, and base entities. This is used in onDisable and whenever the API for a
-    // player is disabled.
+    /**
+     * Remove the tag from the player. This includes removal of the name, lines and
+     * the base entities. Clears all localized data
+     */
     public void remove() {
         name.remove();
         lines.forEach(TagLine::remove);
         baseEntities.forEach(Entity::remove);
     }
 
+    /**
+     * Refresh all entity data and entity pairings on this tag
+     */
     public void refresh() {
         name.tempDisable();
         lines.forEach(TagLine::tempDisable);

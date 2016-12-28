@@ -22,9 +22,9 @@ import java.util.UUID;
  */
 public class PacketHandler implements com.comphenix.protocol.events.PacketListener {
     //The instance of the API to access players' Tag objects
-    private MultiLineAPI inst;
+    private final MultiLineAPI inst;
     //The protocol manager for ProtocolLib
-    private ProtocolManager protocol;
+    private final ProtocolManager protocol;
 
     //Constructor accepts the API instance and retrieves the protocol manager from ProtocolLib.
     public PacketHandler(MultiLineAPI secondLineAPI) {

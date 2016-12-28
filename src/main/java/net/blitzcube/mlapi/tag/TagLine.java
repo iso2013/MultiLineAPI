@@ -1,17 +1,18 @@
 package net.blitzcube.mlapi.tag;
 
+import java.util.List;
+
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
-
-import java.util.ArrayList;
 
 /**
  * Created by iso2013 on 12/22/2016.
  */
 public class TagLine {
+	
     private Tag parent;
     private Entity lineEntity;
-    private ArrayList<Entity> spaceEntities;
+    private List<Entity> spaceEntities;
     private boolean keepSpaceWhenNull;
     private String text;
 
@@ -25,7 +26,7 @@ public class TagLine {
         this.lineEntity = parent.createArmorStand();
         this.spaceEntities = parent.createSpace();
         this.keepSpaceWhenNull = false;
-        text = lineEntity.getCustomName();
+        this.text = lineEntity.getCustomName();
     }
 
     /**
@@ -43,7 +44,7 @@ public class TagLine {
      *
      * @return The list of entities that represent a space
      */
-    public ArrayList<Entity> getSpaceEntities() {
+    public List<Entity> getSpaceEntities() {
         return spaceEntities;
     }
 
