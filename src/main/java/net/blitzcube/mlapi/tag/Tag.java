@@ -45,6 +45,7 @@ public class Tag {
      * class: MultiLineAPI.
      *
      * @param owner The player who owns the tag.
+     * @param owners The list of TagControllers that can modify this tag.
      */
     //Constructor just accepts the player who owns the tag, automatically updates the location, and generates the
     // base and pairings.

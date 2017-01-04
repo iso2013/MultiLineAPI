@@ -21,6 +21,7 @@ public class TagLine {
      * The default constructor for a TagLine. This should only be called through MultiLineAPI.
      *
      * @param parent The Tag that this TagLine belongs to
+     * @param controller The TagController responsible for this tag
      */
     public TagLine(Tag parent, TagController controller) {
         this.parent = parent;

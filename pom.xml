@@ -28,6 +28,22 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.4</version>
+                <executions>
+                    <execution>
+                        <id>javadoc</id>
+                    </execution>
+                </executions>
+                <configuration>
+                    <reportOutputDirectory>docs</reportOutputDirectory>
+                    <destDir>docs</destDir>
+                    <doctitle>MutliLineAPI docs v${project.version}</doctitle>
+                    <windowtitle>MutliLineAPI docs v${project.version}</windowtitle>
+                </configuration>
+            </plugin>
         </plugins>
         <resources>
             <resource>
