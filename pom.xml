@@ -42,6 +42,7 @@
                     <destDir>docs</destDir>
                     <doctitle>MutliLineAPI docs v${project.version}</doctitle>
                     <windowtitle>MutliLineAPI docs v${project.version}</windowtitle>
+                    <excludePackageNames>net.blitzcube.mlapi.listener,net.blitzcube.mlapi.reflect</excludePackageNames>
                 </configuration>
             </plugin>
         </plugins>
