@@ -136,7 +136,7 @@ public class PacketHandler implements com.comphenix.protocol.events.PacketListen
         //Write all the entity IDs that need to be hidden to the first integer list field.
         packet.getIntegerArrays().write(0, is);
         try {
-            //Send the packet to the palyer.
+            //Send the packet to the player.
             protocol.sendServerPacket(p, packet);
         } catch (InvocationTargetException e) {
             //Record in the logs if a packet fails to send.

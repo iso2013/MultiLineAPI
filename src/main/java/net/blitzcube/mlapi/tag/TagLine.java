@@ -1,18 +1,19 @@
 package net.blitzcube.mlapi.tag;
 
-import java.util.List;
-
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
+
+import java.util.List;
 
 /**
  * Created by iso2013 on 12/22/2016.
  */
 public class TagLine {
-	
-    private Tag parent;
+
+    private final Tag parent;
+    private final TagController controller;
+    private final List<Entity> spaceEntities;
     private Entity lineEntity;
-    private List<Entity> spaceEntities;
     private boolean keepSpaceWhenNull;
     private String text;
 
@@ -21,8 +22,9 @@ public class TagLine {
      *
      * @param parent The Tag that this TagLine belongs to
      */
-    public TagLine(Tag parent) {
+    public TagLine(Tag parent, TagController controller) {
         this.parent = parent;
+        this.controller = controller;
         this.lineEntity = parent.createArmorStand();
         this.spaceEntities = parent.createSpace();
         this.keepSpaceWhenNull = false;
@@ -115,6 +117,17 @@ public class TagLine {
     public Tag getParent() {
         return parent;
     }
+
+    /**
+     * Get the TagController this line belongs to.
+     *
+     * @return The TagController this line belongs to
+     */
+    public TagController getController() {
+        return controller;
+    }
+
+
 
     public void tempDisable() {
         lineEntity.remove();

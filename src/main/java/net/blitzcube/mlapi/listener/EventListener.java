@@ -1,25 +1,20 @@
 package net.blitzcube.mlapi.listener;
 
 import net.blitzcube.mlapi.MultiLineAPI;
-import net.blitzcube.mlapi.tag.TagLine;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.*;
-import org.bukkit.metadata.FixedMetadataValue;
-import org.bukkit.scheduler.BukkitTask;
 
 /**
  * Created by iso2013 on 12/22/2016.
  */
 public class EventListener implements Listener {
-    //Whether or not new players should be automatically enabled
-    private boolean autoEnable;
     //The instance of the API for referencing hide methods
     private final MultiLineAPI inst;
+    //Whether or not new players should be automatically enabled
+    private boolean autoEnable;
 
     //Constructor just accepts the API to store in the inst variable
     public EventListener(MultiLineAPI parent) {
@@ -103,54 +98,13 @@ public class EventListener implements Listener {
         MultiLineAPI.refreshOthers(e.getPlayer());
     }
 
-    @EventHandler
-    public void sneak(PlayerToggleSneakEvent e) {
-        //Just some code for testing on sneak. Nothing to see here.
-    	if (MultiLineAPI.isEnabled(e.getPlayer())) {
-    		if (MultiLineAPI.getLineCount(e.getPlayer()) < 1) {
-                MultiLineAPI.addLine(e.getPlayer());
-            }
-            TagLine line = MultiLineAPI.getLine(e.getPlayer(), 0);
-            line.setKeepSpaceWhenNull(false);
-            line.setText(e.isSneaking() ? "Sneaking ☺" : null);
-            MultiLineAPI.refresh(e.getPlayer());
-    	}
+    //Get whether or not players should automatically be enabled.
+    public boolean isAutoEnable() {
+        return autoEnable;
     }
 
-    @EventHandler
-    public void chat(AsyncPlayerChatEvent e) {
-        Player p = e.getPlayer();
-        if (MultiLineAPI.isEnabled(p)) {
-        	String message = e.getMessage();
-            //Run code synchronously.
-            Bukkit.getScheduler().runTask(inst, () -> handleChat(p, message));
-        }
-    }
-
-    private void handleChat(Player p, String message) {
-		//Chat messages below name.
-        if (p.hasMetadata("CHAT_SCHEDULER")) {
-            ((BukkitTask) p.getMetadata("CHAT_SCHEDULER").get(0).value()).cancel();
-            p.removeMetadata("CHAT_SCHEDULER", inst);
-        }
-        while (MultiLineAPI.getLineCount(p) < 2) {
-            MultiLineAPI.addLine(p);
-        }
-        TagLine line = MultiLineAPI.getLine(p, 1);
-        line.setKeepSpaceWhenNull(false);
-        line.setText(ChatColor.YELLOW + message);
-        p.setMetadata("CHAT_SCHEDULER", new FixedMetadataValue(inst, Bukkit.getScheduler().runTaskLater(inst, () -> {
-            line.setText(null);
-            MultiLineAPI.refresh(p);
-        }, 10 * 20)));
-        MultiLineAPI.refresh(p);
-    }
-    
+    //Set whether or not players should automatically be enabled.
     public void setAutoEnable(boolean autoEnable) {
 		this.autoEnable = autoEnable;
-	}
-    
-    public boolean isAutoEnable() {
-		return autoEnable;
 	}
 }

@@ -1,25 +1,19 @@
 package net.blitzcube.mlapi.tag;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Slime;
+import org.bukkit.entity.*;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by iso2013 on 12/22/2016.
@@ -27,22 +21,22 @@ import com.google.common.collect.Maps;
 public class Tag {
     //The list of entities that compose the base of the tag. Currently it's just the SILVERFISH entity to separate
     // the player's tag from the player's head.
-    private List<Entity> baseEntities;
+    private final List<Entity> baseEntities;
     //The list of entities that make up the actual tag. This changes whenever the tag is refreshed, and is pulled
     // from the TagLine objects. See #refreshPairings()
-    private List<Entity> stack;
+    private final List<Entity> stack;
     //The HashMap that represents pairings of entities that should be mounted on each other. Key is the vehicle,
     // Value is the passenger. This is also updated in #refreshPairings()
-    private Map<Entity, Entity> pairings;
+    private final Map<Entity, Entity> pairings;
 
     //The TagLine object for the uppermost tag, - the player's name. It cannot be removed.
-    private TagLine name;
+    private final TagLine name;
     //A list of lines to show underneath the player's name. This should only be changed through addLine(), getLine(),
     // clear() and removeLine() methods.
-    private List<TagLine> lines;
+    private final Map<TagController, List<TagLine>> lines;
 
     //The player whom this tag belongs to.
-    private Player whoOwns;
+    private final Player whoOwns;
     //The location entities should be spawned at when creating this tag.
     private Location entityLoc;
 
@@ -54,19 +48,23 @@ public class Tag {
      */
     //Constructor just accepts the player who owns the tag, automatically updates the location, and generates the
     // base and pairings.
-    public Tag(Player owner) {
+    public Tag(Player owner, List<TagController> owners) {
         //Initialize lists and maps to empty values.
         baseEntities = Lists.newArrayList();
         stack = Lists.newArrayList();
         pairings = Maps.newHashMap();
-        lines = Lists.newArrayList();
+        lines = Maps.newHashMap();
+
+        for (TagController r : owners) {
+            lines.put(r, Lists.newArrayList());
+        }
         //Set whoOwns to the player provided.
         whoOwns = owner;
 
         //Update the location entities should spawn at so spawning can be done.
         updateEntityLoc();
         //Create the new TagLine object that represents the player's first line of the name
-        name = new TagLine(this);
+        name = new TagLine(this, null);
         //Set it to the player's name
         name.setText(owner.getName());
         //Generate the base of the tag. Just a silverfish right now.
@@ -87,11 +85,14 @@ public class Tag {
     /**
      * Add a new line to the player's tag.
      *
+     * @param owner The TagController to create a new line for
      * @return The new line that has been added
      */
-    public TagLine addLine() {
-        TagLine newLine = new TagLine(this);
-        lines.add(newLine);
+    public TagLine addLine(TagController owner) {
+        Preconditions.checkArgument(lines.containsKey(owner), "Controller is not registered for use with " +
+                "MultiLineAPI!");
+        TagLine newLine = new TagLine(this, owner);
+        lines.get(owner).add(newLine);
         refreshPairings();
         return newLine;
     }
@@ -99,33 +100,58 @@ public class Tag {
     /**
      * Add a new line to the player's tag.
      *
+     * @param owner The TagController to add a new line for
      * @param newLine The new line to add
      * @return The new line that has been added
      */
-    public TagLine addLine(TagLine newLine) {
-    	Preconditions.checkArgument(lines.contains(newLine), "Cannot add an instance of TagLine to a Tag more than once");
-    	lines.add(newLine);
-    	refreshPairings();
+    public TagLine addLine(TagController owner, TagLine newLine) {
+        Preconditions.checkArgument(lines.containsKey(owner), "Controller is not registered for use with " +
+                "MultiLineAPI!");
+        Preconditions.checkArgument(lines.get(owner).contains(newLine), "Cannot add an instance of TagLine to a Tag " +
+                "more than once");
+        lines.get(owner).add(newLine);
+        refreshPairings();
     	return newLine;
     }
 
     /**
      * Get a line of the player's tag by a specified index.
      *
+     * @param owner The TagController to get a line for
      * @param index The index of the tag to retrieve
      * @return The TagLine that has been retrieved
      */
-    public TagLine getLine(int index) {
-    	Preconditions.checkArgument(index >= 0 && index < lines.size(), "Index " + index + " was not found in list of size " + lines.size());
-        return lines.get(index);
+    public TagLine getLine(TagController owner, int index) {
+        Preconditions.checkArgument(lines.containsKey(owner), "Controller is not registered for use with " +
+                "MultiLineAPI!");
+        Preconditions.checkArgument(index >= 0 && index < lines.get(owner).size(), "Index " + index + " was not found" +
+                " in list of size " + lines.get(owner).size());
+        return lines.get(owner).get(index);
     }
 
     /**
      * Clear the player's lines. Removes all lines except the player's default name.
      */
     public void clear() {
+        Map<TagController, List<TagLine>> tempMap = Maps.newHashMap();
+        for (Map.Entry<TagController, List<TagLine>> entry : lines.entrySet()) {
+            tempMap.put(entry.getKey(), Lists.newArrayList());
+            clear(entry.getKey());
+        }
         lines.clear();
+        lines.putAll(tempMap);
         refreshPairings();
+    }
+
+    /**
+     * Clear the player's lines associated with a tag controller. Removes all lines the TagController has added.
+     *
+     * @param owner The TagController to clear the lines of
+     */
+    public void clear(TagController owner) {
+        Preconditions.checkArgument(lines.containsKey(owner), "Controller is not registered for use with MultiLineAPI!");
+        lines.get(owner).forEach(TagLine::remove);
+        lines.get(owner).clear();
     }
 
     /**
@@ -134,27 +160,47 @@ public class Tag {
      * @return The number of lines a player has
      */
     public int getNumLines() {
-        return lines.size();
+        int num = 0;
+        for (TagController c : lines.keySet()) {
+            num += lines.get(c).size();
+        }
+        return num;
+    }
+
+    /**
+     * Get the number of lines a player has.
+     *
+     * @param owner The TagController to get the line count of
+     * @return The number of lines the TagController has for the player
+     */
+    public int getNumLines(TagController owner) {
+        Preconditions.checkArgument(lines.containsKey(owner), "Controller is not registered for use with " +
+                "MultiLineAPI!");
+        return lines.get(owner).size();
     }
 
     /**
      * Remove a line from this tag object.
-     *
+     * @param owner The TagController to remove a line of
      * @param line The TagLine to remove from the tag
      */
-    public void removeLine(TagLine line) {
-        removeLine(lines.indexOf(line));
+    public void removeLine(TagController owner, TagLine line) {
+        Preconditions.checkArgument(lines.containsKey(owner), "Controller is not registered for use with MultiLineAPI" +
+                "!");
+        lines.get(owner).remove(line);
         refreshPairings();
     }
 
     /**
      * Remove a line from this tag object based on its index.
-     *
+     * @param owner The TagController to remove a line of
      * @param index The index of the TagLine that should be removed
      */
-    public void removeLine(int index) {
-    	Preconditions.checkArgument(index >= 0 && index < lines.size(), "Index " + index + " was not found in list of size " + lines.size());
-        lines.remove(index).remove();
+    public void removeLine(TagController owner, int index) {
+        Preconditions.checkArgument(lines.containsKey(owner), "Controller is not registered for use with " +
+                "MultiLineAPI!");
+        Preconditions.checkArgument(index >= 0 && index < lines.get(owner).size(), "Index " + index + " was not found in list of size " + lines.get(owner).size());
+        lines.get(owner).remove(index);
     }
 
     /**
@@ -162,13 +208,15 @@ public class Tag {
      * 
      * @return An array of entity IDs
      */
-    public int[] getEntityIds() {
+    public int[] getEntities() {
         List<Entity> stack = new ArrayList<>();
         stack.add(whoOwns);
         stack.addAll(baseEntities);
-        for (TagLine line : lines) {
-            stack.add(line.getLineEntity());
-            stack.addAll(line.getSpaceEntities());
+        for (List<TagLine> entries : lines.values()) {
+            for (TagLine line : entries) {
+                stack.add(line.getLineEntity());
+                stack.addAll(line.getSpaceEntities());
+            }
         }
         int[] ints = new int[stack.size()];
         for (int i = 0; i < ints.length; i++) {
@@ -186,14 +234,14 @@ public class Tag {
      */
     public int[][] getEntityPairings() {
         int[] keys = new int[pairings.size()];
-        int[] vals = new int[pairings.size()];
+        int[] values = new int[pairings.size()];
         List<Map.Entry<Entity, Entity>> entries = new ArrayList<>();
         entries.addAll(pairings.entrySet());
         for (int i = 0; i < keys.length; i++) {
             keys[i] = entries.get(i).getKey().getEntityId();
-            vals[i] = entries.get(i).getValue().getEntityId();
+            values[i] = entries.get(i).getValue().getEntityId();
         }
-        return new int[][]{keys, vals};
+        return new int[][]{keys, values};
     }
 
     //Generate the base of the tag. Currently is just a silverfish for spacing.
@@ -212,7 +260,13 @@ public class Tag {
         //Add all of the baseEntities to the stack, after the Player.
         stack.addAll(baseEntities);
         //Reverse the order of the lines, so they are added in the correct order.
-        List<TagLine> lines = Lists.newArrayList(this.lines);
+        List<Map.Entry<TagController, List<TagLine>>> sortedGroups = Lists.newArrayList(this.lines.entrySet());
+        sortedGroups.sort((o1, o2) -> Integer.compare(o2.getKey().getPriority(), o1.getKey().getPriority()));
+
+        List<TagLine> lines = Lists.newArrayList();
+        for (Map.Entry<TagController, List<TagLine>> entry : sortedGroups) {
+            lines.addAll(entry.getValue());
+        }
         Collections.reverse(lines);
         //For each line the tag contains,
         for (TagLine line : lines) {
@@ -236,7 +290,7 @@ public class Tag {
     }
 
     //Method to create a generic LivingEntity with the given entity type.
-    LivingEntity createGenericEntity(EntityType type) {
+    private LivingEntity createGenericEntity(EntityType type) {
         //Create the new entity by spawning it at the entity location.
         LivingEntity e = (LivingEntity) entityLoc.getWorld().spawnEntity(entityLoc, type);
         //Add an invisibility potion effect
@@ -260,7 +314,7 @@ public class Tag {
     }
 
     //Create a slime to go down in the entity stack. Used for generating spaces.
-    LivingEntity createSlime() {
+    private LivingEntity createSlime() {
         //Create a new slime through createGenericEntity and cast it to slime
         Slime s = (Slime) createGenericEntity(EntityType.SLIME);
         //Set slime size to -1
@@ -308,8 +362,10 @@ public class Tag {
             e.teleport(entityLoc);
         }
         //For each tag line, teleport it's entities to the new location.
-        for (TagLine t : lines) {
-            t.teleport(entityLoc);
+        for (List<TagLine> t : lines.values()) {
+            for (TagLine t2 : t) {
+                t2.teleport(entityLoc);
+            }
         }
     }
 
@@ -328,7 +384,9 @@ public class Tag {
      */
     public void remove() {
         name.remove();
-        lines.forEach(TagLine::remove);
+        for (List<TagLine> t : lines.values()) {
+            t.forEach(TagLine::remove);
+        }
         baseEntities.forEach(Entity::remove);
     }
 
@@ -337,7 +395,9 @@ public class Tag {
      */
     public void refresh() {
         name.tempDisable();
-        lines.forEach(TagLine::tempDisable);
+        for (List<TagLine> t : lines.values()) {
+            t.forEach(TagLine::tempDisable);
+        }
         baseEntities.forEach(Entity::remove);
 
         baseEntities.clear();
@@ -348,7 +408,9 @@ public class Tag {
         updateEntityLoc();
 
         name.reEnable();
-        lines.forEach(TagLine::reEnable);
+        for (List<TagLine> t : lines.values()) {
+            t.forEach(TagLine::reEnable);
+        }
         genBase();
 
         refreshPairings();
