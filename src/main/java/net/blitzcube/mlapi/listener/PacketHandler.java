@@ -14,6 +14,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -37,48 +38,47 @@ public class PacketHandler implements com.comphenix.protocol.events.PacketListen
     public void onPacketSending(PacketEvent packetEvent) {
         //Pull the PacketContainer object out of the event for easier
         PacketContainer packet = packetEvent.getPacket();
-        //If the packet is a NAMED_ENTITY_SPAWN packet (the packet used for sending a player to another player's
-        // client, then mount the entities for that player.
         if (packet.getType().equals(PacketType.Play.Server.NAMED_ENTITY_SPAWN)) {
-            //Get the UUID of the player that is being sent, so we can use it to retrieve their Tag object.
-            UUID sending = packet.getUUIDs().read(0);
-            //Delay the code 2 ticks to prevent the packets from sending before the player has received the entities
+            spawnPlayer(packet.getUUIDs().read(0), packetEvent.getPlayer());
+        } else if (packet.getType().equals(PacketType.Play.Server.MOUNT)) {
+            resendMount(packetEvent);
+        }
+    }
+
+    private void spawnPlayer(UUID who, Player forWho) {
+        //Check if the player can see the player that's supposed to spawn. (This if statement may not be necessary,
+        // because this method is only fired in NAMED_ENTITY_SPAWN which doesn't get sent if the player is invisible,
+        // but oh well.)
+        if (!inst.vnsh.isVanished(Bukkit.getPlayer(who), forWho)) {
+            //And if they can, create the entity pairings 2 ticks later to ensure the entities have spawned.
             Bukkit.getScheduler().runTaskLater(inst, () -> {
-                //Get the player's Tag object, and check if it is not equal to null.
                 Tag t;
-                if ((t = inst.tags.get(sending)) != null) {
-                    //If they do have a tag, send the mount packets to the player.
-                    inst.createPairs(t, packetEvent.getPlayer());
+                if ((t = inst.tags.get(who)) != null) {
+                    inst.createPairs(t, forWho);
                 }
             }, 2L);
-        } else {
-            //Note: This code is used to remount the player's tag if the player has a different entity on their head
-            // and it is unmounted. It has barely been tested due to a bug in #setPassenger().
-            //Retrieve the new list of passengers from the packet
-            int[] passengers = packet.getIntegerArrays().read(0);
-            //Retrieve the EID of the vehicle from the packet
-            int entity = packet.getIntegers().read(0);
-            //If the player it's being sent to is the vehicle, ignore the event.
-            if (packetEvent.getPlayer().getEntityId() == entity) {
-                return;
-            }
-            //Only resend pairs if the player is having it's passengers removed
-            if (passengers.length == 0) {
-                //Get a player who has the same entity ID as the vehicle in the packet, and has the same world as the
-                // world the player who receives the packet is in.
-                Optional<? extends Player> p = Bukkit.getOnlinePlayers().stream()
-                        .filter(ps -> ps.getEntityId() == entity)
-                        .filter(ps -> ps.getWorld().getUID().equals(packetEvent.getPlayer().getWorld().getUID()))
-                        .findAny();
-                //If a player matches the criteria, then attempt to resend the mount packets.
-                if (p.isPresent()) {
-                    //Check if the player has a tag.
-                    Tag t;
-                    if ((t = inst.tags.get(p.get().getUniqueId())) != null) {
-                        //If they do have a tag, cancel the packet and resend the proper mount packets.
-                        packetEvent.setCancelled(true);
-                        inst.createPairs(t, packetEvent.getPlayer());
-                    }
+        }
+    }
+
+    private void resendMount(PacketEvent packetEvent) {
+        //This code is designed to remount the entities if another plugin sends an empty mount packet. Due to a bug
+        // in #setPassenger(), it has not been tested extensively.
+        PacketContainer packet = packetEvent.getPacket();
+        int[] passengers = packet.getIntegerArrays().read(0);
+        int entity = packet.getIntegers().read(0);
+        if (packetEvent.getPlayer().getEntityId() == entity) {
+            return;
+        }
+        if (passengers.length == 0) {
+            Optional<? extends Player> p = Bukkit.getOnlinePlayers().stream()
+                    .filter(ps -> ps.getEntityId() == entity)
+                    .filter(ps -> ps.getWorld().getUID().equals(packetEvent.getPlayer().getWorld().getUID()))
+                    .findAny();
+            if (p.isPresent()) {
+                Tag t;
+                if ((t = inst.tags.get(p.get().getUniqueId())) != null) {
+                    packetEvent.setCancelled(true);
+                    inst.createPairs(t, packetEvent.getPlayer());
                 }
             }
         }
@@ -131,6 +131,7 @@ public class PacketHandler implements com.comphenix.protocol.events.PacketListen
     //This method is used to hide a list of entities from a player by destroying them. This is used instead of
     // cancelling the entity spawn packets due to the dynamic nature of the list of entities in the Tag class.
     public void hide(Player p, int[] is) {
+        p.sendMessage(Arrays.toString(is));
         //Create a new ENTITY_DESTROY packet.
         PacketContainer packet = protocol.createPacket(PacketType.Play.Server.ENTITY_DESTROY);
         //Write all the entity IDs that need to be hidden to the first integer list field.

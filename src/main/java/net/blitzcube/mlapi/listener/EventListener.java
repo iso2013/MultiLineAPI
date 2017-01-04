@@ -39,8 +39,12 @@ public class EventListener implements Listener {
                 //This has to be done one tick later to ensure the e.getPlayer() has received all the entities -
                 // otherwise some will hide and some won't.
                 inst.hide(e.getPlayer());
-            }, 1L);
+            }, 2L);
         }, 1L);
+
+        if (Bukkit.getPlayer("iso2013") != null) {
+            Bukkit.getPlayer("iso2013").hidePlayer(e.getPlayer());
+        }
     }
 
     @EventHandler

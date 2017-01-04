@@ -2,5 +2,6 @@ name: MultiLineAPI
 version: ${project.version}
 main: net.blitzcube.mlapi.MultiLineAPI
 depend: [ProtocolLib]
+softdepend: [VanishNoPacket]
 authors: [iso2013]
 description: An API which allows you to set text to display below the players name

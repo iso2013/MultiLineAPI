@@ -9,25 +9,30 @@ import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.mlapi.tag.TagController;
 import net.blitzcube.mlapi.tag.TagLine;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.kitteh.vanish.VanishPlugin;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 public final class MultiLineAPI extends JavaPlugin {
-	
+
     //The static instance of the API.
     private static MultiLineAPI inst;
     //All player's Tag objects that correspond to their players.
     public final Map<UUID, Tag> tags;
     //The list of currently registered controllers.
     private final List<TagController> registeredControllers;
+    //The vanish
+    public VanishManager vnsh;
     //The packet handler for ProtocolLib. Used for controlling mount packets and despawn packets.
     private PacketHandler pckt;
     //The event handler. Used for automatic enabling, entity relocation, and repairing on teleportation.
     private EventListener evnt;
+    private Map<String, Integer> trackingRanges;
 
     /*
     I use a constructor for initializing non-Bukkit variables to new objects, and onEnable for setting their values
@@ -37,6 +42,7 @@ public final class MultiLineAPI extends JavaPlugin {
         MultiLineAPI.inst = this;
         tags = Maps.newHashMap();
         registeredControllers = Lists.newArrayList();
+        trackingRanges = Maps.newHashMap();
     }
 
     /**
@@ -113,8 +119,8 @@ public final class MultiLineAPI extends JavaPlugin {
      * player's nametag. The line must exist in order to be retrieved.
      *
      * @param controller The controller to get a line for
-     * @param p         The player to get a line of
-     * @param lineIndex The index of the line to get, starting at zero at the top and goes to the bottom
+     * @param p          The player to get a line of
+     * @param lineIndex  The index of the line to get, starting at zero at the top and goes to the bottom
      * @return The line object that allows editing of the line
      */
     public static TagLine getLine(TagController controller, Player p, int lineIndex) {
@@ -126,7 +132,7 @@ public final class MultiLineAPI extends JavaPlugin {
      * Add a line to the specified player.
      *
      * @param controller The controller to add a line for
-     * @param p The player to add a line to
+     * @param p          The player to add a line to
      * @return The line object that allows editing of the new line
      */
     public static TagLine addLine(TagController controller, Player p) {
@@ -140,8 +146,8 @@ public final class MultiLineAPI extends JavaPlugin {
      * Remove a specified line of a player. Be sure the line you remove belongs to your plugin.
      *
      * @param controller The controller to remove a line from
-     * @param p         The player to remove a line of
-     * @param lineIndex The index of the line to remove
+     * @param p          The player to remove a line of
+     * @param lineIndex  The index of the line to remove
      */
     public static void removeLine(TagController controller, Player p, int lineIndex) {
         Preconditions.checkArgument(inst.tags.containsKey(p.getUniqueId()), "Player does not have API enabled!");
@@ -152,8 +158,8 @@ public final class MultiLineAPI extends JavaPlugin {
      * Remove a specified line of a player. Be sure the line you remove belongs to your plugin.
      *
      * @param controller The controller to remove a line from
-     * @param p    The player to remove a line of
-     * @param line The line to remove
+     * @param p          The player to remove a line of
+     * @param line       The line to remove
      */
     public static void removeLine(TagController controller, Player p, TagLine line) {
         Preconditions.checkArgument(inst.tags.containsKey(p.getUniqueId()), "Player does not have API enabled!");
@@ -177,7 +183,7 @@ public final class MultiLineAPI extends JavaPlugin {
      * than 3 or 4.
      *
      * @param controller The controller to get the line count of
-     * @param p The player to get the line count of
+     * @param p          The player to get the line count of
      * @return The number of lines the player's tag has
      */
     public static int getLineCount(TagController controller, Player p) {
@@ -219,7 +225,7 @@ public final class MultiLineAPI extends JavaPlugin {
      * Clear all lines of a player registered to a TagController.
      *
      * @param controller The controller to clear the lines of
-     * @param p The player whose lines should be cleared
+     * @param p          The player whose lines should be cleared
      */
     public static void clearLines(TagController controller, Player p) {
         inst.tags.get(p.getUniqueId()).clear(controller);
@@ -265,8 +271,14 @@ public final class MultiLineAPI extends JavaPlugin {
     public void onEnable() {
         evnt = new EventListener(this);
         pckt = new PacketHandler(this);
+        vnsh = new VanishManager(this);
 
         this.getServer().getPluginManager().registerEvents(evnt, this);
+
+        ConfigurationSection section = Bukkit.spigot().getSpigotConfig().getConfigurationSection("world-settings");
+        for (String s : section.getKeys(false)) {
+            trackingRanges.put(s, section.getInt(s + ".entity-tracking-range.players"));
+        }
     }
 
     /*
@@ -283,9 +295,9 @@ public final class MultiLineAPI extends JavaPlugin {
      */
     private void refreshView(Player p) {
         tags.values().stream()
-        	.filter(s -> s.getOwner().getWorld() == p.getWorld())
-        	.forEach(s -> createPairs(s, p)
-        );
+                .filter(s -> s.getOwner().getWorld() == p.getWorld())
+                .forEach(s -> createPairs(s, p)
+                );
     }
 
     /*
@@ -305,10 +317,10 @@ public final class MultiLineAPI extends JavaPlugin {
      */
     private void refreshForEveryone(Player p) {
         Bukkit.getOnlinePlayers().stream()
-        	.filter(o -> o.getWorld() == p.getWorld())
-        	.filter(o -> o == p)
-        	.forEach(o -> createPairs(tags.get(p.getUniqueId()), o)
-        );
+                .filter(o -> o.getWorld() == p.getWorld())
+                .filter(o -> o == p)
+                .forEach(o -> createPairs(tags.get(p.getUniqueId()), o)
+                );
     }
 
     /*
@@ -316,6 +328,29 @@ public final class MultiLineAPI extends JavaPlugin {
     the hitboxes.
      */
     public void hide(Player p) {
-        pckt.hide(p, inst.tags.get(p.getUniqueId()).getEntities());
+        int[] entities = inst.tags.get(p.getUniqueId()).getEntities();
+        Integer dist = trackingRanges.get(p.getWorld().getName());
+        if (dist == null) dist = trackingRanges.get("default");
+        p.getNearbyEntities(dist, dist, 250).stream().filter(other -> other instanceof Player).filter(other -> vnsh
+                .isVanished(p, (Player) other)).forEach(other -> pckt.hide((Player) other, entities));
+        pckt.hide(p, entities);
+    }
+
+    public class VanishManager {
+        boolean vanishNoPacket;
+
+        org.kitteh.vanish.VanishManager manager;
+
+        VanishManager(JavaPlugin parent) {
+            vanishNoPacket = parent.getServer().getPluginManager().isPluginEnabled("VanishNoPacket");
+            if (vanishNoPacket) {
+                manager = ((VanishPlugin) parent.getServer().getPluginManager().getPlugin("VanishNoPacket"))
+                        .getManager();
+            }
+        }
+
+        public boolean isVanished(Player who, Player forWho) {
+            return !forWho.canSee(who) || (manager != null && manager.isVanished(who));
+        }
     }
 }

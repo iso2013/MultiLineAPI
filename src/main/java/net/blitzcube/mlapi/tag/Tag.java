@@ -211,7 +211,8 @@ public class Tag {
      */
     public int[] getEntities() {
         List<Entity> stack = new ArrayList<>();
-        stack.add(whoOwns);
+        stack.add(name.getLineEntity());
+        stack.addAll(name.getSpaceEntities());
         stack.addAll(baseEntities);
         for (List<TagLine> entries : lines.values()) {
             for (TagLine line : entries) {
