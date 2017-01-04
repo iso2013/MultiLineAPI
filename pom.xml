@@ -6,7 +6,7 @@
 
     <groupId>net.blitzcube.mlapi</groupId>
     <artifactId>MultiLineAPI</artifactId>
-    <version>1.0</version>
+    <version>1.1</version>
     <packaging>jar</packaging>
 
     <name>MultiLineAPI</name>
@@ -39,8 +39,8 @@
 
     <repositories>
         <repository>
-            <id>spigotmc-repo</id>
-            <url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
+            <id>destroystokyo-repo</id>
+            <url>https://repo.destroystokyo.com/repository/maven-public/</url>
         </repository>
         <repository>
             <id>sonatype</id>
@@ -54,9 +54,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
-            <version>1.11-R0.1-SNAPSHOT</version>
+            <groupId>com.destroystokyo.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>1.11.2-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

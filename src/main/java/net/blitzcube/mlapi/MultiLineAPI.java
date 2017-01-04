@@ -1,25 +1,29 @@
 package net.blitzcube.mlapi;
 
-import java.util.Map;
-import java.util.UUID;
-
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import net.blitzcube.mlapi.listener.EventListener;
+import net.blitzcube.mlapi.listener.PacketHandler;
+import net.blitzcube.mlapi.tag.Tag;
+import net.blitzcube.mlapi.tag.TagController;
+import net.blitzcube.mlapi.tag.TagLine;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.google.common.collect.Maps;
-
-import net.blitzcube.mlapi.listener.EventListener;
-import net.blitzcube.mlapi.listener.PacketHandler;
-import net.blitzcube.mlapi.tag.Tag;
-import net.blitzcube.mlapi.tag.TagLine;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public final class MultiLineAPI extends JavaPlugin {
 	
     //The static instance of the API.
     private static MultiLineAPI inst;
     //All player's Tag objects that correspond to their players.
-    public Map<UUID, Tag> tags;
+    public final Map<UUID, Tag> tags;
+    //The list of currently registered controllers.
+    private final List<TagController> registeredControllers;
     //The packet handler for ProtocolLib. Used for controlling mount packets and despawn packets.
     private PacketHandler pckt;
     //The event handler. Used for automatic enabling, entity relocation, and repairing on teleportation.
@@ -32,6 +36,7 @@ public final class MultiLineAPI extends JavaPlugin {
     public MultiLineAPI() {
         MultiLineAPI.inst = this;
         tags = Maps.newHashMap();
+        registeredControllers = Lists.newArrayList();
     }
 
     /**
@@ -59,7 +64,7 @@ public final class MultiLineAPI extends JavaPlugin {
      */
     public static void enable(Player p) {
         if (!inst.tags.containsKey(p.getUniqueId())) {
-            inst.tags.put(p.getUniqueId(), new Tag(p));
+            inst.tags.put(p.getUniqueId(), new Tag(p, inst.registeredControllers));
         }
     }
 
@@ -99,8 +104,7 @@ public final class MultiLineAPI extends JavaPlugin {
      * @return the player's name
      */
     public static TagLine getName(Player p) {
-        if (!inst.tags.containsKey(p.getUniqueId()))
-            throw new IllegalArgumentException("Player does not have API enabled!");
+        Preconditions.checkArgument(inst.tags.containsKey(p.getUniqueId()), "Player does not have API enabled!");
         return inst.tags.get(p.getUniqueId()).getName();
     }
 
@@ -108,26 +112,26 @@ public final class MultiLineAPI extends JavaPlugin {
      * Gets a line by the specified index. Line numbers go from top to bottom, starting at zero and not including the
      * player's nametag. The line must exist in order to be retrieved.
      *
+     * @param controller The controller to get a line for
      * @param p         The player to get a line of
      * @param lineIndex The index of the line to get, starting at zero at the top and goes to the bottom
      * @return The line object that allows editing of the line
      */
-    public static TagLine getLine(Player p, int lineIndex) {
-        if (!inst.tags.containsKey(p.getUniqueId()))
-            throw new IllegalArgumentException("Player does not have API enabled!");
-        return inst.tags.get(p.getUniqueId()).getLine(lineIndex);
+    public static TagLine getLine(TagController controller, Player p, int lineIndex) {
+        Preconditions.checkArgument(inst.tags.containsKey(p.getUniqueId()), "Player does not have API enabled!");
+        return inst.tags.get(p.getUniqueId()).getLine(controller, lineIndex);
     }
 
     /**
      * Add a line to the specified player.
      *
+     * @param controller The controller to add a line for
      * @param p The player to add a line to
      * @return The line object that allows editing of the new line
      */
-    public static TagLine addLine(Player p) {
-        if (!inst.tags.containsKey(p.getUniqueId()))
-            throw new IllegalArgumentException("Player does not have API enabled!");
-        TagLine t = inst.tags.get(p.getUniqueId()).addLine();
+    public static TagLine addLine(TagController controller, Player p) {
+        Preconditions.checkArgument(inst.tags.containsKey(p.getUniqueId()), "Player does not have API enabled!");
+        TagLine t = inst.tags.get(p.getUniqueId()).addLine(controller);
         inst.hide(p);
         return t;
     }
@@ -135,25 +139,25 @@ public final class MultiLineAPI extends JavaPlugin {
     /**
      * Remove a specified line of a player. Be sure the line you remove belongs to your plugin.
      *
+     * @param controller The controller to remove a line from
      * @param p         The player to remove a line of
      * @param lineIndex The index of the line to remove
      */
-    public static void removeLine(Player p, int lineIndex) {
-        if (!inst.tags.containsKey(p.getUniqueId()))
-            throw new IllegalArgumentException("Player does not have API enabled!");
-        inst.tags.get(p.getUniqueId()).removeLine(lineIndex);
+    public static void removeLine(TagController controller, Player p, int lineIndex) {
+        Preconditions.checkArgument(inst.tags.containsKey(p.getUniqueId()), "Player does not have API enabled!");
+        inst.tags.get(p.getUniqueId()).removeLine(controller, lineIndex);
     }
 
     /**
      * Remove a specified line of a player. Be sure the line you remove belongs to your plugin.
      *
+     * @param controller The controller to remove a line from
      * @param p    The player to remove a line of
      * @param line The line to remove
      */
-    public static void removeLine(Player p, TagLine line) {
-        if (!inst.tags.containsKey(p.getUniqueId()))
-            throw new IllegalArgumentException("Player does not have API enabled!");
-        inst.tags.get(p.getUniqueId()).removeLine(line);
+    public static void removeLine(TagController controller, Player p, TagLine line) {
+        Preconditions.checkArgument(inst.tags.containsKey(p.getUniqueId()), "Player does not have API enabled!");
+        inst.tags.get(p.getUniqueId()).removeLine(controller, line);
     }
 
     /**
@@ -164,9 +168,21 @@ public final class MultiLineAPI extends JavaPlugin {
      * @return The number of lines the player's tag has
      */
     public static int getLineCount(Player p) {
-        if (!inst.tags.containsKey(p.getUniqueId()))
-            throw new IllegalArgumentException("Player does not have API enabled!");
+        Preconditions.checkArgument(inst.tags.containsKey(p.getUniqueId()), "Player does not have API enabled!");
         return inst.tags.get(p.getUniqueId()).getNumLines();
+    }
+
+    /**
+     * Get the number of lines a player's tag has. For appearance purposes, this is recommended to never be higher
+     * than 3 or 4.
+     *
+     * @param controller The controller to get the line count of
+     * @param p The player to get the line count of
+     * @return The number of lines the player's tag has
+     */
+    public static int getLineCount(TagController controller, Player p) {
+        Preconditions.checkArgument(inst.tags.containsKey(p.getUniqueId()), "Player does not have API enabled!");
+        return inst.tags.get(p.getUniqueId()).getNumLines(controller);
     }
 
     /**
@@ -175,8 +191,7 @@ public final class MultiLineAPI extends JavaPlugin {
      * @param p The player to refresh
      */
     public static void refresh(Player p) {
-        if (!inst.tags.containsKey(p.getUniqueId()))
-            throw new IllegalArgumentException("Player does not have API enabled!");
+        Preconditions.checkArgument(inst.tags.containsKey(p.getUniqueId()), "Player does not have API enabled!");
         inst.refreshForEveryone(p);
     }
 
@@ -197,7 +212,17 @@ public final class MultiLineAPI extends JavaPlugin {
      * @param p The player whose lines should be cleared
      */
     public static void clearLines(Player p) {
-        inst.tags.clear();
+        inst.tags.get(p.getUniqueId()).clear();
+    }
+
+    /**
+     * Clear all lines of a player registered to a TagController.
+     *
+     * @param controller The controller to clear the lines of
+     * @param p The player whose lines should be cleared
+     */
+    public static void clearLines(TagController controller, Player p) {
+        inst.tags.get(p.getUniqueId()).clear(controller);
     }
 
     /**
@@ -209,6 +234,28 @@ public final class MultiLineAPI extends JavaPlugin {
      */
     public static void updateLocs(Player p) {
         inst.tags.get(p.getUniqueId()).updateEntityLoc();
+    }
+
+
+    /**
+     * Register a TagController class for use with MultiLineAPI.
+     *
+     * @param t The TagController to register
+     */
+    public static void register(TagController t) {
+        if (!inst.registeredControllers.contains(t)) {
+            inst.registeredControllers.add(t);
+        }
+    }
+
+    /**
+     * Check if a TagController is currently registered.
+     *
+     * @param t The TagController to check
+     * @return Whether or not the TagController is registered.
+     */
+    public static boolean isRegistered(TagController t) {
+        return inst.registeredControllers.contains(t);
     }
 
     /*
@@ -269,6 +316,6 @@ public final class MultiLineAPI extends JavaPlugin {
     the hitboxes.
      */
     public void hide(Player p) {
-        pckt.hide(p, inst.tags.get(p.getUniqueId()).getEntityIds());
+        pckt.hide(p, inst.tags.get(p.getUniqueId()).getEntities());
     }
 }
