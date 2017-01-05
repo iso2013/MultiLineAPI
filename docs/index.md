@@ -47,7 +47,7 @@ Source code is available [here](https://github.com/iso2013/MultiLineAPI)!
 Want to donate to continue MultiLineAPI's development? I accept donations here:
 
 <center>
-    <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=B8MZLKPT36FA8&lc=US&item_name=iso2013&item_number=MultiLineAPI&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted">
+    <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=blitzcubeowner%40gmail%2ecom&lc=US&item_name=iso2013&item_number=MultiLineAPI&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted">
         <img src="paypal.png"/>
     </a>
 </center>
