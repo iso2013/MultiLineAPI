@@ -2,8 +2,9 @@
 MultiLineAPI is an easy to use API that allows the server to display a unique second line of text for each player, and allows the player's nametag to be changed (without the limitations of other methods - see below for more information).
 
 #### MultiLineAPI vs Scoreboards and other alternatives
+
 |                               | MultiLineAPI        | Vanilla Scoreboard | TagAPI             | NickNamer          |
-|:-:|:-:|:-:|:-:|:-:|
+|-------------------------------|---------------------|--------------------|--------------------|--------------------|
 | Nametag support               | ✔                    | ✘                  | ✔        | ✔                 |
 | Infinite Line support           | ✔                    | ✔                  | ✘        | ✘                 |
 | Character limit (name / line) | (∞ / ∞)              | (✘ / ∞)            | (16 / ✘) | (16 / ✘)          |
