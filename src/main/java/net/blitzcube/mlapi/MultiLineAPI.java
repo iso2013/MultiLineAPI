@@ -319,7 +319,6 @@ public final class MultiLineAPI extends JavaPlugin {
     private void refreshForEveryone(Player p) {
         Bukkit.getOnlinePlayers().stream()
                 .filter(o -> o.getWorld() == p.getWorld())
-                .filter(o -> o != p)
                 .forEach(o -> createPairs(tags.get(p.getUniqueId()), o)
                 );
     }

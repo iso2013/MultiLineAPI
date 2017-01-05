@@ -76,14 +76,14 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void worldChange(PlayerChangedWorldEvent e) {
-        //handle(e);
+        handle(e);
     }
 
     public void handle(PlayerEvent e) {
         if (MultiLineAPI.isEnabled(e.getPlayer())) {
             MultiLineAPI.updateLocs(e.getPlayer());
 
-            //inst.tags.get(e.getPlayer().getUniqueId()).refresh();
+            inst.tags.get(e.getPlayer().getUniqueId()).refresh();
 
             inst.hide(e.getPlayer());
 
