@@ -10,6 +10,7 @@ import net.blitzcube.mlapi.tag.TagController;
 import net.blitzcube.mlapi.tag.TagLine;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.kitteh.vanish.VanishPlugin;
@@ -318,7 +319,7 @@ public final class MultiLineAPI extends JavaPlugin {
     private void refreshForEveryone(Player p) {
         Bukkit.getOnlinePlayers().stream()
                 .filter(o -> o.getWorld() == p.getWorld())
-                .filter(o -> o == p)
+                .filter(o -> o != p)
                 .forEach(o -> createPairs(tags.get(p.getUniqueId()), o)
                 );
     }
@@ -331,8 +332,13 @@ public final class MultiLineAPI extends JavaPlugin {
         int[] entities = inst.tags.get(p.getUniqueId()).getEntities();
         Integer dist = trackingRanges.get(p.getWorld().getName());
         if (dist == null) dist = trackingRanges.get("default");
-        p.getNearbyEntities(dist, dist, 250).stream().filter(other -> other instanceof Player).filter(other -> vnsh
-                .isVanished(p, (Player) other)).forEach(other -> pckt.hide((Player) other, entities));
+        for (Entity e : p.getNearbyEntities(dist, dist, 250)) {
+            if (e instanceof Player) {
+                if (!vnsh.canSee(p, (Player) e)) {
+                    pckt.hide((Player) e, entities);
+                }
+            }
+        }
         pckt.hide(p, entities);
     }
 
@@ -349,8 +355,12 @@ public final class MultiLineAPI extends JavaPlugin {
             }
         }
 
-        public boolean isVanished(Player who, Player forWho) {
-            return !forWho.canSee(who) || (manager != null && manager.isVanished(who));
+        public boolean canSee(Player who, Player forWho) {
+            if (manager != null) {
+                return forWho.canSee(who) && !manager.isVanished(who);
+            } else {
+                return forWho.canSee(who);
+            }
         }
     }
 }

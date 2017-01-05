@@ -71,28 +71,19 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void teleport(PlayerTeleportEvent e) {
-        if (e.getFrom().getWorld().getUID().equals(e.getTo().getWorld().getUID())) {
-            if (MultiLineAPI.isEnabled(e.getPlayer())) {
-                //Update the player's entities locations so they follow the player around
-                MultiLineAPI.updateLocs(e.getPlayer());
-                //Hide all the entities from the player who owns them. This needs to be done on teleport or world
-                // change,
-
-                // in my testing. Teleporting the entities across worlds causes Spigot to resend them to the client,
-                // so they need to be removed again.
-                inst.hide(e.getPlayer());
-
-                MultiLineAPI.refresh(e.getPlayer());
-            }
-            //Refresh other players for that player. This re-sends the mount packets, which break when they teleport.
-            MultiLineAPI.refreshOthers(e.getPlayer());
-        }
+        Bukkit.getScheduler().runTaskLater(inst, () -> handle(e), 2L);
     }
 
     @EventHandler
     public void worldChange(PlayerChangedWorldEvent e) {
+        //handle(e);
+    }
+
+    public void handle(PlayerEvent e) {
         if (MultiLineAPI.isEnabled(e.getPlayer())) {
-            inst.tags.get(e.getPlayer().getUniqueId()).refresh();
+            MultiLineAPI.updateLocs(e.getPlayer());
+
+            //inst.tags.get(e.getPlayer().getUniqueId()).refresh();
 
             inst.hide(e.getPlayer());
 

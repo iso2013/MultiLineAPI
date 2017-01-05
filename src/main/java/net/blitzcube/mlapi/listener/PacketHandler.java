@@ -14,7 +14,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -49,7 +48,7 @@ public class PacketHandler implements com.comphenix.protocol.events.PacketListen
         //Check if the player can see the player that's supposed to spawn. (This if statement may not be necessary,
         // because this method is only fired in NAMED_ENTITY_SPAWN which doesn't get sent if the player is invisible,
         // but oh well.)
-        if (!inst.vnsh.isVanished(Bukkit.getPlayer(who), forWho)) {
+        if (forWho.canSee(Bukkit.getPlayer(who))) {
             //And if they can, create the entity pairings 2 ticks later to ensure the entities have spawned.
             Bukkit.getScheduler().runTaskLater(inst, () -> {
                 Tag t;
@@ -131,7 +130,6 @@ public class PacketHandler implements com.comphenix.protocol.events.PacketListen
     //This method is used to hide a list of entities from a player by destroying them. This is used instead of
     // cancelling the entity spawn packets due to the dynamic nature of the list of entities in the Tag class.
     public void hide(Player p, int[] is) {
-        p.sendMessage(Arrays.toString(is));
         //Create a new ENTITY_DESTROY packet.
         PacketContainer packet = protocol.createPacket(PacketType.Play.Server.ENTITY_DESTROY);
         //Write all the entity IDs that need to be hidden to the first integer list field.
