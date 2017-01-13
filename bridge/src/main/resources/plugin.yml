@@ -1,0 +1,5 @@
+name: NametagEdit
+version: ${project.version}
+main: net.blitzcube.bridge.nametageditbridge.NametagEditBridge
+depend: [MultiLineAPI]
+authors: [iso2013]
