@@ -392,10 +392,7 @@ public class Tag {
         baseEntities.forEach(Entity::remove);
     }
 
-    /**
-     * Refresh all entity data and entity pairings on this tag
-     */
-    public void refresh() {
+    public void tempDisable() {
         name.tempDisable();
         for (List<TagLine> t : lines.values()) {
             t.forEach(TagLine::tempDisable);
@@ -406,7 +403,9 @@ public class Tag {
         stack.clear();
         pairings.clear();
         lines.clear();
+    }
 
+    public void reEnable() {
         updateEntityLoc();
 
         name.reEnable();
@@ -416,5 +415,24 @@ public class Tag {
         genBase();
 
         refreshPairings();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Tag tag = (Tag) o;
+
+        if (name != null ? !name.equals(tag.name) : tag.name != null) return false;
+        return whoOwns.equals(tag.whoOwns);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + whoOwns.hashCode();
+        return result;
     }
 }

@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
 
 /**
@@ -25,9 +26,9 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void join(PlayerJoinEvent e) {
-    	if (!autoEnable) return;
-        
-    	//If auto joining is enabled, then schedule a task
+        if (!autoEnable) return;
+
+        //If auto joining is enabled, then schedule a task
         Bukkit.getScheduler().runTaskLater(inst, () -> {
             //Enable the player with MultiLineAPI. This has to be done one tick later so all players receive the
             // entities.
@@ -41,9 +42,27 @@ public class EventListener implements Listener {
                 inst.hide(e.getPlayer());
             }, 2L);
         }, 1L);
+    }
 
-        if (Bukkit.getPlayer("iso2013") != null) {
-            Bukkit.getPlayer("iso2013").hidePlayer(e.getPlayer());
+    @EventHandler
+    public void onDeath(PlayerDeathEvent e) {
+        if (MultiLineAPI.isEnabled(e.getEntity())) {
+            Bukkit.getScheduler().runTaskLater(inst, () -> inst.tags.get(e.getEntity().getUniqueId()).tempDisable(),
+                    20L);
+        }
+    }
+
+    @EventHandler
+    public void onRespawn(PlayerRespawnEvent e) {
+        e.getPlayer().sendMessage("respawned noob");
+        if (MultiLineAPI.isEnabled(e.getPlayer())) {
+            Bukkit.getScheduler().runTaskLater(inst, () -> {
+                //For some reason this must be done twice... Maybe it has to do with the entity spawning times?
+                inst.tags.get(e.getPlayer().getUniqueId()).reEnable();
+                inst.tags.get(e.getPlayer().getUniqueId()).tempDisable();
+                inst.tags.get(e.getPlayer().getUniqueId()).reEnable();
+                //This number (2L) CANNOT be higher in my testing. Setting it to 10L resulted in no reset of the API.
+            }, 2L);
         }
     }
 
@@ -83,7 +102,8 @@ public class EventListener implements Listener {
         if (MultiLineAPI.isEnabled(e.getPlayer())) {
             MultiLineAPI.updateLocs(e.getPlayer());
 
-            inst.tags.get(e.getPlayer().getUniqueId()).refresh();
+            inst.tags.get(e.getPlayer().getUniqueId()).tempDisable();
+            inst.tags.get(e.getPlayer().getUniqueId()).reEnable();
 
             inst.hide(e.getPlayer());
 
@@ -100,6 +120,6 @@ public class EventListener implements Listener {
 
     //Set whether or not players should automatically be enabled.
     public void setAutoEnable(boolean autoEnable) {
-		this.autoEnable = autoEnable;
-	}
+        this.autoEnable = autoEnable;
+    }
 }

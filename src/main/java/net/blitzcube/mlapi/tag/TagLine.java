@@ -141,4 +141,27 @@ public class TagLine {
         lineEntity.setCustomNameVisible(text != null);
         spaceEntities.addAll(parent.createSpace());
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TagLine tagLine = (TagLine) o;
+
+        if (keepSpaceWhenNull != tagLine.keepSpaceWhenNull) return false;
+        if (!parent.equals(tagLine.parent)) return false;
+        if (!controller.equals(tagLine.controller)) return false;
+        return text != null ? text.equals(tagLine.text) : tagLine.text == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = parent.hashCode();
+        result = 31 * result + controller.hashCode();
+        result = 31 * result + (keepSpaceWhenNull ? 1 : 0);
+        result = 31 * result + (text != null ? text.hashCode() : 0);
+        return result;
+    }
 }

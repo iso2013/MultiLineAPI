@@ -1,0 +1,13 @@
+name: MLAPIExample
+version: ${project.version}
+main: net.blitzcube.test.mlapitest.MLAPIExample
+depend: [MultiLineAPI]
+authors: [iso2013]
+commands:
+    mlapi:
+        description: A MultiLineAPI example command.
+        permission: mlapi.example
+permissions:
+    mlapi.test:
+        description: Allows use of the MLAPI Example command.
+        default: op
