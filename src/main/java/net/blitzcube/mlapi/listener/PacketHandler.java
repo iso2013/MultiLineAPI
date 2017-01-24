@@ -7,13 +7,16 @@ import com.comphenix.protocol.events.ListeningWhitelist;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.injector.GamePhase;
+import com.google.common.collect.Lists;
 import net.blitzcube.mlapi.MultiLineAPI;
 import net.blitzcube.mlapi.tag.Tag;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.potion.PotionEffectType;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -41,7 +44,31 @@ public class PacketHandler implements com.comphenix.protocol.events.PacketListen
             spawnPlayer(packet.getUUIDs().read(0), packetEvent.getPlayer());
         } else if (packet.getType().equals(PacketType.Play.Server.MOUNT)) {
             resendMount(packetEvent);
+        } else if (packet.getType().equals(PacketType.Play.Server.ENTITY_EFFECT)) {
+            handleAddEffect(packetEvent);
+        } else if (packet.getType().equals(PacketType.Play.Server.REMOVE_ENTITY_EFFECT)) {
+            handleEffect(packetEvent);
         }
+    }
+
+    private void handleAddEffect(PacketEvent event) {
+        PacketContainer p = event.getPacket();
+        int entityId = p.getIntegers().read(0);
+        int effectId = p.getBytes().read(0);
+        if (effectId != PotionEffectType.INVISIBILITY.getId()) return;
+        Optional<? extends Player> oP = Bukkit.getOnlinePlayers().stream()
+                .filter(ps -> ps.getEntityId() == entityId)
+                .filter(ps -> ps.getWorld().getUID().equals(event.getPlayer().getWorld().getUID())).findAny();
+        if (!oP.isPresent()) return;
+        Bukkit.getScheduler().runTask(inst, () -> inst.tags.get(oP.get().getUniqueId()).tempDisable());
+    }
+
+    private void handleEffect(PacketEvent event) {
+        PacketContainer p = event.getPacket();
+        PotionEffectType effectId = p.getEffectTypes().read(0);
+        if (!effectId.equals(PotionEffectType.INVISIBILITY)) return;
+        inst.tags.get(event.getPlayer().getUniqueId()).reEnable();
+        MultiLineAPI.refresh(event.getPlayer());
     }
 
     private void spawnPlayer(UUID who, Player forWho) {
@@ -59,16 +86,20 @@ public class PacketHandler implements com.comphenix.protocol.events.PacketListen
         }
     }
 
+    private void despawnPlayer(UUID who, Player forWho) {
+        //TODO: Implement player de-spawning
+    }
+
     private void resendMount(PacketEvent packetEvent) {
         //This code is designed to remount the entities if another plugin sends an empty mount packet. Due to a bug
         // in #setPassenger(), it has not been tested extensively.
         PacketContainer packet = packetEvent.getPacket();
         int[] passengers = packet.getIntegerArrays().read(0);
         int entity = packet.getIntegers().read(0);
-        if (packetEvent.getPlayer().getEntityId() == entity) {
-            return;
-        }
         if (passengers.length == 0) {
+            if (packetEvent.getPlayer().getEntityId() == entity) {
+                return;
+            }
             Optional<? extends Player> p = Bukkit.getOnlinePlayers().stream()
                     .filter(ps -> ps.getEntityId() == entity)
                     .filter(ps -> ps.getWorld().getUID().equals(packetEvent.getPlayer().getWorld().getUID()))
@@ -77,7 +108,32 @@ public class PacketHandler implements com.comphenix.protocol.events.PacketListen
                 Tag t;
                 if ((t = inst.tags.get(p.get().getUniqueId())) != null) {
                     packetEvent.setCancelled(true);
-                    inst.createPairs(t, packetEvent.getPlayer());
+                    Bukkit.getScheduler().runTask(inst, () -> {
+                        t.reEnable();
+                        inst.createPairs(t, packetEvent.getPlayer());
+                    });
+                }
+            }
+        } else {
+            Optional<? extends Player> p = Bukkit.getOnlinePlayers().stream()
+                    .filter(ps -> ps.getEntityId() == entity)
+                    .filter(ps -> ps.getWorld().getUID().equals(packetEvent.getPlayer().getWorld().getUID()))
+                    .findAny();
+            if (p.isPresent()) {
+                Tag t;
+                if ((t = inst.tags.get(p.get().getUniqueId())) != null) {
+                    List<Integer> entityList = Lists.newArrayList();
+                    for (int i : t.getEntities()) entityList.add(i);
+                    boolean containsOther = false;
+                    for (int i : passengers) {
+                        if (!entityList.contains(i)) {
+                            containsOther = true;
+                            break;
+                        }
+                    }
+                    if (containsOther) {
+                        t.tempDisable();
+                    }
                 }
             }
         }
@@ -94,7 +150,9 @@ public class PacketHandler implements com.comphenix.protocol.events.PacketListen
         // ListeningWhitelist.
         return ListeningWhitelist.newBuilder().normal().gamePhase(GamePhase.PLAYING).types(
                 PacketType.Play.Server.NAMED_ENTITY_SPAWN,
-                PacketType.Play.Server.MOUNT
+                PacketType.Play.Server.MOUNT,
+                PacketType.Play.Server.ENTITY_EFFECT,
+                PacketType.Play.Server.REMOVE_ENTITY_EFFECT
         ).build();
     }
 

@@ -133,6 +133,7 @@ public class TagLine {
     public void tempDisable() {
         lineEntity.remove();
         spaceEntities.forEach(Entity::remove);
+        spaceEntities.clear();
     }
 
     public void reEnable() {

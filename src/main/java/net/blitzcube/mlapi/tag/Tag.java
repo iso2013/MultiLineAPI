@@ -311,7 +311,7 @@ public class Tag {
         e.setSilent(true);
         //Add a STACK_ENTITY metadata value so the entity will have damage or death cancelled by the EventListener.
         e.setMetadata("STACK_ENTITY", new FixedMetadataValue(Bukkit.getPluginManager().getPlugin("MultiLineAPI"),
-                null));
+                whoOwns.getUniqueId()));
         return e;
     }
 
@@ -393,6 +393,7 @@ public class Tag {
     }
 
     public void tempDisable() {
+        if (baseEntities.size() <= 0) return;
         name.tempDisable();
         for (List<TagLine> t : lines.values()) {
             t.forEach(TagLine::tempDisable);
@@ -406,6 +407,7 @@ public class Tag {
     }
 
     public void reEnable() {
+        if (baseEntities.size() > 0) return;
         updateEntityLoc();
 
         name.reEnable();
