@@ -6,10 +6,10 @@ Overall document style
 @import url('resources/fonts/dejavu.css');
 
 body {
-    background-color:#ffffff;
-    color:#353833;
-    font-family:'DejaVu Sans', Arial, Helvetica, sans-serif;
-    font-size:14px;
+    background-color:#212121;
+    color:#f2f2f2;
+    font-family:'Calibri', Arial, Helvetica, sans-serif;
+    font-size:16px;
     margin:0;
 }
 a:link, a:visited {
@@ -32,7 +32,7 @@ a[name]:hover {
     color:#353833;
 }
 pre {
-    font-family:'DejaVu Sans Mono', monospace;
+    font-family:'Calibri', monospace;
     font-size:14px;
 }
 h1 {
@@ -58,19 +58,19 @@ ul {
     list-style-type:disc;
 }
 code, tt {
-    font-family:'DejaVu Sans Mono', monospace;
+    font-family:'Calibri', monospace;
     font-size:14px;
     padding-top:4px;
     margin-top:8px;
     line-height:1.4em;
 }
 dt code {
-    font-family:'DejaVu Sans Mono', monospace;
+    font-family:'Calibri', monospace;
     font-size:14px;
     padding-top:4px;
 }
 table tr td dt code {
-    font-family:'DejaVu Sans Mono', monospace;
+    font-family:'Calibri', monospace;
     font-size:14px;
     vertical-align:top;
     padding-top:4px;
@@ -114,7 +114,7 @@ Document title and Copyright styles
 Navigation bar styles
 */
 .bar {
-    background-color:#4D7A97;
+    background-color:#3333aa;
     color:#FFFFFF;
     padding:.8em .5em .4em .8em;
     height:auto;/*height:1.8em;*/
@@ -287,7 +287,7 @@ Page layout container styles
 .contentContainer .description dl dd, .contentContainer .details dl dd, .serializedFormContainer dl dd {
     margin:5px 0 10px 0px;
     font-size:14px;
-    font-family:'DejaVu Sans Mono',monospace;
+    font-family:'Calibri',monospace;
 }
 .serializedFormContainer dl.nameValue dt {
     margin-left:1px;
