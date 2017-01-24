@@ -1,12 +1,17 @@
 package net.blitzcube.mlapi.listener;
 
 import net.blitzcube.mlapi.MultiLineAPI;
+import net.blitzcube.mlapi.tag.Tag;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
+
+import java.util.UUID;
 
 /**
  * Created by iso2013 on 12/22/2016.
@@ -54,7 +59,6 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onRespawn(PlayerRespawnEvent e) {
-        e.getPlayer().sendMessage("respawned noob");
         if (MultiLineAPI.isEnabled(e.getPlayer())) {
             Bukkit.getScheduler().runTaskLater(inst, () -> {
                 //For some reason this must be done twice... Maybe it has to do with the entity spawning times?
@@ -81,10 +85,38 @@ public class EventListener implements Listener {
     }
 
     @EventHandler
+    public void death(EntityDeathEvent e) {
+        if (e.getEntity().hasMetadata("STACK_ENTITY")) {
+            e.setDroppedExp(0);
+            UUID u = (UUID) e.getEntity().getMetadata("STACK_ENTITY").get(0).value();
+            Tag t = inst.tags.get(u);
+            if (t != null) {
+                t.tempDisable();
+                Bukkit.getScheduler().runTaskLater(inst, () -> {
+                    t.reEnable();
+                    MultiLineAPI.refresh(Bukkit.getPlayer(u));
+                }, 1L);
+            }
+        }
+    }
+
+    @EventHandler
     public void move(PlayerMoveEvent e) {
         //Update the player's entities locations so they follow the player around
         if (MultiLineAPI.isEnabled(e.getPlayer())) {
             MultiLineAPI.updateLocs(e.getPlayer());
+        }
+    }
+
+    @EventHandler
+    public void gamemode(PlayerGameModeChangeEvent e) {
+        if (e.getNewGameMode() == GameMode.SPECTATOR) {
+            Bukkit.getScheduler().runTaskLater(inst, new Runnable() {
+                @Override
+                public void run() {
+                    MultiLineAPI.refreshOthers(e.getPlayer());
+                }
+            }, 1L);
         }
     }
 

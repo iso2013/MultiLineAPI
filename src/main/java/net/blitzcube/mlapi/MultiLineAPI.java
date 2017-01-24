@@ -9,10 +9,12 @@ import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.mlapi.tag.TagController;
 import net.blitzcube.mlapi.tag.TagLine;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffectType;
 import org.kitteh.vanish.VanishPlugin;
 
 import java.util.List;
@@ -297,7 +299,9 @@ public final class MultiLineAPI extends JavaPlugin {
     private void refreshView(Player p) {
         tags.values().stream()
                 .filter(s -> s.getOwner().getWorld() == p.getWorld())
-                .forEach(s -> createPairs(s, p)
+                .forEach(s -> {
+                            createPairs(s, p);
+                        }
                 );
     }
 
@@ -319,7 +323,9 @@ public final class MultiLineAPI extends JavaPlugin {
     private void refreshForEveryone(Player p) {
         Bukkit.getOnlinePlayers().stream()
                 .filter(o -> o.getWorld() == p.getWorld())
-                .forEach(o -> createPairs(tags.get(p.getUniqueId()), o)
+                .forEach(o -> {
+                            createPairs(tags.get(p.getUniqueId()), o);
+                        }
                 );
     }
 
@@ -355,11 +361,18 @@ public final class MultiLineAPI extends JavaPlugin {
         }
 
         public boolean canSee(Player who, Player forWho) {
+            //Check VanishNoPacket
             if (manager != null) {
-                return forWho.canSee(who) && !manager.isVanished(who);
-            } else {
-                return forWho.canSee(who);
+                if (manager.isVanished(who)) return false;
             }
+            //Check Bukkit's vanish system
+            if (!forWho.canSee(who)) return false;
+            //Check potion effects
+            if (who.hasPotionEffect(PotionEffectType.INVISIBILITY)) return false;
+            //Disable tags for users in spectator
+            if (forWho.getGameMode() == GameMode.SPECTATOR) return false;
+            if (who.getGameMode() == GameMode.SPECTATOR) return false;
+            return true;
         }
     }
 }
