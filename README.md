@@ -31,7 +31,7 @@ MultiLineAPI is designed as an API. It is not meant to be used as a plugin on it
 ## Screenshots
 Screenshots coming soon! Here's a comparison between MultiLineAPI and the vanilla scoreboard:
 
-![Comparison](comparison.png)
+![Comparison](docs/comparison.png)
 
 ## Issues
 You may report issues [here](https://github.com/iso2013/MultiLineAPI/issues). Please include the following information, otherwise your report will be ignored:
