@@ -29,7 +29,15 @@ Sometimes the entities can become separated from the player. If this happens, th
 MultiLineAPI is designed as an API. It is not meant to be used as a plugin on its own. API documentation is available [here](https://iso2013.github.io/MultiLineAPI/javadocs/).
 
 ## Screenshots
-Screenshots coming soon! Here's a comparison between MultiLineAPI and the vanilla scoreboard:
+MultiLineAPI does not lag behind when players move:
+
+![LagFree](docs/no-lag.gif)
+
+MultiLineAPI also supports more than just one additional line:
+
+![ManyLines](docs/three-lines-demo.gif)
+
+A comparison between MultiLineAPI and the vanilla scoreboard:
 
 ![Comparison](docs/comparison.png)
 
