@@ -28,8 +28,21 @@ Sometimes the entities can become separated from the player. If this happens, th
 ## API Usage
 MultiLineAPI is designed as an API. It is not meant to be used as a plugin on its own. API documentation is available [here](https://iso2013.github.io/MultiLineAPI/javadocs/).
 
+## Frequently Asked Questions:
+
+#### Q: Does MultiLineAPI support entities?
+Not currently, but adding support is in progress. See the issue [here](https://github.com/iso2013/MultiLineAPI/issues/12).
+
 ## Screenshots
-Screenshots coming soon! Here's a comparison between MultiLineAPI and the vanilla scoreboard:
+MultiLineAPI does not lag behind when players move:
+
+![LagFree](no-lag.gif)
+
+MultiLineAPI also supports more than just one additional line:
+
+![ManyLines](three-lines-demo.gif)
+
+A comparison between MultiLineAPI and the vanilla scoreboard:
 
 ![Comparison](comparison.png)
 
@@ -48,6 +61,6 @@ Want to donate to continue MultiLineAPI's development? I accept donations here:
 
 <center>
     <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=blitzcubeowner%40gmail%2ecom&lc=US&item_name=iso2013&item_number=MultiLineAPI&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted">
-        <img src="paypal.png"/>
+        <img src="docs/paypal.png"/>
     </a>
 </center>
