@@ -18,8 +18,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffectType;
 import org.kitteh.vanish.VanishPlugin;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -281,30 +279,11 @@ public final class MultiLineAPI extends JavaPlugin {
 
         this.getServer().getPluginManager().registerEvents(evnt, this);
 
-        YamlConfiguration configuration = spigotConfig();
-        if (configuration == null)
-            throw new UnsupportedOperationException("Failed to find Spigot Configuration Method!");
+        YamlConfiguration configuration = Bukkit.spigot().getConfig();
         ConfigurationSection section = configuration.getConfigurationSection("world-settings");
         for (String s : section.getKeys(false)) {
             trackingRanges.put(s, section.getInt(s + ".entity-tracking-range.players"));
         }
-    }
-
-    private YamlConfiguration spigotConfig() {
-        Method configMethod = null;
-        for (Method m : Bukkit.spigot().getClass().getDeclaredMethods()) {
-            if (m.getName().equals("getSpigotConfig") || m.getName().equals("getConfig")) {
-                configMethod = m;
-            }
-        }
-        if (configMethod == null)
-            throw new UnsupportedOperationException("Failed to find Spigot Configuration Method!");
-        try {
-            return (YamlConfiguration) configMethod.invoke(Bukkit.spigot());
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     /*
