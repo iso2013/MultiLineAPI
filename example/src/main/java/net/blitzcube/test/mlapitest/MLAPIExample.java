@@ -39,8 +39,10 @@ public final class MLAPIExample extends JavaPlugin implements TagController, Lis
         MLAPIExample ex = this;
         p.setMetadata("PLAYER_CHAT", new FixedMetadataValue(this, Bukkit.getScheduler().runTaskLater(this, () -> {
             line.setText(null);
+            MultiLineAPI.refresh(p);
             p.removeMetadata("PLAYER_CHAT", ex);
-        }, 200L)));
+        }, 200L).getTaskId()));
+        MultiLineAPI.refresh(p);
     }
 
     @Override

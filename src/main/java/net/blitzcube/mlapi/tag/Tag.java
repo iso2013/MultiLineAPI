@@ -403,7 +403,6 @@ public class Tag {
         baseEntities.clear();
         stack.clear();
         pairings.clear();
-        lines.clear();
     }
 
     public void reEnable() {
