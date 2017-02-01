@@ -129,14 +129,13 @@ public class TagLine {
     }
 
 
-
-    public void tempDisable() {
+    public void despawn() {
         lineEntity.remove();
         spaceEntities.forEach(Entity::remove);
         spaceEntities.clear();
     }
 
-    public void reEnable() {
+    public void respawn() {
         lineEntity = parent.createArmorStand();
         lineEntity.setCustomName(text);
         lineEntity.setCustomNameVisible(text != null);
