@@ -7,11 +7,13 @@ import com.comphenix.protocol.events.ListeningWhitelist;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.injector.GamePhase;
+import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import com.comphenix.protocol.wrappers.WrappedWatchableObject;
 import com.google.common.collect.Maps;
 import net.blitzcube.mlapi.MultiLineAPI;
 import net.blitzcube.mlapi.tag.Tag;
+import net.blitzcube.mlapi.util.HitboxUtil;
 import org.apache.commons.lang.ArrayUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -36,9 +38,10 @@ import java.util.stream.IntStream;
 public class PacketListener implements com.comphenix.protocol.events.PacketListener {
     public final MultiLineAPI inst;
     public final ProtocolManager protocol;
-    public VanishManager vnsh;
-    private Map<String, Integer> trackingRanges;
+    public final VanishManager vnsh;
+    private final Map<String, Integer> trackingRanges;
 
+    @SuppressWarnings("deprecation")
     public PacketListener(MultiLineAPI inst) {
         this.inst = inst;
         this.protocol = ProtocolLibrary.getProtocolManager();
@@ -46,7 +49,7 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
         this.vnsh = new VanishManager(inst);
         this.trackingRanges = Maps.newHashMap();
 
-        ConfigurationSection section = Bukkit.spigot().getSpigotConfig().getConfigurationSection("world-settings");
+        ConfigurationSection section = Bukkit.spigot().getConfig().getConfigurationSection("world-settings");
         for (String s : section.getKeys(false)) {
             trackingRanges.put(s, section.getInt(s + ".entity-tracking-range.players"));
         }
@@ -65,8 +68,7 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
                 Tag t = inst.tags.get(entity);
                 if (e.getPlayer() != null && vnsh.canSee(t.getOwner(), e.getPlayer())) {
                     Bukkit.getScheduler().runTaskLater(inst, () -> {
-                        //t.updateEntityLoc();
-                        //t.getProtocol().sendPairs(e.getPlayer(), this, true);
+                        t.updateEntityLoc();
                         MultiLineAPI.refreshOthers(e.getPlayer());
                         t.getProtocol().unhideTags(e.getPlayer(), inst.pckt);
                     }, 2L);
@@ -94,6 +96,7 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
                     Bukkit.getScheduler().runTask(inst, () -> {
                         t.respawn();
                         t.getProtocol().sendPairs(e.getPlayer(), this, false);
+                        t.getProtocol().hide(this);
                     });
                 } else {
                     if (IntStream.of(passengers).filter(i -> !ArrayUtils.contains(t.getEntities(), i)).findAny()
@@ -119,11 +122,14 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
             List<WrappedWatchableObject> l = p.getWatchableCollectionModifier().read(0);
             byte val = -1;
             for (WrappedWatchableObject o : l) {
-                if (o.getValue().getClass().equals(Byte.class)) {
+                if (o.getValue().getClass().equals(Byte.class) && o.getIndex() == 0) {
                     val = (byte) o.getValue();
+                    break;
                 }
             }
-            if (val == -1) return;
+            if (val == -1) {
+                return;
+            }
             if ((val & 0x20) != 0) { //Entity is being made invisible
                 Bukkit.getScheduler().runTask(inst, () -> inst.tags.get(entity.get().getUniqueId()).despawn());
             } else { //Entity is being made visible
@@ -166,8 +172,24 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
     }
 
     @Override
-    public void onPacketReceiving(PacketEvent packetEvent) {
-
+    public void onPacketReceiving(PacketEvent e) {
+        PacketContainer p = e.getPacket();
+        if (p.getType().equals(PacketType.Play.Client.USE_ENTITY)) {
+            if (p.getFloat().size() == 3) {
+                Bukkit.getLogger().info(p.getFloat().read(0) + " " + p.getFloat().read(1) + " " + p.getFloat().read(2));
+            }
+            int entityId = p.getIntegers().read(0);
+            Optional<Entity> entity = e.getPlayer().getNearbyEntities(6, 250, 6).stream()
+                    .filter(en -> en.getEntityId() == entityId)
+                    .filter(en -> en.getWorld().getUID().equals(e.getPlayer().getWorld().getUID()))
+                    .findAny();
+            if (!entity.isPresent()) return;
+            if (!entity.get().hasMetadata("STACK_ENTITY")) return;
+            Entity owner = inst.tags.get(entity.get().getMetadata("STACK_ENTITY").get(0).value()).getOwner();
+            if (!HitboxUtil.isLookingAt(e.getPlayer(), owner)) return;
+            p.getIntegers().write(0, owner.getEntityId());
+            p.getEntityUseActions().write(0, EnumWrappers.EntityUseAction.ATTACK);
+        }
     }
 
     @Override
@@ -179,13 +201,16 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
                 PacketType.Play.Server.NAMED_ENTITY_SPAWN,
                 PacketType.Play.Server.MOUNT,
                 PacketType.Play.Server.ENTITY_METADATA,
-                PacketType.Play.Server.ENTITY_DESTROY
+                PacketType.Play.Server.ENTITY_DESTROY,
+                PacketType.Play.Server.WORLD_PARTICLES
         ).build();
     }
 
     @Override
     public ListeningWhitelist getReceivingWhitelist() {
-        return ListeningWhitelist.EMPTY_WHITELIST;
+        return ListeningWhitelist.newBuilder().normal().gamePhase(GamePhase.PLAYING).types(
+                PacketType.Play.Client.USE_ENTITY
+        ).build();
     }
 
     @Override
@@ -200,7 +225,7 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
     }
 
     public class VanishManager {
-        boolean vanishNoPacket;
+        final boolean vanishNoPacket;
 
         org.kitteh.vanish.VanishManager manager;
 

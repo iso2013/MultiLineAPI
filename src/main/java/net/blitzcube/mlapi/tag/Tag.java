@@ -47,7 +47,7 @@ public class Tag {
         name = new TagLine(this, null);
         if (!(owner instanceof Player)) {
             name.setKeepSpaceWhenNull(false);
-            name.setText(null);
+            name.setText(owner.getCustomName());
         } else {
             name.setText(owner.getName());
         }
@@ -153,7 +153,7 @@ public class Tag {
         baseEntities.add(createGenericEntity(EntityType.SILVERFISH));
     }
 
-    public int[][] getEntityPairings() {
+    private int[][] getEntityPairings() {
         stack.clear();
         stack.add(whoOwns);
         stack.addAll(baseEntities);
@@ -305,12 +305,12 @@ public class Tag {
         return event;
     }
 
-    public int[] getEntitiesExceptOwner() {
+    private int[] getEntitiesExceptOwner() {
         return stack.stream().filter(e -> e != whoOwns).mapToInt(Entity::getEntityId).toArray();
     }
 
     public class Protocol {
-        Tag forWhat;
+        final Tag forWhat;
         int[][] pairCache;
 
         public Protocol(Tag forWhat) {
@@ -379,21 +379,21 @@ public class Tag {
     }
 
     public class Event {
-        Tag forWhat;
+        final Tag forWhat;
 
         public Event(Tag forWhat) {
             this.forWhat = forWhat;
         }
 
         public void create(PacketListener manager) {
-            Bukkit.getScheduler().runTaskLater(manager.inst, () -> resend(manager, true), 1L);
+            Bukkit.getScheduler().runTaskLater(manager.inst, () -> resend(manager), 1L);
             Bukkit.getScheduler().runTaskLater(manager.inst, () -> forWhat.protocol.hide(manager), 2L);
         }
 
         public void respawn(PacketListener manager) {
             Bukkit.getScheduler().runTaskLater(manager.inst, () -> {
                 forWhat.respawn();
-                resend(manager, true);
+                resend(manager);
             }, 2L);
         }
 
@@ -401,13 +401,13 @@ public class Tag {
             forWhat.despawn();
             Bukkit.getScheduler().runTaskLater(manager.inst, () -> {
                 forWhat.respawn();
-                resend(manager, true);
+                resend(manager);
             }, 2L);
         }
 
-        private void resend(PacketListener manager, boolean update) {
+        private void resend(PacketListener manager) {
             for (Player p : Bukkit.getOnlinePlayers()) {
-                forWhat.protocol.sendPairs(p, manager, update);
+                forWhat.protocol.sendPairs(p, manager, true);
             }
         }
 

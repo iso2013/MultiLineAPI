@@ -37,7 +37,7 @@ public final class MLAPIExample extends JavaPlugin implements TagController, Lis
         updateLine((LivingEntity) e.getEntity());
     }
 
-    public void updateLine(LivingEntity e) {
+    private void updateLine(LivingEntity e) {
         if (e instanceof Player) return;
         if (!MultiLineAPI.isEnabled(e)) MultiLineAPI.enable(e);
         if (MultiLineAPI.getLineCount(this, e) < 1) MultiLineAPI.addLine(this, e);
@@ -47,7 +47,7 @@ public final class MLAPIExample extends JavaPlugin implements TagController, Lis
         MultiLineAPI.refresh(e);
     }
 
-    public ChatColor getColor(double percent) {
+    private ChatColor getColor(double percent) {
         if (percent > 0.75) {
             return ChatColor.DARK_GREEN;
         } else if (percent > 0.75) {
@@ -62,12 +62,12 @@ public final class MLAPIExample extends JavaPlugin implements TagController, Lis
         return ChatColor.BLACK;
     }
 
-    public void handleChat(String message, Player p) {
+    private void handleChat(String message, Player p) {
         if (MultiLineAPI.getLineCount(this, p) < 1) {
             MultiLineAPI.addLine(this, p);
         }
         TagLine line = MultiLineAPI.getLine(this, p, 0);
-        line.setText(ChatColor.YELLOW + ChatColor.translateAlternateColorCodes('&', message));
+        line.setText(ChatColor.translateAlternateColorCodes('&', message));
         if (p.hasMetadata("PLAYER_CHAT")) {
             int i = (int) p.getMetadata("PLAYER_CHAT").get(0).value();
             p.removeMetadata("PLAYER_CHAT", this);

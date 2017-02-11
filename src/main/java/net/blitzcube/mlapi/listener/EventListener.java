@@ -83,15 +83,9 @@ public class EventListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void damage(EntityDamageEvent e) {
         if (e.getEntity().hasMetadata("STACK_ENTITY")) {
-            UUID u = (UUID) e.getEntity().getMetadata("STACK_ENTITY").get(0).value();
-            Tag t = inst.tags.get(u);
-            if (t != null) {
-                Bukkit.getPluginManager().callEvent(new EntityDamageEvent(t.getOwner(), e.getCause(), e.));
-                //TODO: Fix this
-            }
             e.setCancelled(true);
         }
     }
@@ -99,8 +93,16 @@ public class EventListener implements Listener {
     @EventHandler
     public void gameMode(PlayerGameModeChangeEvent e) {
         e.getPlayer().sendMessage(e.getPlayer().getGameMode().name());
-        if (e.getNewGameMode() == GameMode.SPECTATOR || e.getPlayer().getGameMode() == GameMode.SPECTATOR) {
-            Bukkit.getScheduler().runTaskLater(inst, () -> MultiLineAPI.refreshOthers(e.getPlayer()), 2L);
+        if (e.getNewGameMode() == GameMode.SPECTATOR) {
+            Bukkit.getScheduler().runTaskLater(inst, () -> {
+                inst.tags.get(e.getPlayer().getUniqueId()).despawn();
+                MultiLineAPI.refreshOthers(e.getPlayer());
+            }, 2L);
+        } else if (e.getPlayer().getGameMode() == GameMode.SPECTATOR) {
+            Bukkit.getScheduler().runTaskLater(inst, () -> {
+                inst.tags.get(e.getPlayer().getUniqueId()).respawn();
+                MultiLineAPI.refreshOthers(e.getPlayer());
+            }, 2L);
         }
     }
 

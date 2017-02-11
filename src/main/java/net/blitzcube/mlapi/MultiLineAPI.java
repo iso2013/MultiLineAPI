@@ -22,7 +22,7 @@ import java.util.UUID;
 public final class MultiLineAPI extends JavaPlugin {
 
     //The static instance of the API.
-    protected static MultiLineAPI inst;
+    private static MultiLineAPI inst;
     //All player's Tag objects that correspond to their players.
     public final Map<UUID, Tag> tags;
     //The list of currently registered controllers.
