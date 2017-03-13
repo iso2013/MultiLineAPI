@@ -54,6 +54,19 @@
         </resources>
     </build>
 
+    <distributionManagement>
+      <repository>
+        <id>digitalpenquin-deployment</id>
+        <name>DigitalPenquin Release Deployment</name>
+        <url>https://repo.srv.digitalpenquin.com/repositories/maven-releases/</url>
+      </repository>
+      <snapshotRepository>
+        <id>digitalpenquin-deployment</id>
+        <name>DigitalPenquin Snapshot Deployment</name>
+        <url>https://repo.srv.digitalpenquin.com/repositories/maven-snapshots/</url>
+      </snapshotRepository>
+    </distributionManagement>
+
     <repositories>
         <repository>
             <id>destroystokyo-repo</id>
