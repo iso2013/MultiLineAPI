@@ -68,6 +68,10 @@
     </distributionManagement>
 
     <repositories>
+	<repository>
+	    <id>digitalpenquin-repo</id>
+  	    <url>https://repo.srv.digitalpenquin.com/repository/maven-public/</url>
+	</repository>
         <repository>
             <id>destroystokyo-repo</id>
             <url>https://repo.destroystokyo.com/repository/maven-public/</url>
