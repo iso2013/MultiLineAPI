@@ -6,12 +6,13 @@
 
     <groupId>net.blitzcube.mlapi</groupId>
     <artifactId>MultiLineAPI</artifactId>
-    <version>1.2</version>
+    <version>X2</version>
     <packaging>jar</packaging>
 
     <name>MultiLineAPI</name>
 
-    <description>An API which allows you to add multiple lines of player nametags.</description>
+    <description>An API which allows you to add multiple lines to entity nametags.</description>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
@@ -42,7 +43,6 @@
                     <destDir>javadocs</destDir>
                     <doctitle>MutliLineAPI docs v${project.version}</doctitle>
                     <windowtitle>MutliLineAPI docs v${project.version}</windowtitle>
-                    <excludePackageNames>net.blitzcube.mlapi.listener,net.blitzcube.mlapi.reflect</excludePackageNames>
                 </configuration>
             </plugin>
         </plugins>
