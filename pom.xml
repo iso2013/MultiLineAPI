@@ -6,7 +6,11 @@
 
     <groupId>net.blitzcube.mlapi</groupId>
     <artifactId>MultiLineAPI</artifactId>
+<<<<<<< HEAD
     <version>X2</version>
+=======
+    <version>1.2.6</version>
+>>>>>>> origin/versionX
     <packaging>jar</packaging>
 
     <name>MultiLineAPI</name>
@@ -54,7 +58,24 @@
         </resources>
     </build>
 
+    <distributionManagement>
+      <repository>
+        <id>digitalpenquin-deployment</id>
+        <name>DigitalPenquin Release Deployment</name>
+        <url>https://repo.srv.digitalpenquin.com/repository/maven-releases/</url>
+      </repository>
+      <snapshotRepository>
+        <id>digitalpenquin-deployment</id>
+        <name>DigitalPenquin Snapshot Deployment</name>
+        <url>https://repo.srv.digitalpenquin.com/repository/maven-snapshots/</url>
+      </snapshotRepository>
+    </distributionManagement>
+
     <repositories>
+	<repository>
+	    <id>digitalpenquin-repo</id>
+  	    <url>https://repo.srv.digitalpenquin.com/repository/maven-public/</url>
+	</repository>
         <repository>
             <id>destroystokyo-repo</id>
             <url>https://repo.destroystokyo.com/repository/maven-public/</url>
