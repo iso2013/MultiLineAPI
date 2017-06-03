@@ -1,6 +1,15 @@
 package net.blitzcube.mlapi;
 
+import com.google.common.collect.Maps;
+import net.blitzcube.mlapi.example.ExampleListener;
+import net.blitzcube.mlapi.listener.EventListener;
+import net.blitzcube.mlapi.listener.PacketListener;
+import net.blitzcube.mlapi.tag.Tag;
+import net.blitzcube.mlapi.util.EntityUtil;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Class by iso2013 @ 2017.
@@ -12,5 +21,12 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 
 public final class MultiLineAPI extends JavaPlugin {
+    public static final Map<UUID, Tag> tags = Maps.newHashMap();
 
+    @Override
+    public void onEnable() {
+        EntityUtil.init();
+        this.getServer().getPluginManager().registerEvents(new EventListener(new PacketListener(this)), this);
+        this.getServer().getPluginManager().registerEvents(new ExampleListener(), this);
+    }
 }
