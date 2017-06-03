@@ -33,6 +33,7 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onDeath(PlayerDeathEvent e) {
+        Bukkit.broadcastMessage(e.getEntity().getEntityId() + " hmm");
         Stream<Player> players = EntityUtil.getEntities(e.getEntity(), 1).filter(entity -> entity instanceof Player)
                 .map(entity -> (Player) entity);
         Bukkit.getScheduler().runTaskLater(packet.getPlugin(), () -> players.forEach(player -> packet.despawnStack

@@ -12,9 +12,12 @@ import com.google.common.collect.Sets;
 import net.blitzcube.mlapi.MultiLineAPI;
 import net.blitzcube.mlapi.util.EntityUtil;
 import net.blitzcube.mlapi.util.PacketUtil;
+import net.blitzcube.mlapi.util.VisibilityUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.InvocationTargetException;
@@ -25,6 +28,7 @@ import java.util.Set;
  * Created by iso2013 on 5/4/2017.
  */
 public class PacketListener implements com.comphenix.protocol.events.PacketListener {
+    private final String INVISIBLE_CONST = "MLAPI_INVISIBLE";
     private MultiLineAPI plugin;
     private ProtocolManager manager;
 
@@ -64,15 +68,23 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
             EntityUtil.getEntities(p, 1, packet.getIntegerArrays().read(0))
                     .filter(entity -> plugin.tags.containsKey(entity.getUniqueId()))
                     .forEach(entity -> despawnStack(p, entity));
-        }// else if (packet.getType().equals(PacketType.Play.Server.REMOVE_ENTITY_EFFECT)){
-        //   Entity e = EntityUtil.getEntities(p, 1, packet.getIntegers().read(0)).findAny().orElse(null);
-        //   if(!packet.getEffectTypes().read(0).equals(PotionEffectType.INVISIBILITY)) return;
-        //   spawnStack(p, e).forEach(packetContainer -> packetEvent.schedule(new ScheduledPacket(packetContainer, p,
-        // false)));
-        //} else if (packet.getType().equals(PacketType.Play.Server.ENTITY_EFFECT)){
-        //   if(packet.getBytes().read(0) != PotionEffectType.INVISIBILITY.getId()) return;
-        //   despawnStack(p, EntityUtil.getEntities(p, 1, packet.getIntegers().read(0)).findAny().orElse(null));
-        //}
+        } else if (packet.getType().equals(PacketType.Play.Server.ENTITY_METADATA)) {
+            boolean invisible = VisibilityUtil.isMetadataInvisible(packet.getWatchableCollectionModifier().read(0));
+            Entity e = EntityUtil.getEntities(p, 1, packet.getIntegers().read(0)).findAny().orElse(null);
+            if (e == null) return;
+            boolean current = e.hasMetadata(INVISIBLE_CONST) && e.getMetadata(INVISIBLE_CONST).get(0).asBoolean();
+            e.removeMetadata(INVISIBLE_CONST, this.plugin);
+            if (invisible != current) {
+                if (invisible) {
+                    despawnStack(p, e);
+                } else {
+                    spawnStack(p, e).forEach(packetContainer -> packetEvent.schedule(new ScheduledPacket
+                            (packetContainer,
+                            p, false)));
+                }
+                e.setMetadata(INVISIBLE_CONST, new FixedMetadataValue(this.plugin, invisible));
+            }
+        }
     }
 
     void spawnAllStacks(Player forWho) {
@@ -95,7 +107,6 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
                 .filter(entity -> plugin.tags.containsKey(entity.getUniqueId()))
                 .forEach(entity -> mount.addAll(plugin.tags.get(entity.getUniqueId()).last(entity)));
         try {
-            Bukkit.getLogger().info("Despawning " + mount.size() + " entities.");
             manager.sendServerPacket(forWho, PacketUtil.getDespawnPacket(mount.toArray(new PacketUtil
                     .FakeEntity[mount.size()])));
         } catch (InvocationTargetException e) {
@@ -109,7 +120,8 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
         Set<PacketContainer> mount = Sets.newHashSet();
         PacketUtil.FakeEntity last = null;
         for (PacketUtil.FakeEntity e : stack) {
-            for (PacketContainer c : PacketUtil.getSpawnPacket(e, forWhat.getLocation())) {
+            for (PacketContainer c : PacketUtil.getSpawnPacket(e, forWhat instanceof LivingEntity ? ((LivingEntity)
+                    forWhat).getEyeLocation() : forWhat.getLocation())) {
                 try {
                     manager.sendServerPacket(forWho, c);
                 } catch (InvocationTargetException e1) {
@@ -118,10 +130,8 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
             }
             if (last != null) {
                 mount.add(PacketUtil.getPassengerPacket(last.getEntityId(), e.getEntityId()));
-                Bukkit.broadcastMessage(last.getEntityId() + " " + e.getEntityId());
             } else {
                 mount.add(PacketUtil.getPassengerPacket(forWhat.getEntityId(), e.getEntityId()));
-                Bukkit.broadcastMessage(forWhat.getEntityId() + " " + e.getEntityId());
             }
             last = e;
         }
@@ -154,7 +164,8 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
                 PacketType.Play.Server.SPAWN_ENTITY_WEATHER,
                 PacketType.Play.Server.NAMED_ENTITY_SPAWN,
                 PacketType.Play.Server.MOUNT,
-                PacketType.Play.Server.ENTITY_DESTROY
+                PacketType.Play.Server.ENTITY_DESTROY,
+                PacketType.Play.Server.ENTITY_METADATA
         ).build();
     }
 
