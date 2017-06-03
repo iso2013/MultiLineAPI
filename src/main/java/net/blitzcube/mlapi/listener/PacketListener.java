@@ -87,11 +87,11 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
         }
     }
 
-    void spawnAllStacks(Player forWho) {
+    void spawnAllStacks(Player forWho, boolean bypassGamemode) {
         Set<PacketContainer> spawnPackets = Sets.newHashSet();
         EntityUtil.getEntities(forWho, 1)
                 .filter(entity -> plugin.tags.containsKey(entity.getUniqueId()))
-                .forEach(entity -> spawnPackets.addAll(spawnStack(forWho, entity)));
+                .forEach(entity -> spawnPackets.addAll(spawnStack(forWho, entity, bypassGamemode)));
         Bukkit.getScheduler().runTaskLater(plugin, () -> spawnPackets.forEach(packetContainer -> {
             try {
                 manager.sendServerPacket(forWho, packetContainer);
@@ -115,7 +115,13 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
     }
 
     private Set<PacketContainer> spawnStack(Player forWho, Entity forWhat) {
-        if (forWhat == null || !plugin.tags.containsKey(forWhat.getUniqueId())) return Sets.newHashSet();
+        return spawnStack(forWho, forWhat, false);
+    }
+
+    private Set<PacketContainer> spawnStack(Player forWho, Entity forWhat, boolean bypassGamemode) {
+        if (forWhat == null || !plugin.tags.containsKey(forWhat.getUniqueId()) || !VisibilityUtil.isViewable(forWho,
+                forWhat, bypassGamemode))
+            return Sets.newHashSet();
         LinkedList<PacketUtil.FakeEntity> stack = plugin.tags.get(forWhat.getUniqueId()).render(forWhat, forWho);
         Set<PacketContainer> mount = Sets.newHashSet();
         PacketUtil.FakeEntity last = null;

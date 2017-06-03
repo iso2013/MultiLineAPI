@@ -27,7 +27,7 @@ public class EventListener implements Listener {
             packet.despawnAllStacks(e.getPlayer());
         } else if (!e.getNewGameMode().equals(GameMode.SPECTATOR) && e.getPlayer().getGameMode().equals(GameMode
                 .SPECTATOR)) {
-            packet.spawnAllStacks(e.getPlayer());
+            packet.spawnAllStacks(e.getPlayer(), true);
         }
     }
 

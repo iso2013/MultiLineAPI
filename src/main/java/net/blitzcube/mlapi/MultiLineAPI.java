@@ -6,6 +6,7 @@ import net.blitzcube.mlapi.listener.EventListener;
 import net.blitzcube.mlapi.listener.PacketListener;
 import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.mlapi.util.EntityUtil;
+import net.blitzcube.mlapi.util.VisibilityUtil;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Map;
@@ -26,6 +27,7 @@ public final class MultiLineAPI extends JavaPlugin {
     @Override
     public void onEnable() {
         EntityUtil.init();
+        VisibilityUtil.init(this);
         this.getServer().getPluginManager().registerEvents(new EventListener(new PacketListener(this)), this);
         this.getServer().getPluginManager().registerEvents(new ExampleListener(), this);
     }
