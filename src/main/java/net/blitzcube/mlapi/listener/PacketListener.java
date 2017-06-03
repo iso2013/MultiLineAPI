@@ -8,13 +8,17 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.events.ScheduledPacket;
 import com.comphenix.protocol.injector.GamePhase;
+import com.comphenix.protocol.wrappers.EnumWrappers;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import net.blitzcube.mlapi.MultiLineAPI;
 import net.blitzcube.mlapi.util.EntityUtil;
+import net.blitzcube.mlapi.util.HitboxUtil;
 import net.blitzcube.mlapi.util.PacketUtil;
 import net.blitzcube.mlapi.util.VisibilityUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -22,7 +26,9 @@ import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Created by iso2013 on 5/4/2017.
@@ -31,10 +37,12 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
     private final String INVISIBLE_CONST = "MLAPI_INVISIBLE";
     private MultiLineAPI plugin;
     private ProtocolManager manager;
+    private Map<Integer, UUID> tagMap;
 
     public PacketListener(MultiLineAPI plugin) {
         this.plugin = plugin;
         this.manager = ProtocolLibrary.getProtocolManager();
+        this.tagMap = Maps.newHashMap();
         this.manager.addPacketListener(this);
         PacketUtil.init(this.manager);
     }
@@ -126,6 +134,7 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
         Set<PacketContainer> mount = Sets.newHashSet();
         PacketUtil.FakeEntity last = null;
         for (PacketUtil.FakeEntity e : stack) {
+            this.tagMap.put(e.getEntityId(), forWhat.getUniqueId());
             for (PacketContainer c : PacketUtil.getSpawnPacket(e, forWhat instanceof LivingEntity ? ((LivingEntity)
                     forWhat).getEyeLocation() : forWhat.getLocation())) {
                 try {
@@ -157,7 +166,19 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
 
     @Override
     public void onPacketReceiving(PacketEvent packetEvent) {
-        //404: Method #onPacketReceiving not found.
+        Player p = packetEvent.getPlayer();
+        PacketContainer packet = packetEvent.getPacket();
+        if (packet.getType().equals(PacketType.Play.Client.USE_ENTITY)) {
+            UUID u = tagMap.get(packet.getIntegers().read(0));
+            if (u == null) return;
+            Entity e = p.getNearbyEntities(8, 8, 8).stream().filter(entity -> entity.getUniqueId().equals(u)).findAny
+                    ().orElse(null);
+            if (e == null) return;
+            if (!HitboxUtil.isLookingAt(p, e)) return;
+            packet.getIntegers().write(0, e.getEntityId());
+            if (e.getType() == EntityType.ARMOR_STAND)
+                packet.getEntityUseActions().write(0, EnumWrappers.EntityUseAction.ATTACK);
+        }
     }
 
     @Override
@@ -177,7 +198,9 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
 
     @Override
     public ListeningWhitelist getReceivingWhitelist() {
-        return ListeningWhitelist.EMPTY_WHITELIST;
+        return ListeningWhitelist.newBuilder().normal().gamePhase(GamePhase.PLAYING).types(
+                PacketType.Play.Client.USE_ENTITY
+        ).build();
     }
 
     @Override
