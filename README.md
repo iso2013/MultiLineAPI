@@ -53,7 +53,7 @@ MultiLineAPI can be retrieved from the [DigitalPenquin Repository](https://repo.
 </dependencies>
 ```
 
-The current version deployed to the repository can be found on the [**Releases**](https://github.com/simpleauthority/MultiLineAPI/releases) page.
+The current version deployed to the repository can be found on the [**Releases**](https://github.com/iso2013/MultiLineAPI/releases) page.
 
 ## Screenshots
 MultiLineAPI does not lag behind when players move:
