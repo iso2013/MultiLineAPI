@@ -15,5 +15,6 @@ public class ExampleListener implements Listener {
         Tag t = new Tag();
         MultiLineAPI.tags.put(e.getPlayer().getUniqueId(), t);
         t.tagControllers.add(new ExampleTagController());
+        t.tagControllers.add(new ExampleSecondTagController());
     }
 }

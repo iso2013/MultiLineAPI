@@ -27,15 +27,14 @@ public class Tag {
 
     public LinkedList<PacketUtil.FakeEntity> render(Entity forWhat, Player forWho) {
         LinkedList<TagLine> tagLines = Lists.newLinkedList();
-        //this.tagControllers.sort((o1, o2) -> Integer.compare(o2.getPriority(), o1.getPriority()));
+        this.tagControllers.sort((o1, o2) -> Integer.compare(o2.getPriority(), o1.getPriority()));
         for (TagController tc : this.tagControllers) {
-            tagLines.addAll(tc.getLines(forWhat));
-            //for(TagLine line : tc.getLines(forWhat)){
-            //    line.setCached(line.getText(forWho));
-            //    if(line.keepSpaceWhenNull() || line.getCached() != null){
-            //        tagLines.add(line);
-            //    }
-            //}
+            for (TagLine line : tc.getLines(forWhat)) {
+                line.setCached(line.getText(forWho));
+                if (line.keepSpaceWhenNull() || line.getCached() != null) {
+                    tagLines.add(line);
+                }
+            }
         }
         if (this.entities.size() != base.size() + 1 + (tagLines.size() * 4)) {
             this.entities.removeAll(base);
@@ -76,9 +75,8 @@ public class Tag {
         for (TagLine t : tagLines) {
             this.entities.get(idx).setWatcher(PacketUtil.createWatcher(new HashMap<Integer, Object>() {{
                 put(0, (byte) 32);
-                String text = t.getText(forWho);
-                put(2, text != null ? text : "");
-                put(3, text != null);
+                put(2, t.getCached() != null ? t.getCached() : "");
+                put(3, t.getCached() != null);
                 put(4, true);
                 put(11, (byte) 16);
             }}));
@@ -96,19 +94,15 @@ public class Tag {
     }
 
     public String getName(String entityName, Entity forWhat) {
+        this.tagControllers.sort((o1, o2) -> Integer.compare(o2.getPriority(), o1.getPriority()));
         for (TagController t : tagControllers) {
             entityName = t.getName(forWhat).replace("`PREV`", entityName);
         }
         return entityName;
     }
 
-    public LinkedList<PacketUtil.FakeEntity> last(Entity forWhat) {
-        List<TagLine> tagLines = Lists.newLinkedList();
-        for (TagController tc : tagControllers) {
-            tagLines.addAll(tc.getLines(forWhat));
-        }
-        return entities != null && entities.size() != base.size() + 1 + (tagLines.size() * 4) ? entities : render
-                (forWhat, null);
+    public LinkedList<PacketUtil.FakeEntity> last() {
+        return entities;
     }
 
     private PacketUtil.FakeEntity createSilverfish() {
@@ -139,32 +133,5 @@ public class Tag {
             put(4, true);
             put(11, (byte) 16);
         }}));
-    }
-
-    public class RenderResult {
-        private LinkedList<PacketUtil.FakeEntity> created, stack, removed;
-
-        private RenderResult() {
-            this.created = Lists.newLinkedList();
-            this.stack = Lists.newLinkedList();
-            this.removed = Lists.newLinkedList();
-        }
-
-        private PacketUtil.FakeEntity addCreated(PacketUtil.FakeEntity e) {
-            this.created.add(e);
-            return e;
-        }
-
-        public LinkedList<PacketUtil.FakeEntity> getCreated() {
-            return created;
-        }
-
-        public LinkedList<PacketUtil.FakeEntity> getStack() {
-            return stack;
-        }
-
-        public LinkedList<PacketUtil.FakeEntity> getRemoved() {
-            return removed;
-        }
     }
 }

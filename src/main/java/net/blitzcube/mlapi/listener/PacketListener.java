@@ -64,7 +64,8 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
             Entity e = EntityUtil.getEntities(p, 1, packet.getIntegers().read(0)).findAny().orElse(null);
             if (e == null) return;
             int[] passengers = packet.getIntegerArrays().read(0);
-            LinkedList<PacketUtil.FakeEntity> stack = plugin.tags.get(e.getUniqueId()).last(e);
+            LinkedList<PacketUtil.FakeEntity> stack = plugin.tags.get(e.getUniqueId()).last();
+            if (stack == null || stack.isEmpty()) return;
             if (passengers.length == 0) {
                 spawnStack(p, e).forEach(packetContainer -> packetEvent.schedule(new ScheduledPacket(packetContainer,
                         p, false)));
@@ -113,7 +114,7 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
         Set<PacketUtil.FakeEntity> mount = Sets.newHashSet();
         EntityUtil.getEntities(forWho, 1.1)
                 .filter(entity -> plugin.tags.containsKey(entity.getUniqueId()))
-                .forEach(entity -> mount.addAll(plugin.tags.get(entity.getUniqueId()).last(entity)));
+                .forEach(entity -> mount.addAll(plugin.tags.get(entity.getUniqueId()).last()));
         try {
             manager.sendServerPacket(forWho, PacketUtil.getDespawnPacket(mount.toArray(new PacketUtil
                     .FakeEntity[mount.size()])));
@@ -155,7 +156,8 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
 
     void despawnStack(Player forWho, Entity forWhat) {
         if (!plugin.tags.containsKey(forWhat.getUniqueId())) return;
-        LinkedList<PacketUtil.FakeEntity> stack = plugin.tags.get(forWhat.getUniqueId()).last(forWhat);
+        LinkedList<PacketUtil.FakeEntity> stack = plugin.tags.get(forWhat.getUniqueId()).last();
+        if (stack == null || stack.isEmpty()) return;
         try {
             manager.sendServerPacket(forWho, PacketUtil.getDespawnPacket(stack.toArray(new PacketUtil
                     .FakeEntity[stack.size()])), false);

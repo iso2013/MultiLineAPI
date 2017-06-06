@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
  */
 public abstract class TagLine {
     private PacketUtil.FakeEntity line;
+    private String cached;
 
     final PacketUtil.FakeEntity getLine() {
         return this.line;
@@ -17,5 +18,15 @@ public abstract class TagLine {
         this.line = line;
     }
 
+    final String getCached() {
+        return cached;
+    }
+
+    final void setCached(String cached) {
+        this.cached = cached;
+    }
+
     public abstract String getText(Player forWho);
+
+    public boolean keepSpaceWhenNull() {return false;}
 }

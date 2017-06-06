@@ -33,10 +33,10 @@ public class ExampleSecondTagController extends TagController {
 
     @Override
     public String getName(Entity forWhat) {
-        return "`PREV` " + ChatColor.GREEN + "" + ChatColor.BOLD + "Owner" + ChatColor.RESET;
+        return ChatColor.GREEN + "" + ChatColor.ITALIC + "Owner" + ChatColor.RESET + " `PREV`";
     }
 
-    //@Override
+    @Override
     public int getPriority() {
         return 10;
     }

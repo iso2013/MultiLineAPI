@@ -11,4 +11,8 @@ public abstract class TagController {
     public abstract Collection<? extends TagLine> getLines(Entity forWhat);
 
     public abstract String getName(Entity forWhat);
+
+    public int getPriority() {
+        return 0;
+    }
 }
