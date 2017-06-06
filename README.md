@@ -28,6 +28,33 @@ Sometimes the entities can become separated from the player. If this happens, th
 ## API Usage
 MultiLineAPI is designed as an API. It is not meant to be used as a plugin on its own. API documentation is available [here](https://iso2013.github.io/MultiLineAPI/javadocs/).
 
+### Maven
+MultiLineAPI can be retrieved from the [DigitalPenquin Repository](https://repo.srv.digitalpenquin.com). See below for details:
+
+#### Repository
+```
+<repositories>
+    <repository>
+	    <id>digitalpenquin-repo</id>
+  	    <url>https://repo.srv.digitalpenquin.com/repository/maven-public/</url>
+    </repository>
+</repositories>
+```
+
+#### Artifact
+```
+<dependencies>
+    <dependency>
+        <groupId>net.blitzcube.mlapi</groupId>
+        <artifactId>MultiLineAPI</artifactId>
+        <version>X.Y.Z</version>
+        <scope>compile</scope>
+    </dependency>
+</dependencies>
+```
+
+The current version deployed to the repository can be found on the [**Releases**](https://github.com/simpleauthority/MultiLineAPI/releases) page.
+
 ## Screenshots
 MultiLineAPI does not lag behind when players move:
 
