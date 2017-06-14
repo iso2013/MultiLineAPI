@@ -8,7 +8,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Class by iso2013 @ 2017.
@@ -20,9 +20,9 @@ import java.util.LinkedList;
  */
 
 public class ExampleSecondTagController extends TagController {
-    LinkedList<TagLine> lines;
+    final List<TagLine> lines;
 
-    public ExampleSecondTagController() {
+    ExampleSecondTagController() {
         lines = Lists.newLinkedList();
         lines.add(new TagLine() {
             @Override
@@ -46,4 +46,7 @@ public class ExampleSecondTagController extends TagController {
     public int getPriority() {
         return 10;
     }
+
+    @Override
+    public int getNamePriority() { return -10; }
 }

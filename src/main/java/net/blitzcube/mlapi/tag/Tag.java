@@ -3,6 +3,7 @@ package net.blitzcube.mlapi.tag;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import net.blitzcube.mlapi.util.PacketUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -22,7 +23,7 @@ public class Tag {
     public final List<TagController> tagControllers;
 
     private final List<PacketUtil.FakeEntity> base;
-    private LinkedList<PacketUtil.FakeEntity> entities;
+    private List<PacketUtil.FakeEntity> entities;
 
     public Tag() {
         this.tagControllers = Lists.newArrayList();
@@ -31,8 +32,8 @@ public class Tag {
         base.add(createSilverfish());
     }
 
-    public LinkedList<PacketUtil.FakeEntity> render(Entity forWhat, Player forWho) {
-        LinkedList<TagLine> tagLines = Lists.newLinkedList();
+    public TagRender render(Entity forWhat, Player forWho) {
+        List<TagLine> tagLines = Lists.newLinkedList();
         this.tagControllers.sort((o1, o2) -> Integer.compare(o2.getPriority(), o1.getPriority()));
         for (TagController tc : this.tagControllers) {
             for (TagLine line : tc.getLines(forWhat)) {
@@ -42,10 +43,40 @@ public class Tag {
                 }
             }
         }
-        if (this.entities.size() != base.size() + 1 + (tagLines.size() * 4)) {
+        Collections.reverse(tagLines);
+        TagRender render = new TagRender();
+        stackEntities(render, tagLines);
+        this.entities = render.entities;
+        if (forWho == null) return render;
+        int idx = base.size();
+        for (TagLine t : tagLines) {
+            Bukkit.broadcastMessage(t.getCached());
+            render.entities.get(idx).setWatcher(PacketUtil.createWatcher(new HashMap<Integer, Object>() {{
+                put(0, (byte) 32);
+                put(2, t.getCached() != null ? t.getCached() : "");
+                put(3, t.getCached() != null);
+                put(4, true);
+                put(11, (byte) 16);
+            }}));
+            idx += 4;
+        }
+        render.entities.get(idx).setWatcher(PacketUtil.createWatcher(new HashMap<Integer, Object>() {{
+            put(0, (byte) 32);
+            put(2, getName(forWhat.getCustomName() != null && forWhat.getType() != EntityType.PLAYER ? forWhat
+                    .getCustomName() : forWhat.getName(), forWhat));
+            put(3, forWhat.isCustomNameVisible() || forWhat.getType().equals(EntityType.PLAYER));
+            put(4, true);
+            put(11, (byte) 16);
+        }}));
+        return render;
+    }
+
+    public void stackEntities(TagRender render, List<TagLine> lines) {
+        if (this.entities.size() != base.size() + 1 + (lines.size() * 4)) {
             this.entities.removeAll(base);
-            Set<PacketUtil.FakeEntity> armorStands = Sets.newHashSet(), silverfish = Sets.newHashSet(), slimes = Sets
-                    .newHashSet();
+            Set<PacketUtil.FakeEntity> armorStands = Sets.newHashSet(),
+                    silverfish = Sets.newHashSet(),
+                    slimes = Sets.newHashSet();
             Collections.reverse(this.entities);
             for (PacketUtil.FakeEntity e : this.entities) {
                 switch (e.getType()) {
@@ -60,54 +91,37 @@ public class Tag {
                 }
             }
             this.entities.clear();
-            this.entities.addAll(base);
-            Iterator<PacketUtil.FakeEntity> asI = armorStands.iterator(), sI = silverfish.iterator(), slI = slimes
-                    .iterator();
-            Collections.reverse(tagLines);
-            for (TagLine line : tagLines) {
-                line.setLine(asI.hasNext() ? asI.next() : (createArmorStand()));
-                this.entities.add(line.getLine());
-                this.entities.add(slI.hasNext() ? slI.next() : (createSlime()));
-                this.entities.add(sI.hasNext() ? sI.next() : (createSilverfish()));
-                this.entities.add(sI.hasNext() ? sI.next() : (createSilverfish()));
+            render.entities.addAll(base);
+            Iterator<PacketUtil.FakeEntity> asI = armorStands.iterator(),
+                    sI = silverfish.iterator(),
+                    slI = slimes.iterator();
+            for (TagLine line : lines) {
+                render.entities.add(line.setLine(asI.hasNext() ? asI.next() : createArmorStand()));
+                render.entities.add(slI.hasNext() ? slI.next() : createSlime());
+                render.entities.add(sI.hasNext() ? sI.next() : createSilverfish());
+                render.entities.add(sI.hasNext() ? sI.next() : createSilverfish());
             }
-            this.entities.add(asI.hasNext() ? asI.next() : (createArmorStand()));
+            render.entities.add(asI.hasNext() ? asI.next() : createArmorStand());
+            render.removed.addAll(armorStands);
+            render.removed.addAll(silverfish);
+            render.removed.addAll(slimes);
             armorStands.clear();
             silverfish.clear();
             slimes.clear();
+        } else {
+            render.entities.addAll(this.entities);
         }
-        if (forWho == null) return this.entities;
-        int idx = base.size();
-        for (TagLine t : tagLines) {
-            this.entities.get(idx).setWatcher(PacketUtil.createWatcher(new HashMap<Integer, Object>() {{
-                put(0, (byte) 32);
-                put(2, t.getCached() != null ? t.getCached() : "");
-                put(3, t.getCached() != null);
-                put(4, true);
-                put(11, (byte) 16);
-            }}));
-            idx += 4;
-        }
-        this.entities.get(idx).setWatcher(PacketUtil.createWatcher(new HashMap<Integer, Object>() {{
-            put(0, (byte) 32);
-            put(2, getName(forWhat.getCustomName() != null && forWhat.getType() != EntityType.PLAYER ? forWhat
-                    .getCustomName() : forWhat.getName(), forWhat));
-            put(3, forWhat.isCustomNameVisible() || forWhat.getType().equals(EntityType.PLAYER));
-            put(4, true);
-            put(11, (byte) 16);
-        }}));
-        return this.entities;
     }
 
     public String getName(String entityName, Entity forWhat) {
-        this.tagControllers.sort((o1, o2) -> Integer.compare(o2.getPriority(), o1.getPriority()));
+        this.tagControllers.sort((o1, o2) -> Integer.compare(o2.getNamePriority(), o1.getNamePriority()));
         for (TagController t : tagControllers) {
             entityName = t.getName(forWhat).replace("`PREV`", entityName);
         }
         return entityName;
     }
 
-    public LinkedList<PacketUtil.FakeEntity> last() {
+    public List<PacketUtil.FakeEntity> last() {
         return entities;
     }
 
@@ -139,5 +153,23 @@ public class Tag {
             put(4, true);
             put(11, (byte) 16);
         }}));
+    }
+
+    public static class TagRender {
+        private final List<PacketUtil.FakeEntity> removed;
+        private final List<PacketUtil.FakeEntity> entities;
+
+        TagRender() {
+            this.removed = Lists.newLinkedList();
+            this.entities = Lists.newLinkedList();
+        }
+
+        public List<PacketUtil.FakeEntity> getRemoved() {
+            return removed;
+        }
+
+        public List<PacketUtil.FakeEntity> getEntities() {
+            return entities;
+        }
     }
 }

@@ -12,6 +12,7 @@ import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import net.blitzcube.mlapi.MultiLineAPI;
+import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.mlapi.util.EntityUtil;
 import net.blitzcube.mlapi.util.HitboxUtil;
 import net.blitzcube.mlapi.util.PacketUtil;
@@ -25,7 +26,7 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -70,7 +71,7 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
             Entity e = EntityUtil.getEntities(p, 1, packet.getIntegers().read(0)).findAny().orElse(null);
             if (e == null) return;
             int[] passengers = packet.getIntegerArrays().read(0);
-            LinkedList<PacketUtil.FakeEntity> stack = plugin.tags.get(e.getUniqueId()).last();
+            List<PacketUtil.FakeEntity> stack = plugin.tags.get(e.getUniqueId()).last();
             if (stack == null || stack.isEmpty()) return;
             if (passengers.length == 0) {
                 spawnStack(p, e).forEach(packetContainer -> packetEvent.schedule(new ScheduledPacket(packetContainer,
@@ -102,11 +103,11 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
         }
     }
 
-    void spawnAllStacks(Player forWho, boolean bypassGamemode) {
+    void spawnAllStacks(Player forWho, boolean bypassGameMode) {
         Set<PacketContainer> spawnPackets = Sets.newHashSet();
         EntityUtil.getEntities(forWho, 1)
                 .filter(entity -> plugin.tags.containsKey(entity.getUniqueId()))
-                .forEach(entity -> spawnPackets.addAll(spawnStack(forWho, entity, bypassGamemode)));
+                .forEach(entity -> spawnPackets.addAll(spawnStack(forWho, entity, bypassGameMode)));
         Bukkit.getScheduler().runTaskLater(plugin, () -> spawnPackets.forEach(packetContainer -> {
             try {
                 manager.sendServerPacket(forWho, packetContainer);
@@ -137,11 +138,18 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
         if (forWhat == null || !plugin.tags.containsKey(forWhat.getUniqueId()) || !VisibilityUtil.isViewable(forWho,
                 forWhat, bypassGamemode))
             return Sets.newHashSet();
-        LinkedList<PacketUtil.FakeEntity> stack = plugin.tags.get(forWhat.getUniqueId()).render(forWhat, forWho);
+        Tag.TagRender render = plugin.tags.get(forWhat.getUniqueId()).render(forWhat, forWho);
         Set<PacketContainer> mount = Sets.newHashSet();
         PacketUtil.FakeEntity last = null;
-        for (PacketUtil.FakeEntity e : stack) {
-            this.tagMap.put(e.getEntityId(), forWhat.getUniqueId());
+        render.getRemoved().forEach((e) -> this.tagMap.remove(e.getEntityId()));
+        try {
+            manager.sendServerPacket(forWho, PacketUtil.getDespawnPacket(render.getRemoved().toArray(new PacketUtil
+                    .FakeEntity[render.getRemoved().size()])));
+        } catch (InvocationTargetException e1) {
+            plugin.getLogger().severe("Failed to send despawn packet to " + forWho.getName());
+        }
+        for (PacketUtil.FakeEntity e : render.getEntities()) {
+            this.tagMap.putIfAbsent(e.getEntityId(), forWhat.getUniqueId());
             for (PacketContainer c : PacketUtil.getSpawnPacket(e, forWhat instanceof LivingEntity ? ((LivingEntity)
                     forWhat).getEyeLocation() : forWhat.getLocation())) {
                 try {
@@ -160,9 +168,9 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
         return mount;
     }
 
-    void despawnStack(Player forWho, Entity forWhat) {
+    public void despawnStack(Player forWho, Entity forWhat) {
         if (!plugin.tags.containsKey(forWhat.getUniqueId())) return;
-        LinkedList<PacketUtil.FakeEntity> stack = plugin.tags.get(forWhat.getUniqueId()).last();
+        List<PacketUtil.FakeEntity> stack = plugin.tags.get(forWhat.getUniqueId()).last();
         if (stack == null || stack.isEmpty()) return;
         try {
             manager.sendServerPacket(forWho, PacketUtil.getDespawnPacket(stack.toArray(new PacketUtil

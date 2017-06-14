@@ -7,7 +7,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Class by iso2013 @ 2017.
@@ -19,9 +19,9 @@ import java.util.LinkedList;
  */
 
 public class ExampleTagController extends net.blitzcube.mlapi.tag.TagController {
-    LinkedList<TagLine> lines;
+    final List<TagLine> lines;
 
-    public ExampleTagController() {
+    ExampleTagController() {
         lines = Lists.newLinkedList();
         lines.add(new TagLine() {
             @Override

@@ -21,4 +21,6 @@ public abstract class TagController {
     public int getPriority() {
         return 0;
     }
+
+    public int getNamePriority() { return 0; }
 }

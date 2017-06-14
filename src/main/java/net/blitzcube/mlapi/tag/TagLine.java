@@ -20,8 +20,9 @@ public abstract class TagLine {
         return this.line;
     }
 
-    final void setLine(PacketUtil.FakeEntity line) {
+    final PacketUtil.FakeEntity setLine(PacketUtil.FakeEntity line) {
         this.line = line;
+        return line;
     }
 
     final String getCached() {
