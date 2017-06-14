@@ -1,9 +1,9 @@
 package net.blitzcube.mlapi.tag;
 
+import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import net.blitzcube.mlapi.util.PacketUtil;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -12,7 +12,7 @@ import java.util.*;
 
 /**
  * Class by iso2013 @ 2017.
- *
+ * <p>
  * Licensed under LGPLv3. See LICENSE.txt for more information.
  * You may copy, distribute and modify the software provided that modifications are described and licensed for free
  * under LGPL. Derivatives works (including modifications or anything statically linked to the library) can only be
@@ -20,16 +20,27 @@ import java.util.*;
  */
 
 public class Tag {
+    private static final Map<Integer, Object> armorStand = new HashMap<Integer, Object>() {{
+        put(0, (byte) 32);
+        put(4, true);
+        put(11, (byte) 16);
+    }};
     public final List<TagController> tagControllers;
-
     private final List<PacketUtil.FakeEntity> base;
     private List<PacketUtil.FakeEntity> entities;
-
     public Tag() {
         this.tagControllers = Lists.newArrayList();
         this.base = Lists.newArrayList();
         this.entities = Lists.newLinkedList();
         base.add(createSilverfish());
+    }
+
+    private static WrappedDataWatcher createArmorStandWatcher(String name, boolean visible) {
+        return PacketUtil.createWatcher(new HashMap<Integer, Object>() {{
+            putAll(armorStand);
+            put(2, name);
+            put(3, visible);
+        }});
     }
 
     public TagRender render(Entity forWhat, Player forWho) {
@@ -50,28 +61,18 @@ public class Tag {
         if (forWho == null) return render;
         int idx = base.size();
         for (TagLine t : tagLines) {
-            Bukkit.broadcastMessage(t.getCached());
-            render.entities.get(idx).setWatcher(PacketUtil.createWatcher(new HashMap<Integer, Object>() {{
-                put(0, (byte) 32);
-                put(2, t.getCached() != null ? t.getCached() : "");
-                put(3, t.getCached() != null);
-                put(4, true);
-                put(11, (byte) 16);
-            }}));
+            render.entities.get(idx).setWatcher(createArmorStandWatcher(t.getCached() != null ? t.getCached() : "", t
+                    .getCached() != null));
             idx += 4;
         }
-        render.entities.get(idx).setWatcher(PacketUtil.createWatcher(new HashMap<Integer, Object>() {{
-            put(0, (byte) 32);
-            put(2, getName(forWhat.getCustomName() != null && forWhat.getType() != EntityType.PLAYER ? forWhat
-                    .getCustomName() : forWhat.getName(), forWhat));
-            put(3, forWhat.isCustomNameVisible() || forWhat.getType().equals(EntityType.PLAYER));
-            put(4, true);
-            put(11, (byte) 16);
-        }}));
+        render.entities.get(idx).setWatcher(createArmorStandWatcher(getName(forWhat.getCustomName() != null &&
+                forWhat.getType() != EntityType.PLAYER ? forWhat
+                .getCustomName() : forWhat.getName(), forWhat), forWhat.isCustomNameVisible() || forWhat.getType()
+                .equals(EntityType.PLAYER)));
         return render;
     }
 
-    public void stackEntities(TagRender render, List<TagLine> lines) {
+    private void stackEntities(TagRender render, List<TagLine> lines) {
         if (this.entities.size() != base.size() + 1 + (lines.size() * 4)) {
             this.entities.removeAll(base);
             Set<PacketUtil.FakeEntity> armorStands = Sets.newHashSet(),
@@ -113,7 +114,7 @@ public class Tag {
         }
     }
 
-    public String getName(String entityName, Entity forWhat) {
+    private String getName(String entityName, Entity forWhat) {
         this.tagControllers.sort((o1, o2) -> Integer.compare(o2.getNamePriority(), o1.getNamePriority()));
         for (TagController t : tagControllers) {
             entityName = t.getName(forWhat).replace("`PREV`", entityName);

@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * Class by iso2013 @ 2017.
- *
+ * <p>
  * Licensed under LGPLv3. See LICENSE.txt for more information.
  * You may copy, distribute and modify the software provided that modifications are described and licensed for free
  * under LGPL. Derivatives works (including modifications or anything statically linked to the library) can only be
@@ -21,8 +21,8 @@ import java.util.List;
  */
 
 public class VisibilityUtil {
-    static boolean vanishNoPacket;
-    static org.kitteh.vanish.VanishManager manager;
+    private static boolean vanishNoPacket;
+    private static org.kitteh.vanish.VanishManager manager;
 
     public static void init(JavaPlugin parent) {
         vanishNoPacket = parent.getServer().getPluginManager().isPluginEnabled("VanishNoPacket");
@@ -34,11 +34,10 @@ public class VisibilityUtil {
     public static boolean isMetadataInvisible(List<WrappedWatchableObject> metadata) {
         WrappedWatchableObject ob = metadata.stream().filter(wrappedWatchableObject -> wrappedWatchableObject
                 .getIndex() == 0).findAny().orElse(null);
-        if (ob == null) return false;
-        return (((Byte) ob.getRawValue()) & 0x20) > 0;
+        return ob != null && (((Byte) ob.getRawValue()) & 0x20) > 0;
     }
 
-    public static boolean isViewable(Player viewer, Entity target, boolean bypassGamemode) {
+    public static boolean isViewable(Player viewer, Entity target, boolean bypassGameMode) {
         if (target instanceof Player) {
             if (vanishNoPacket) {
                 if (manager.isVanished((Player) target)) return false;
@@ -49,7 +48,6 @@ public class VisibilityUtil {
         if (target instanceof LivingEntity) {
             if (((LivingEntity) target).hasPotionEffect(PotionEffectType.INVISIBILITY)) return false;
         }
-        if (viewer.getGameMode() == GameMode.SPECTATOR && !bypassGamemode) return false;
-        return true;
+        return !(viewer.getGameMode() == GameMode.SPECTATOR && !bypassGameMode);
     }
 }

@@ -15,7 +15,7 @@ import java.util.Map;
 
 /**
  * Class by iso2013 @ 2017.
- *
+ * <p>
  * Licensed under LGPLv3. See LICENSE.txt for more information.
  * You may copy, distribute and modify the software provided that modifications are described and licensed for free
  * under LGPL. Derivatives works (including modifications or anything statically linked to the library) can only be
@@ -23,7 +23,8 @@ import java.util.Map;
  */
 
 public class HitboxUtil {
-    private static Map<EntityType, BoundingBoxWrapper> boxes = Maps.newHashMap();
+    //I really wanted to name this boxen. https://youtu.be/QWzYaZDK6Is?t=122
+    private static final Map<EntityType, BoundingBoxWrapper> boxes = Maps.newHashMap();
 
     //Algorithm adapted from http://gamedev.stackexchange.com/a/18459
     public static boolean isLookingAt(Player player, Entity entity) {

@@ -6,14 +6,18 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class by iso2013 @ 2017.
- *
+ * <p>
  * Licensed under LGPLv3. See LICENSE.txt for more information.
  * You may copy, distribute and modify the software provided that modifications are described and licensed for free
  * under LGPL. Derivatives works (including modifications or anything statically linked to the library) can only be
@@ -49,9 +53,11 @@ public class PacketUtil {
         put(EntityType.DRAGON_FIREBALL, 93);
     }};
     private static ProtocolManager manager;
+    private static Logger errorLogger;
 
-    public static void init(ProtocolManager manager) {
+    public static void init(ProtocolManager manager, Logger errorLogger) {
         PacketUtil.manager = manager;
+        PacketUtil.errorLogger = errorLogger;
     }
 
     public static PacketContainer[] getSpawnPacket(FakeEntity entity, Location l) {
@@ -138,6 +144,20 @@ public class PacketUtil {
         }
         return watcher;
     }
+
+    public static boolean trySend(PacketContainer packet, Player destination, Level importance, boolean filters) {
+        if (destination == null) return false;
+        try {
+            manager.sendServerPacket(destination, packet);
+            return true;
+        } catch (InvocationTargetException e) {
+            errorLogger.log(importance, "Failed to send packet of type " + packet.getType().name() + " to player " +
+                    destination.getName() + "!");
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 
     public static class FakeEntity {
         private static int lastId = -1;

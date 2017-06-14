@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * Class by iso2013 @ 2017.
- *
+ * <p>
  * Licensed under LGPLv3. See LICENSE.txt for more information.
  * You may copy, distribute and modify the software provided that modifications are described and licensed for free
  * under LGPL. Derivatives works (including modifications or anything statically linked to the library) can only be
@@ -19,7 +19,7 @@ import java.util.List;
  */
 
 public class ExampleTagController extends net.blitzcube.mlapi.tag.TagController {
-    final List<TagLine> lines;
+    private final List<TagLine> lines;
 
     ExampleTagController() {
         lines = Lists.newLinkedList();
