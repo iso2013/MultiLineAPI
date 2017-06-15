@@ -148,7 +148,7 @@ public class PacketUtil {
     public static boolean trySend(PacketContainer packet, Player destination, Level importance, boolean filters) {
         if (destination == null) return false;
         try {
-            manager.sendServerPacket(destination, packet);
+            manager.sendServerPacket(destination, packet, filters);
             return true;
         } catch (InvocationTargetException e) {
             errorLogger.log(importance, "Failed to send packet of type " + packet.getType().name() + " to player " +
