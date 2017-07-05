@@ -50,7 +50,7 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
         this.tagMap = Maps.newHashMap();
         ProtocolManager manager = ProtocolLibrary.getProtocolManager();
         manager.addPacketListener(this);
-        PacketUtil.init(manager, plugin.getLogger());
+        PacketUtil.init(manager, plugin.getLogger(), false);
     }
 
     @Override

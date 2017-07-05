@@ -1,7 +1,11 @@
 package net.blitzcube.mlapi.tag;
 
+import com.google.common.collect.Maps;
 import net.blitzcube.mlapi.util.PacketUtil;
 import org.bukkit.entity.Player;
+
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Class by iso2013 @ 2017.
@@ -13,16 +17,20 @@ import org.bukkit.entity.Player;
  */
 
 public abstract class TagLine {
-    private PacketUtil.FakeEntity line;
+    private Map<UUID, PacketUtil.FakeEntity> line = Maps.newHashMap();
     private String cached;
 
-    final PacketUtil.FakeEntity getLine() {
-        return this.line;
+    final PacketUtil.FakeEntity getLine(UUID entity) {
+        return this.line.get(entity);
     }
 
-    final PacketUtil.FakeEntity setLine(PacketUtil.FakeEntity line) {
-        this.line = line;
+    final PacketUtil.FakeEntity setLine(PacketUtil.FakeEntity line, UUID entity) {
+        this.line.put(entity, line);
         return line;
+    }
+
+    final PacketUtil.FakeEntity removeLine(UUID entity) {
+        return this.line.remove(entity);
     }
 
     final String getCached() {

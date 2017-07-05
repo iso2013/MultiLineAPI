@@ -4,11 +4,15 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -16,11 +20,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Class by iso2013 @ 2017.
+ * Class by iso2013 © 2017.
  * <p>
- * Licensed under LGPLv3. See LICENSE.txt for more information.
+ * Licensed under LGPLv3. See https://opensource.org/licenses/lgpl-3.0.html for more information.
  * You may copy, distribute and modify the software provided that modifications are described and licensed for free
- * under LGPL. Derivatives works (including modifications or anything statically linked to the library) can only be
+ * under LGPL. Derivative works (including modifications or anything statically linked to the library) can only be
  * redistributed under LGPL, but applications that use the library don't have to be.
  */
 
@@ -54,10 +58,25 @@ public class PacketUtil {
     }};
     private static ProtocolManager manager;
     private static Logger errorLogger;
+    private static Field entityID;
+    private static int fallbackId = -1;
+    private static Method getISNMSCopy;
 
-    public static void init(ProtocolManager manager, Logger errorLogger) {
+    public static void init(ProtocolManager manager, Logger errorLogger, boolean itemSupport) {
         PacketUtil.manager = manager;
         PacketUtil.errorLogger = errorLogger;
+        String version = Bukkit.getServer().getClass().getPackage().getName();
+        version = version.substring(version.lastIndexOf('.') + 1);
+        try {
+            entityID = Class.forName("net.minecraft.server." + version + ".Entity").getDeclaredField("entityCount");
+            if (!entityID.isAccessible()) entityID.setAccessible(true);
+            if (!itemSupport) return;
+            getISNMSCopy = Class.forName("org.bukkit.craftbukkit." + version + ".inventory.CraftItemStack")
+                    .getDeclaredMethod("asNMSCopy", ItemStack.class);
+        } catch (NoSuchMethodException | ClassNotFoundException | NoSuchFieldException e) {
+            entityID = null;
+            getISNMSCopy = null;
+        }
     }
 
     public static PacketContainer[] getSpawnPacket(FakeEntity entity, Location l) {
@@ -140,6 +159,16 @@ public class PacketUtil {
     public static WrappedDataWatcher createWatcher(Map<Integer, Object> data) {
         WrappedDataWatcher watcher = new WrappedDataWatcher();
         for (Map.Entry<Integer, Object> e : data.entrySet()) {
+            if (e.getValue().getClass() == org.bukkit.inventory.ItemStack.class) {
+                if (getISNMSCopy == null) throw new IllegalArgumentException("Not enabled for item support.");
+                try {
+                    watcher.setObject(e.getKey(), WrappedDataWatcher.Registry.getItemStackSerializer(false),
+                            getISNMSCopy.invoke(null, e.getValue()));
+                } catch (IllegalAccessException | InvocationTargetException e1) {
+                    e1.printStackTrace();
+                }
+                continue;
+            }
             watcher.setObject(e.getKey(), WrappedDataWatcher.Registry.get(e.getValue().getClass()), e.getValue());
         }
         return watcher;
@@ -158,10 +187,18 @@ public class PacketUtil {
         return false;
     }
 
+    private static int getNextEntityID() {
+        try {
+            int id = entityID.getInt(null);
+            entityID.setInt(null, id + 1);
+            return id;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return fallbackId--;
+    }
 
     public static class FakeEntity {
-        private static int lastId = -1;
-
         private final int entityId, typeId, objectData;
         private final UUID uniqueId;
         private final EntityType type;
@@ -182,8 +219,7 @@ public class PacketUtil {
         }
 
         public FakeEntity(EntityType type, int objectData, WrappedDataWatcher metadata) {
-            lastId = lastId - 1;
-            this.entityId = lastId;
+            this.entityId = getNextEntityID();
             this.uniqueId = UUID.randomUUID();
             this.type = type;
             this.typeId = objects.containsKey(type) ? objects.get(type) : type.getTypeId();
