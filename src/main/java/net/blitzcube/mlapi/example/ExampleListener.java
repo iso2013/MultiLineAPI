@@ -1,9 +1,10 @@
 package net.blitzcube.mlapi.example;
 
 import net.blitzcube.mlapi.MultiLineAPI;
-import net.blitzcube.mlapi.tag.Tag;
+import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 
 /**
@@ -16,11 +17,23 @@ import org.bukkit.event.player.PlayerJoinEvent;
  */
 
 public class ExampleListener implements Listener {
+    private ExampleTagController tg = new ExampleTagController();
+
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
-        Tag t = new Tag();
-        MultiLineAPI.tags.put(e.getPlayer().getUniqueId(), t);
-        t.tagControllers.add(new ExampleTagController());
-        t.tagControllers.add(new ExampleSecondTagController());
+        MultiLineAPI.enable(e.getPlayer());
+        MultiLineAPI.addTagControllers(e.getPlayer(), new ExampleSecondTagController(), tg);
+    }
+
+    @EventHandler
+    public void onAsyncPlayerChatEvent(AsyncPlayerChatEvent e) {
+        tg.lastMessage = e.getMessage();
+        MultiLineAPI.refreshForAll(e.getPlayer());
+        Bukkit.getScheduler().runTaskLater(Bukkit.getPluginManager().getPlugin("MultiLineAPI"),
+                () -> {
+                    tg.lastMessage = null;
+                    MultiLineAPI.refreshForAll(e.getPlayer());
+                }, 200L
+        );
     }
 }

@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,7 @@ public class EntityUtil {
         highest *= distanceMultiplier;
         List<Integer> ids = Lists.newArrayList();
         for (int i : entityIds) ids.add(i);
-        return forWho.getNearbyEntities(highest, highest, highest).stream()
+        return forWho.getNearbyEntities(highest, 255, highest).stream()
                 .filter(entity -> ids.size() <= 0 || ids.contains(entity.getEntityId()));
     }
 
@@ -59,7 +60,16 @@ public class EntityUtil {
         double highest = entityDistances.containsKey(forWho.getWorld().getName()) ?
                 entityDistances.get(forWho.getWorld().getName()) : entityDistances.get("default");
         highest *= distanceMultiplier;
-        return forWho.getNearbyEntities(highest, highest, highest).stream()
+        return forWho.getNearbyEntities(highest, 255, highest).stream()
                 .filter(entity -> entity.getUniqueId().equals(uuid));
+    }
+
+    public static boolean isInRange(Entity e, Player p, double distanceMultiplier) {
+        if (!e.getWorld().getUID().equals(p.getWorld().getUID())) return false;
+        double highest = entityDistances.containsKey(e.getWorld().getName()) ?
+                entityDistances.get(p.getWorld().getName()) : entityDistances.get("default");
+        highest *= distanceMultiplier;
+        return Math.abs(e.getLocation().getX() - p.getLocation().getX()) < highest
+                && Math.abs(e.getLocation().getZ() - p.getLocation().getZ()) < highest;
     }
 }

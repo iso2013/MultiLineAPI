@@ -1,7 +1,10 @@
 package net.blitzcube.mlapi.tag;
 
+import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import net.blitzcube.mlapi.util.PacketUtil;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -28,12 +31,16 @@ public class Tag {
     private final List<PacketUtil.FakeEntity> base;
     private final List<PacketUtil.FakeEntity> entities;
     private final List<TagLine> lines;
+    private final Map<UUID, Boolean> hiddenFor;
+    private PacketUtil.FakeEntity name;
+    private boolean hiddenForAll;
 
     public Tag() {
         this.tagControllers = Lists.newArrayList();
         this.lines = Lists.newArrayList();
         this.entities = Lists.newArrayList();
         this.base = Lists.newArrayList();
+        this.hiddenFor = Maps.newHashMap();
         base.add(createSilverfish());
     }
 
@@ -65,65 +72,94 @@ public class Tag {
         if (forWhat == null) return render;
         List<TagLine> newLines = getLines(forWhat, forWho);
         this.lines.removeAll(newLines);
-        newLines.stream().filter((l) -> l.getLine(forWhat.getUniqueId()) == null).forEach(l -> l.setLine
-                (createArmorStand(), forWhat.getUniqueId()));
+        final boolean[] created = {false};
+        newLines.stream().filter((l) -> l.getLine(forWhat.getUniqueId()) == null).forEach(l -> {
+            l.setLine(createArmorStand(), forWhat.getUniqueId());
+            created[0] = true;
+        });
         this.lines.forEach(tagLine -> render.removed.add(tagLine.removeLine(forWhat.getUniqueId())));
         this.lines.clear();
         this.lines.addAll(newLines);
-        entities.removeAll(base);
-        Iterator<PacketUtil.FakeEntity> sIterator = entities.iterator();
-        PacketUtil.FakeEntity nameLine = null;
-        for (PacketUtil.FakeEntity s; sIterator.hasNext(); ) {
-            s = sIterator.next();
-            if (s.getType().equals(EntityType.ARMOR_STAND)) {
-                if (newLines.size() < 1) {
+        if (render.removed.size() > 0 || created[0]) {
+            entities.removeAll(base);
+            Iterator<PacketUtil.FakeEntity> sIterator = entities.iterator();
+            PacketUtil.FakeEntity nameLine = null;
+            for (PacketUtil.FakeEntity s; sIterator.hasNext(); ) {
+                s = sIterator.next();
+                if (s.getType().equals(EntityType.ARMOR_STAND)) {
+                    if (newLines.size() < 1) {
+                        render.entities.add(s);
+                        nameLine = s;
+                        sIterator.remove();
+                        break;
+                    }
+                    render.entities.add(newLines.remove(0).getLine(forWhat.getUniqueId()));
+                    render.removed.add(s);
+                } else {
                     render.entities.add(s);
-                    nameLine = s;
-                    break;
                 }
-                render.entities.add(newLines.remove(0).getLine(forWhat.getUniqueId()));
-            } else {
-                render.entities.add(s);
+                sIterator.remove();
             }
-            sIterator.remove();
+            for (TagLine line : newLines) {
+                render.entities.add(createSilverfish());
+                render.entities.add(createSilverfish());
+                render.entities.add(createSlime());
+                render.entities.add(line.getLine(forWhat.getUniqueId()));
+            }
+            if (nameLine == null) {
+                nameLine = createArmorStand();
+                render.entities.add(createSilverfish());
+                render.entities.add(createSilverfish());
+                render.entities.add(createSlime());
+                render.entities.add(nameLine);
+            }
+            for (PacketUtil.FakeEntity e : base) {
+                render.entities.add(0, e);
+            }
+            render.removed.addAll(entities);
+            this.entities.clear();
+            this.entities.addAll(render.entities);
+            this.name = nameLine;
         }
-        for (TagLine line : newLines) {
-            render.entities.add(createSilverfish());
-            render.entities.add(createSilverfish());
-            render.entities.add(createSlime());
-            render.entities.add(line.getLine(forWhat.getUniqueId()));
-        }
-        if (nameLine == null) {
-            nameLine = createArmorStand();
-            render.entities.add(createSilverfish());
-            render.entities.add(createSilverfish());
-            render.entities.add(createSlime());
-            render.entities.add(nameLine);
-        }
-        for (PacketUtil.FakeEntity e : base) {
-            render.entities.add(0, e);
-        }
-        render.removed.addAll(entities);
-        entities.clear();
-        this.entities.addAll(render.entities);
         for (TagLine t : this.lines) {
             t.getLine(forWhat.getUniqueId()).setWatcher(createArmorStandWatcher(t.getCached() != null ? t.getCached()
                     : "", t.getCached() != null));
         }
-        nameLine.setWatcher(createArmorStandWatcher(
+        this.name.setWatcher(createArmorStandWatcher(
                 getName((forWhat.getCustomName() != null && forWhat.getType() != EntityType.PLAYER) ?
-                        forWhat.getCustomName() : forWhat.getName(), forWhat),
+                        forWhat.getCustomName() : forWhat.getName(), forWhat, forWho),
                 forWhat.isCustomNameVisible() || forWhat.getType().equals(EntityType.PLAYER)
         ));
         return render;
     }
 
+    public Set<PacketContainer> refreshLines(Entity forWhat, Player forWho) {
+        Set<PacketContainer> packets = Sets.newHashSet();
+        for (TagLine l : lines) {
+            if (l.getLine(forWhat.getUniqueId()) == null) continue;
+            l.setCached(l.getText(forWho));
+            l.getLine(forWhat.getUniqueId()).setWatcher(createArmorStandWatcher(l.getCached() != null ? l.getCached()
+                            : "",
+                    l.getCached() != null));
+            packets.add(PacketUtil.getMetadataPacket(l.getLine(forWhat.getUniqueId())));
+        }
+        return packets;
+    }
 
+    public PacketContainer refreshName(Entity forWhat, Player forWho) {
+        if (this.name == null) return null;
+        this.name.setWatcher(createArmorStandWatcher(
+                getName((forWhat.getCustomName() != null && forWhat.getType() != EntityType.PLAYER) ?
+                        forWhat.getCustomName() : forWhat.getName(), forWhat, forWho),
+                forWhat.isCustomNameVisible() || forWhat.getType().equals(EntityType.PLAYER)
+        ));
+        return PacketUtil.getMetadataPacket(name);
+    }
 
-    private String getName(String entityName, Entity forWhat) {
+    private String getName(String entityName, Entity forWhat, Player forWho) {
         this.tagControllers.sort((o1, o2) -> Integer.compare(o2.getNamePriority(), o1.getNamePriority()));
         for (TagController t : tagControllers) {
-            entityName = t.getName(forWhat).replace("`PREV`", entityName);
+            entityName = t.getName(forWhat, forWho).replace("`PREV`", entityName);
         }
         return entityName;
     }
@@ -160,6 +196,29 @@ public class Tag {
             put(4, true);
             put(11, (byte) 16);
         }}));
+    }
+
+    public void setHidden(UUID u, Boolean val) {
+        hiddenFor.put(u, val);
+    }
+
+    public boolean isHiddenForAll() {
+        return hiddenForAll;
+    }
+
+    public void setHiddenForAll(boolean hiddenForAll) {
+        this.hiddenForAll = hiddenForAll;
+    }
+
+    public boolean isVisible(UUID u) {
+        if (hiddenFor.containsKey(u) && hiddenFor.get(u) != null) {
+            return hiddenFor.get(u);
+        }
+        return hiddenForAll;
+    }
+
+    public boolean isHiddenFor(UUID uniqueId) {
+        return hiddenFor.get(uniqueId);
     }
 
     public static class TagRender {

@@ -24,9 +24,8 @@ public abstract class TagLine {
         return this.line.get(entity);
     }
 
-    final PacketUtil.FakeEntity setLine(PacketUtil.FakeEntity line, UUID entity) {
+    final void setLine(PacketUtil.FakeEntity line, UUID entity) {
         this.line.put(entity, line);
-        return line;
     }
 
     final PacketUtil.FakeEntity removeLine(UUID entity) {

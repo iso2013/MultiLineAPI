@@ -140,10 +140,10 @@ public class PacketUtil {
         return packet;
     }
 
-    public static PacketContainer getPassengerPacket(int entity, int... passengers) {
+    public static PacketContainer getPassengerPacket(int entity, FakeEntity passenger) {
         PacketContainer packet = manager.createPacket(PacketType.Play.Server.MOUNT);
         packet.getIntegers().write(0, entity);
-        packet.getIntegerArrays().write(0, passengers);
+        packet.getIntegerArrays().write(0, new int[]{passenger.getEntityId()});
         return packet;
     }
 

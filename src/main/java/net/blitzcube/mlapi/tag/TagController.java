@@ -1,6 +1,7 @@
 package net.blitzcube.mlapi.tag;
 
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 
 import java.util.Collection;
 
@@ -16,7 +17,7 @@ import java.util.Collection;
 public abstract class TagController {
     public abstract Collection<? extends TagLine> getLines(Entity forWhat);
 
-    public abstract String getName(Entity forWhat);
+    public abstract String getName(Entity forWhat, Player forWho);
 
     public int getPriority() {
         return 0;

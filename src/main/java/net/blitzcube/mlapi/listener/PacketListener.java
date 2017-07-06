@@ -42,6 +42,8 @@ import java.util.logging.Level;
 
 public class PacketListener implements com.comphenix.protocol.events.PacketListener {
     private static final String INVISIBLE_CONST = "MLAPI_INVISIBLE";
+    private static final double LINE_OFFSET = 0.065;
+    private static final double LINE_START = 0.065;
     private final MultiLineAPI plugin;
     private final Map<Integer, UUID> tagMap;
 
@@ -70,19 +72,19 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
             Entity e = EntityUtil.getEntities(p, 1.05, packet.getIntegers().read(0)).findAny().orElse(null);
             if (e == null) return;
             int[] passengers = packet.getIntegerArrays().read(0);
-            List<PacketUtil.FakeEntity> stack = MultiLineAPI.tags.get(e.getUniqueId()).last();
+            List<PacketUtil.FakeEntity> stack = plugin.tags.get(e.getUniqueId()).last();
             if (stack == null || stack.isEmpty()) return;
             if (passengers.length == 0) {
                 spawnStack(p, e).forEach(packetContainer -> packetEvent.schedule(new ScheduledPacket(packetContainer,
                         p, false)));
             } else if (passengers.length > 1 || passengers.length == 1 && stack.size() >= 1 && stack.get(0)
                     .getEntityId() != passengers[0]) {
-                despawnStack(p, e);
+                despawnStack(p, e.getUniqueId());
             }
         } else if (packet.getType().equals(PacketType.Play.Server.ENTITY_DESTROY)) {
             EntityUtil.getEntities(p, 1, packet.getIntegerArrays().read(0))
-                    .filter(entity -> MultiLineAPI.tags.containsKey(entity.getUniqueId()))
-                    .forEach(entity -> despawnStack(p, entity));
+                    .filter(e -> plugin.tags.containsKey(e.getUniqueId()))
+                    .forEach(e -> despawnStack(p, e.getUniqueId()));
         } else if (packet.getType().equals(PacketType.Play.Server.ENTITY_METADATA)) {
             boolean invisible = VisibilityUtil.isMetadataInvisible(packet.getWatchableCollectionModifier().read(0));
             Entity e = EntityUtil.getEntities(p, 1, packet.getIntegers().read(0)).findAny().orElse(null);
@@ -91,22 +93,22 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
             e.removeMetadata(INVISIBLE_CONST, this.plugin);
             if (invisible != current) {
                 if (invisible) {
-                    despawnStack(p, e);
+                    despawnStack(p, e.getUniqueId());
                 } else {
-                    spawnStack(p, e).forEach(packetContainer -> packetEvent.schedule(new ScheduledPacket
-                            (packetContainer,
-                                    p, false)));
+                    Set<PacketContainer> pc = spawnStack(p, e);
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> pc.forEach(packetContainer -> PacketUtil.trySend
+                            (packetContainer, p, Level.SEVERE, false)), 1L);
                 }
                 e.setMetadata(INVISIBLE_CONST, new FixedMetadataValue(this.plugin, invisible));
             }
         }
     }
 
-    void spawnAllStacks(Player forWho, boolean bypassGameMode) {
+    void spawnAllStacks(Player forWho) {
         Set<PacketContainer> spawnPackets = Sets.newHashSet();
         EntityUtil.getEntities(forWho, 1.05)
-                .filter(entity -> MultiLineAPI.tags.containsKey(entity.getUniqueId()))
-                .forEach(entity -> spawnPackets.addAll(spawnStack(forWho, entity, bypassGameMode)));
+                .filter(entity -> plugin.tags.containsKey(entity.getUniqueId()))
+                .forEach(entity -> spawnPackets.addAll(spawnStack(forWho, entity, true)));
         Bukkit.getScheduler().runTaskLater(plugin, () -> spawnPackets.forEach(c -> PacketUtil.trySend(c, forWho,
                 Level.WARNING, false)), 1L);
     }
@@ -114,8 +116,8 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
     void despawnAllStacks(Player forWho) {
         Set<PacketUtil.FakeEntity> mount = Sets.newHashSet();
         EntityUtil.getEntities(forWho, 1.05)
-                .filter(entity -> MultiLineAPI.tags.containsKey(entity.getUniqueId()))
-                .forEach(entity -> mount.addAll(MultiLineAPI.tags.get(entity.getUniqueId()).last()));
+                .filter(entity -> plugin.tags.containsKey(entity.getUniqueId()))
+                .forEach(entity -> mount.addAll(plugin.tags.get(entity.getUniqueId()).last()));
         PacketUtil.trySend(
                 PacketUtil.getDespawnPacket(mount.toArray(new PacketUtil.FakeEntity[mount.size()])),
                 forWho, Level.SEVERE,
@@ -123,41 +125,73 @@ public class PacketListener implements com.comphenix.protocol.events.PacketListe
         );
     }
 
-    private Set<PacketContainer> spawnStack(Player forWho, Entity forWhat) {
+    public void spawnStackAndSend(Player forWho, Entity forWhat) {
+        Set<PacketContainer> spawnPackets = Sets.newHashSet();
+        spawnPackets.addAll(spawnStack(forWho, forWhat));
+        Bukkit.getScheduler().runTaskLater(plugin, () -> spawnPackets.forEach(c -> PacketUtil.trySend(c, forWho,
+                Level.SEVERE, false)), 1L);
+    }
+
+    public Set<PacketContainer> spawnStack(Player forWho, Entity forWhat) {
         return spawnStack(forWho, forWhat, false);
     }
 
     private Set<PacketContainer> spawnStack(Player forWho, Entity forWhat, boolean bypassGamemode) {
-        if (forWhat == null || !MultiLineAPI.tags.containsKey(forWhat.getUniqueId()) || !VisibilityUtil.isViewable
-                (forWho,
-                forWhat, bypassGamemode))
+        if (forWhat == null || !plugin.tags.containsKey(forWhat.getUniqueId())
+                || plugin.tags.get(forWhat.getUniqueId()).isVisible(forWho.getUniqueId())
+                || !VisibilityUtil.isViewable(forWho, forWhat, bypassGamemode))
             return Sets.newHashSet();
-        Tag.TagRender render = MultiLineAPI.tags.get(forWhat.getUniqueId()).render(forWhat, forWho);
-        Set<PacketContainer> mount = Sets.newHashSet();
-        PacketUtil.FakeEntity last = null;
+        Tag.TagRender render = plugin.tags.get(forWhat.getUniqueId()).render(forWhat, forWho);
+        Set<PacketContainer> delayed = Sets.newHashSet();
         render.getRemoved().forEach((e) -> this.tagMap.remove(e.getEntityId()));
         PacketUtil.trySend(PacketUtil.getDespawnPacket(render.getRemoved().toArray(new PacketUtil.FakeEntity[render
                 .getRemoved().size()])), forWho, Level.SEVERE, false);
+        PacketUtil.FakeEntity last = null;
+        double yOffset = LINE_START;
         for (PacketUtil.FakeEntity e : render.getEntities()) {
             this.tagMap.putIfAbsent(e.getEntityId(), forWhat.getUniqueId());
-            for (PacketContainer c : PacketUtil.getSpawnPacket(e,
-                    forWhat instanceof LivingEntity ? ((LivingEntity) forWhat).getEyeLocation() : forWhat.getLocation())
-                    ) {
+            for (PacketContainer c :
+                    PacketUtil.getSpawnPacket(e, (forWhat instanceof LivingEntity ?
+                            ((LivingEntity) forWhat).getEyeLocation() : forWhat.getLocation()).clone().add(0,
+                            yOffset, 0)
+                    )) {
                 PacketUtil.trySend(c, forWho, Level.SEVERE, false);
             }
+            PacketContainer p;
             if (last != null) {
-                mount.add(PacketUtil.getPassengerPacket(last.getEntityId(), e.getEntityId()));
+                p = PacketUtil.getPassengerPacket(last.getEntityId(), e);
             } else {
-                mount.add(PacketUtil.getPassengerPacket(forWhat.getEntityId(), e.getEntityId()));
+                p = PacketUtil.getPassengerPacket(forWhat.getEntityId(), e);
             }
+            if (p != null) delayed.add(p);
             last = e;
+            yOffset += LINE_OFFSET;
         }
-        return mount;
+        return delayed;
     }
 
-    public void despawnStack(Player forWho, Entity forWhat) {
-        if (!MultiLineAPI.tags.containsKey(forWhat.getUniqueId())) return;
-        List<PacketUtil.FakeEntity> stack = MultiLineAPI.tags.get(forWhat.getUniqueId()).last();
+    public void refreshLines(Player forWho, Entity forWhat) {
+        if (forWhat == null || !plugin.tags.containsKey(forWhat.getUniqueId())
+                || plugin.tags.get(forWhat.getUniqueId()).isVisible(forWho.getUniqueId())
+                || !VisibilityUtil.isViewable(forWho, forWhat, false))
+            return;
+        for (PacketContainer c : plugin.tags.get(forWhat.getUniqueId()).refreshLines(forWhat, forWho)) {
+            PacketUtil.trySend(c, forWho, Level.WARNING, false);
+        }
+    }
+
+    public void refreshName(Player forWho, Entity forWhat) {
+        if (forWhat == null || !plugin.tags.containsKey(forWhat.getUniqueId())
+                || plugin.tags.get(forWhat.getUniqueId()).isVisible(forWho.getUniqueId())
+                || !VisibilityUtil.isViewable(forWho, forWhat, false))
+            return;
+        PacketUtil.trySend(plugin.tags.get(forWhat.getUniqueId()).refreshName(forWhat, forWho), forWho, Level
+                .WARNING, false);
+    }
+
+    public void despawnStack(Player forWho, UUID forWhat) {
+        if (!plugin.tags.containsKey(forWhat)) return;
+        List<PacketUtil.FakeEntity> stack = plugin.tags.get(forWhat).last();
         if (stack == null || stack.isEmpty()) return;
         PacketUtil.trySend(
                 PacketUtil.getDespawnPacket(stack.toArray(new PacketUtil.FakeEntity[stack.size()])),

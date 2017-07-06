@@ -20,6 +20,7 @@ import java.util.List;
 
 public class ExampleTagController extends net.blitzcube.mlapi.tag.TagController {
     private final List<TagLine> lines;
+    public String lastMessage = null;
 
     ExampleTagController() {
         lines = Lists.newLinkedList();
@@ -27,6 +28,12 @@ public class ExampleTagController extends net.blitzcube.mlapi.tag.TagController 
             @Override
             public String getText(Player forWho) {
                 return "Hello, " + forWho.getName() + "!";
+            }
+        });
+        lines.add(new TagLine() {
+            @Override
+            public String getText(Player forWho) {
+                return lastMessage;
             }
         });
     }
@@ -37,7 +44,7 @@ public class ExampleTagController extends net.blitzcube.mlapi.tag.TagController 
     }
 
     @Override
-    public String getName(Entity forWhat) {
+    public String getName(Entity forWhat, Player forWho) {
         return ChatColor.AQUA + "" + ChatColor.BOLD + "Owner" + ChatColor.RESET + " `PREV`";
     }
 }

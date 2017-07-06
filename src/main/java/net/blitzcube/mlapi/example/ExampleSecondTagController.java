@@ -38,7 +38,7 @@ public class ExampleSecondTagController extends TagController {
     }
 
     @Override
-    public String getName(Entity forWhat) {
+    public String getName(Entity forWhat, Player forWho) {
         return ChatColor.GREEN + "" + ChatColor.ITALIC + "Owner" + ChatColor.RESET + " `PREV`";
     }
 
