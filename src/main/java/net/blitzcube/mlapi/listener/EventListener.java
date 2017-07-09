@@ -10,6 +10,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.stream.Stream;
 
@@ -35,6 +36,13 @@ public class EventListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent e) {
         if (autoEnablePlayer) {
             MultiLineAPI.enable(e.getPlayer());
+        }
+    }
+
+    @EventHandler
+    public void onPlayerLeave(PlayerQuitEvent e) {
+        if (autoDisablePlayer) {
+            MultiLineAPI.disable(e.getPlayer());
         }
     }
 
