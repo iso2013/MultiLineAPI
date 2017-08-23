@@ -27,13 +27,14 @@ public class Tag {
         put(4, true);
         put(11, (byte) 16);
     }};
-    public final List<TagController> tagControllers;
+    private final List<TagController> tagControllers;
     private final List<PacketUtil.FakeEntity> base;
     private final List<PacketUtil.FakeEntity> entities;
     private final List<TagLine> lines;
     private final Map<UUID, Boolean> hiddenFor;
     private PacketUtil.FakeEntity name;
     private boolean hiddenForAll;
+    private int baseID;
 
     public Tag() {
         this.tagControllers = Lists.newArrayList();
@@ -219,6 +220,10 @@ public class Tag {
 
     public boolean isHiddenFor(UUID uniqueId) {
         return hiddenFor.get(uniqueId);
+    }
+
+    public int getBaseID() {
+        return baseID;
     }
 
     public static class TagRender {

@@ -232,6 +232,10 @@ public class PacketUtil {
             this.watcher = watcher;
         }
 
+        protected WrappedDataWatcher getWatcher() {
+            return watcher;
+        }
+
         public int getEntityId() {
             return entityId;
         }

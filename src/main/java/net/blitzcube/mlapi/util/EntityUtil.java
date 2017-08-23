@@ -56,6 +56,18 @@ public class EntityUtil {
                 .filter(entity -> ids.size() <= 0 || ids.contains(entity.getEntityId()));
     }
 
+    public static Stream<Entity> getEntities(Player forWho, int[] size, int... entityIds) {
+        List<Integer> ids = Lists.newArrayList();
+        for (int i : entityIds) ids.add(i);
+        return forWho.getNearbyEntities(size[0], size[1], size[2]).stream()
+                .filter(entity -> ids.size() <= 0 || ids.contains(entity.getEntityId()));
+    }
+
+    public static Stream<Entity> getEntities(Player forWho, int[] size, UUID uuid) {
+        return forWho.getNearbyEntities(size[0], size[1], size[2]).stream()
+                .filter(entity -> entity.getUniqueId().equals(uuid));
+    }
+
     public static Stream<Entity> getEntities(Entity forWho, double distanceMultiplier, UUID uuid) {
         double highest = entityDistances.containsKey(forWho.getWorld().getName()) ?
                 entityDistances.get(forWho.getWorld().getName()) : entityDistances.get("default");

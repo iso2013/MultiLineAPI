@@ -17,20 +17,8 @@ import java.util.UUID;
  */
 
 public abstract class TagLine {
-    private Map<UUID, PacketUtil.FakeEntity> line = Maps.newHashMap();
+    protected Map<UUID, Map<LineEntity, PacketUtil.FakeEntity>> line = Maps.newHashMap();
     private String cached;
-
-    final PacketUtil.FakeEntity getLine(UUID entity) {
-        return this.line.get(entity);
-    }
-
-    final void setLine(PacketUtil.FakeEntity line, UUID entity) {
-        this.line.put(entity, line);
-    }
-
-    final PacketUtil.FakeEntity removeLine(UUID entity) {
-        return this.line.remove(entity);
-    }
 
     final String getCached() {
         return cached;
@@ -43,4 +31,11 @@ public abstract class TagLine {
     public abstract String getText(Player forWho);
 
     public boolean keepSpaceWhenNull() {return false;}
+
+    public enum LineEntity {
+        NAME_PLATE,
+        POSITIVE_SPACER_1,
+        POSITIVE_SPACER_2,
+        NEGATIVE_SPACER
+    }
 }
