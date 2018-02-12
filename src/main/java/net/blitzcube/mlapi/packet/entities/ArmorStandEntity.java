@@ -1,47 +1,55 @@
 package net.blitzcube.mlapi.packet.entities;
 
-import com.comphenix.protocol.wrappers.WrappedDataWatcher;
-import net.blitzcube.mlapi.tag.TagLine;
-import net.blitzcube.mlapi.util.PacketUtil;
-import org.bukkit.entity.EntityType;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import com.comphenix.protocol.wrappers.WrappedDataWatcher;
+
+import org.bukkit.entity.EntityType;
+
+import net.blitzcube.mlapi.tag.TagLine;
+import net.blitzcube.mlapi.util.packet.entity.FakeEntity;
 
 /**
  * Created by iso2013 on 7/28/2017.
  */
-public class ArmorStandEntity extends PacketUtil.FakeEntity {
-    private Map<Integer, Object> pending = new HashMap<>();
+public class ArmorStandEntity extends FakeEntity {
+
+    private static final Map<Integer, Object> DEFAULT_METADATA = new HashMap<>();
+
+    static {
+        DEFAULT_METADATA.put(0, (byte) 32);
+        DEFAULT_METADATA.put(4, true);
+        DEFAULT_METADATA.put(11, (byte) 16);
+    }
+    
     private TagLine tagLine;
 
     public ArmorStandEntity() {
-        super(EntityType.ARMOR_STAND);
-        pending.put(0, (byte) 32);
-        pending.put(4, true);
-        pending.put(11, (byte) 16);
-        pushMetadata();
+        super(EntityType.ARMOR_STAND, new WrappedDataWatcher(), EntityType.ARMOR_STAND.getTypeId());
+
+        this.pendingChanges.putAll(DEFAULT_METADATA);
+        this.pushMetadata();
     }
 
     public ArmorStandEntity(WrappedDataWatcher metadata) {
-        super(EntityType.ARMOR_STAND, metadata);
-        pending.put(0, (byte) 32);
-        pending.put(4, true);
-        pending.put(11, (byte) 16);
-        pushMetadata();
+        super(EntityType.ARMOR_STAND, metadata, EntityType.ARMOR_STAND.getTypeId());
+
+        this.pendingChanges.putAll(DEFAULT_METADATA);
+        this.pushMetadata();
     }
 
     public void setCustomNameVisible(boolean visible) {
-        pending.put(3, visible);
+        this.pendingChanges.put(3, visible);
     }
 
     public void setCustomName(String name) {
-        pending.put(2, name);
+        this.pendingChanges.put(2, name);
     }
 
     public void pushMetadata() {
-        super.getWatcher().asMap().forEach((i, wWO) -> {
-            if (!pending.containsKey(i)) wWO.getRawValue();
+        this.metadata.asMap().forEach((i, wWO) -> {
+            if (!pendingChanges.containsKey(i)) wWO.getRawValue();
         });
     }
 
@@ -52,4 +60,5 @@ public class ArmorStandEntity extends PacketUtil.FakeEntity {
     public void setTagLine(TagLine tagLine) {
         this.tagLine = tagLine;
     }
+
 }

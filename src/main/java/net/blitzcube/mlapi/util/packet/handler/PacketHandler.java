@@ -1,8 +1,13 @@
 package net.blitzcube.mlapi.util.packet.handler;
 
-import com.comphenix.protocol.PacketType;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import java.lang.annotation.*;
+import com.comphenix.protocol.PacketType;
 
 /**
  * Created by iso2013 on 8/23/2017.
@@ -12,6 +17,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface PacketHandler {
+
     PacketType.Protocol protocol();
 
     PacketType.Sender sender();
@@ -21,6 +27,7 @@ public @interface PacketHandler {
     Priority priority() default Priority.NORMAL;
 
     enum Priority {
+
         LOWEST(-2),
         LOW(-1),
         NORMAL(0),
@@ -30,12 +37,14 @@ public @interface PacketHandler {
 
         private int numeric;
 
-        Priority(int i) {
+        private Priority(int i) {
             this.numeric = i;
         }
 
         public int getNumeric() {
             return numeric;
         }
+
     }
+
 }

@@ -1,31 +1,34 @@
 package net.blitzcube.mlapi.util.packet.entity;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.wrappers.WrappedDataWatcher;
-import net.blitzcube.mlapi.util.packet.PacketUtil;
-import org.bukkit.Location;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.wrappers.WrappedDataWatcher;
+
+import org.bukkit.Location;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
+
+import net.blitzcube.mlapi.api.IFakeEntity;
+import net.blitzcube.mlapi.util.packet.PacketUtil;
+
 /**
  * Created by iso2013 on 8/24/2017.
  */
-public class FakeEntity {
-    private static final Map<EntityType, Class<? extends FakeEntity>> clazzMap =
-            new HashMap<EntityType, Class<? extends FakeEntity>>() {{
+public class FakeEntity implements IFakeEntity {
 
-            }};
-    final Map<Integer, Object> pendingChanges;
+    private static final Map<EntityType, Class<? extends FakeEntity>> CLASS_MAP = new HashMap<>();
+
+    protected final Map<Integer, Object> pendingChanges;
+    protected WrappedDataWatcher metadata = new WrappedDataWatcher();
+
     private final int entityID, typeID;
     private final UUID uniqueID;
     private final EntityType type;
-    private WrappedDataWatcher metadata = new WrappedDataWatcher();
 
     public FakeEntity(EntityType type, WrappedDataWatcher metadata, int entityID) {
         this.entityID = entityID;
@@ -33,20 +36,38 @@ public class FakeEntity {
         this.uniqueID = UUID.randomUUID();
         this.type = type;
         this.pendingChanges = new HashMap<>();
-        pendingChanges.putAll(metadata.asMap());
+        this.pendingChanges.putAll(metadata.asMap());
+    }
+
+    @Override
+    public int getEntityId() {
+        return entityID;
+    }
+
+    @Override
+    public UUID getUniqueId() {
+        return uniqueID;
+    }
+
+    @Override
+    public EntityType getType() {
+        return type;
+    }
+
+    public void setMetadata(WrappedDataWatcher metadata) {
+        this.metadata = metadata;
+    }
+
+    public WrappedDataWatcher getMetadata() {
+        return metadata;
     }
 
     public static Class<? extends FakeEntity> getImpl(EntityType type) {
-        return clazzMap.getOrDefault(type, FakeEntity.class);
+        return CLASS_MAP.getOrDefault(type, FakeEntity.class);
     }
 
     public static void destroy(Set<FakeEntity> entities, Player... forWho) {
-        int[] ids = new int[entities.size()];
-        int idx = 0;
-        for (FakeEntity e : entities) {
-            ids[idx] = e.entityID;
-            idx++;
-        }
+        int[] ids = entities.stream().mapToInt(e -> e.entityID).toArray();
         PacketContainer packet = new PacketContainer(PacketType.Play.Server.ENTITY_DESTROY);
         packet.getModifier().writeDefaults();
         packet.getIntegerArrays().write(0, ids);
@@ -54,22 +75,21 @@ public class FakeEntity {
     }
 
     public static void setVehicle(int vehicle, Set<FakeEntity> passengers, Player... forWho) {
+        int[] ids = passengers.stream().mapToInt(e -> e.entityID).toArray();
+
         PacketContainer packet = new PacketContainer(PacketType.Play.Server.MOUNT);
         packet.getModifier().writeDefaults();
         packet.getIntegers().write(0, vehicle);
-        int[] passengerIDs = new int[passengers.size()];
-        int idx = 0;
-        for (FakeEntity e : passengers) {
-            passengerIDs[idx] = e.entityID;
-        }
-        packet.getIntegerArrays().write(0, passengerIDs);
+        packet.getIntegerArrays().write(0, ids);
         PacketUtil.sendFriendly(packet, forWho);
     }
 
+    @Override
     public void spawn(Location location, Player... forWho) {
-        spawn(location.getX(), location.getY(), location.getZ(), location.getPitch(), location.getYaw(), forWho);
+        this.spawn(location.getX(), location.getY(), location.getZ(), location.getPitch(), location.getYaw(), forWho);
     }
 
+    @Override
     public void spawn(double x, double y, double z, float pitch, float yaw, Player... forWho) {
         PacketUtil.updateWatcher(metadata, pendingChanges);
         PacketContainer packet = new PacketContainer(PacketType.Play.Server.SPAWN_ENTITY_LIVING);
@@ -90,6 +110,7 @@ public class FakeEntity {
         PacketUtil.sendFriendly(packet, forWho);
     }
 
+    @Override
     public void updateMetadata(Player... forWho) {
         PacketUtil.updateWatcher(metadata, pendingChanges);
         PacketContainer packet = new PacketContainer(PacketType.Play.Server.ENTITY_METADATA);
@@ -98,4 +119,5 @@ public class FakeEntity {
         packet.getWatchableCollectionModifier().write(0, metadata.getWatchableObjects());
         PacketUtil.sendFriendly(packet, forWho);
     }
+
 }

@@ -1,15 +1,17 @@
 package net.blitzcube.mlapi.util.packet;
 
-import net.blitzcube.mlapi.util.packet.entity.object.FakeObject;
-import org.bukkit.entity.EntityType;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import org.bukkit.entity.EntityType;
+
+import net.blitzcube.mlapi.util.packet.entity.object.FakeObject;
 
 /**
  * Created by iso2013 on 8/24/2017.
  */
 public enum ObjectType {
+
     BOAT(EntityType.BOAT, 1),
     DROPPED_ITEM(EntityType.DROPPED_ITEM, 2),
     AREA_EFFECT_CLOUD(EntityType.AREA_EFFECT_CLOUD, 3),
@@ -36,26 +38,27 @@ public enum ObjectType {
     SPECTRAL_ARROW(EntityType.SPECTRAL_ARROW, 91),
     DRAGON_FIREBALL(EntityType.DRAGON_FIREBALL, 93);
 
-    static Map<EntityType, ObjectType> entityToObject;
+    private static Map<EntityType, ObjectType> entityToObject;
 
     static {
         entityToObject = new HashMap<>();
+
         for (ObjectType t : values()) {
             entityToObject.put(t.entityType, t);
         }
     }
 
-    EntityType entityType;
-    int id;
+    private EntityType entityType;
+    private int id;
     private Class<? extends FakeObject> impl;
 
-    ObjectType(EntityType entityType, int id) {
+    private ObjectType(EntityType entityType, int id) {
         this.entityType = entityType;
         this.id = id;
         this.impl = FakeObject.class;
     }
 
-    ObjectType(EntityType entityType, int id, Class<? extends FakeObject> impl) {
+    private ObjectType(EntityType entityType, int id, Class<? extends FakeObject> impl) {
         this.entityType = entityType;
         this.id = id;
         this.impl = impl;
@@ -68,4 +71,5 @@ public enum ObjectType {
     public Class<? extends FakeObject> getImpl() {
         return impl;
     }
+
 }

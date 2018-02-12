@@ -1,18 +1,20 @@
 package net.blitzcube.mlapi.util.packet.handler;
 
-import com.comphenix.protocol.events.PacketEvent;
-import org.bukkit.plugin.java.JavaPlugin;
-
 import java.lang.reflect.Method;
+
+import com.comphenix.protocol.events.PacketEvent;
+
+import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * Created by iso2013 on 8/23/2017.
  */
 public class PacketGoal {
-    private int priority;
-    private JavaPlugin parent;
-    private Object handler;
-    private Method method;
+
+    private final JavaPlugin parent;
+    private final Object handler;
+    private final Method method;
+    private final int priority;
 
     public PacketGoal(JavaPlugin parent, Object handler, Method method, PacketHandler.Priority priority) {
         this.parent = parent;
@@ -27,10 +29,11 @@ public class PacketGoal {
 
     public void invoke(PacketEvent packetEvent) {
         try {
-            method.invoke(handler, packetEvent);
+            this.method.invoke(handler, packetEvent);
         } catch (Exception e) {
-            parent.getLogger().severe("Failed to execute listener. Error provided:");
+            this.parent.getLogger().severe("Failed to execute listener. Error provided:");
             e.printStackTrace();
         }
     }
+
 }

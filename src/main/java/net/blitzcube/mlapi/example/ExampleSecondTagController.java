@@ -1,14 +1,16 @@
 package net.blitzcube.mlapi.example;
 
-import com.google.common.collect.Lists;
-import net.blitzcube.mlapi.tag.TagController;
-import net.blitzcube.mlapi.tag.TagLine;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-import java.util.Collection;
-import java.util.List;
+import net.blitzcube.mlapi.api.MLAPI;
+import net.blitzcube.mlapi.api.tag.ITagController;
+import net.blitzcube.mlapi.api.tag.ITagLine;
 
 /**
  * Class by iso2013 @ 2017.
@@ -18,22 +20,17 @@ import java.util.List;
  * under LGPL. Derivatives works (including modifications or anything statically linked to the library) can only be
  * redistributed under LGPL, but applications that use the library don't have to be.
  */
+public class ExampleSecondTagController implements ITagController {
 
-public class ExampleSecondTagController extends TagController {
-    private final List<TagLine> lines;
+    private final List<ITagLine> lines;
 
-    ExampleSecondTagController() {
-        lines = Lists.newLinkedList();
-        lines.add(new TagLine() {
-            @Override
-            public String getText(Player forWho) {
-                return "I'M MORE IMPORTANT!";
-            }
-        });
+    public ExampleSecondTagController() {
+        this.lines = new LinkedList<>();
+        this.lines.add(MLAPI.createTagLine("I'M MORE IMPORTANT!"));
     }
 
     @Override
-    public Collection<? extends TagLine> getLines(Entity forWhat) {
+    public Collection<ITagLine> getLines(Entity forWhat) {
         return lines;
     }
 
@@ -48,5 +45,8 @@ public class ExampleSecondTagController extends TagController {
     }
 
     @Override
-    public int getNamePriority() { return -10; }
+    public int getNamePriority() {
+        return -10;
+    }
+
 }
