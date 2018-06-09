@@ -1,0 +1,5 @@
+name: MultiLineAPI
+version: ${project.version}
+main: net.blitzcube.mlapi.MultiLineAPI
+depends: [PacketEntityAPI]
+authors: [iso2013]

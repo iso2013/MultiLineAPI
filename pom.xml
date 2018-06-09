@@ -6,79 +6,37 @@
 
     <groupId>net.blitzcube.mlapi</groupId>
     <artifactId>MultiLineAPI</artifactId>
-    <version>X2</version>
-    <packaging>jar</packaging>
-
-    <name>MultiLineAPI</name>
-
-    <description>An API which allows you to add multiple lines to entity nametags.</description>
+    <packaging>pom</packaging>
+    <version>2.0.0-SNAPSHOT</version>
+    <modules>
+        <module>API</module>
+        <module>Plugin</module>
+    </modules>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <github.global.server>github</github.global.server>
     </properties>
-
-    <build>
-        <defaultGoal>clean package</defaultGoal>
-        <plugins>
-            <plugin>
-                <version>3.1</version>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.4</version>
-                <executions>
-                    <execution>
-                        <id>javadoc</id>
-                    </execution>
-                </executions>
-                <configuration>
-                    <reportOutputDirectory>docs</reportOutputDirectory>
-                    <destDir>javadocs</destDir>
-                    <doctitle>MutliLineAPI docs v${project.version}</doctitle>
-                    <windowtitle>MutliLineAPI docs v${project.version}</windowtitle>
-                </configuration>
-            </plugin>
-        </plugins>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
-    </build>
 
     <distributionManagement>
         <repository>
-            <id>digitalpenquin-deployment</id>
-            <name>DigitalPenquin Release Deployment</name>
-            <url>https://repo.srv.digitalpenquin.com/repository/maven-releases/</url>
+            <id>internal.repo</id>
+            <name>Temporary Staging Repository</name>
+            <url>file://${project.build.directory}/mvn-repo</url>
         </repository>
-        <snapshotRepository>
-            <id>digitalpenquin-deployment</id>
-            <name>DigitalPenquin Snapshot Deployment</name>
-            <url>https://repo.srv.digitalpenquin.com/repository/maven-snapshots/</url>
-        </snapshotRepository>
     </distributionManagement>
 
     <repositories>
         <repository>
-            <id>digitalpenquin-repo</id>
-            <url>https://repo.srv.digitalpenquin.com/repository/maven-public/</url>
+            <id>spigotmc-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
         </repository>
         <repository>
-            <id>destroystokyo-repo</id>
-            <url>https://repo.destroystokyo.com/repository/maven-public/</url>
-        </repository>
-        <repository>
-            <id>sonatype</id>
-            <url>https://oss.sonatype.org/content/groups/public/</url>
+            <id>iso2013-repo</id>
+            <url>http://iso2013.github.io/repo/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
         </repository>
         <repository>
             <id>dmulloy2-repo</id>
@@ -88,20 +46,67 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.destroystokyo.paper</groupId>
-            <artifactId>paper-api</artifactId>
-            <version>1.12-R0.1-SNAPSHOT</version>
+            <groupId>org.spigotmc</groupId>
+            <artifactId>spigot-api</artifactId>
+            <version>1.12.2-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.blitzcube.peapi</groupId>
+            <artifactId>API</artifactId>
+            <version>0.4.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.comphenix.protocol</groupId>
             <artifactId>ProtocolLib</artifactId>
-            <version>4.2.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.kitteh.vanish</groupId>
-            <artifactId>VanishNoPacket</artifactId>
-            <version>3.20</version>
+            <version>4.4.0-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.7.0</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.github.github</groupId>
+                <artifactId>site-maven-plugin</artifactId>
+                <version>0.12</version>
+                <configuration>
+                    <message>Maven artifacts for ${project.name} - ${project.version}</message>
+                    <outputDirectory>${project.build.directory}/mvn-repo</outputDirectory>
+                    <branch>refs/heads/master</branch>
+                    <includes>
+                        <include>**/*</include>
+                    </includes>
+                    <repositoryName>iso2013.github.io</repositoryName>
+                    <repositoryOwner>iso2013</repositoryOwner>
+                    <merge>true</merge>
+                    <path>repo</path>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>site</goal>
+                        </goals>
+                        <phase>deploy</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
 </project>
