@@ -1,8 +1,14 @@
 package net.blitzcube.mlapi.renderer;
 
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import net.blitzcube.mlapi.api.tag.ITag;
+import net.blitzcube.mlapi.structure.transactions.AddTransaction;
+import net.blitzcube.mlapi.structure.transactions.NameTransaction;
+import net.blitzcube.mlapi.structure.transactions.RemoveTransaction;
+import net.blitzcube.mlapi.structure.transactions.StructureTransaction;
 import net.blitzcube.mlapi.tag.RenderedTagLine;
 import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
@@ -14,6 +20,7 @@ import net.blitzcube.peapi.api.packet.IEntityMountPacket;
 import net.blitzcube.peapi.api.packet.IEntityPacket;
 import net.blitzcube.peapi.api.packet.IEntityPacketFactory;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -27,14 +34,16 @@ public class TagRenderer {
     private final IPacketEntityAPI packet;
     private final JavaPlugin parent;
     private final LineEntityFactory lineFactory;
-    private final Map<Player, Set<RenderedTagLine>> visibleLines;
+    private final Multimap<Player, RenderedTagLine> visibleLines;
+    private final Multimap<Player, Tag> visibleTags;
     private final Table<Player, Tag, Boolean> tagVisibility;
 
     public TagRenderer(IPacketEntityAPI packet, JavaPlugin parent) {
         this.packet = packet;
         this.parent = parent;
         this.lineFactory = new LineEntityFactory(packet.getModifierRegistry(), packet.getEntityFactory());
-        this.visibleLines = new HashMap<>();
+        this.visibleLines = HashMultimap.create();
+        this.visibleTags = HashMultimap.create();
         this.tagVisibility = HashBasedTable.create();
     }
 
@@ -42,197 +51,8 @@ public class TagRenderer {
         return lineFactory;
     }
 
-    //This method can be used in a variety of ways:
-    //A group of lines is added:
-    //        index - the index of the first added line in the list of lines
-    //        added - the list of all lines that were added
-    //        removed - null
-    //        lines - the list of all lines
-    //    In this case, the method should send 2 + (n*4) mount packets.
-    //A group of lines is removed:
-    //        index - the index of where the old lines USED to be
-    //        added - null
-    //        removed - the list of all lines that were removed and should be destroyed
-    //        lines - the list of all lines
-    public void renderStructureChange(
-            int index,
-            List<RenderedTagLine> added,
-            List<RenderedTagLine> removed,
-            Tag t,
-            Set<Player> targets,
-            int removalSize
-    ) {
-        for (Player p : targets) {
-            IEntityIdentifier below = null, above = null;
-            for (int i = index - 1; i >= -1; i--) {
-                if (i == -1) {
-                    below = t.getBottom().getIdentifier();
-                    break;
-                }
-                RenderedTagLine l;
-                if (visibleLines.get(p).contains(l = t.getLines().get(i))) {
-                    below = l.getStack().getLast().getIdentifier();
-                }
-            }
-
-            int addedSize = added != null ? added.size() : 0;
-            for (int i = index + removalSize + addedSize; i <= t.getLines().size(); i++) {
-                if (i == t.getLines().size()) {
-                    above = t.getBottom().getIdentifier();
-                    break;
-                }
-                RenderedTagLine l;
-                if (visibleLines.get(p).contains(l = t.getLines().get(i))) {
-                    above = l.getBottom().getIdentifier();
-                }
-            }
-
-            if (below == null || above == null) throw new IllegalStateException();
-
-            IEntityPacketFactory f = packet.getPacketFactory();
-
-            Set<IEntityPacket> firstPhase = new HashSet<>();
-            Set<IEntityPacket> secondPhase = new HashSet<>();
-
-            if (added == null && removed != null) {
-                firstPhase.add(f.createDestroyPacket(removed.stream().flatMap(l -> l.getStack().stream())
-                        .map(IFakeEntity::getIdentifier).toArray(IEntityIdentifier[]::new)));
-                firstPhase.add(f.createMountPacket(below, above));
-                visibleLines.get(p).removeAll(removed);
-            } else if (added != null && removed == null) {
-                generateObject(f, t.getTop().getIdentifier(), firstPhase, secondPhase);
-
-                List<IEntityIdentifier> stack = new LinkedList<>();
-                stack.add(below);
-
-                for (RenderedTagLine l : added) {
-                    boolean skip = true;
-                    generateObject(f, l.getBottom().getIdentifier(), firstPhase, secondPhase);
-                    for (IFakeEntity e : l.getStack()) {
-                        stack.add(e.getIdentifier());
-                        if (skip) {
-                            skip = false;
-                            continue;
-                        }
-                        firstPhase.add(f.createEntitySpawnPacket(e.getIdentifier()));
-                    }
-                    visibleLines.get(p).add(l);
-                }
-
-                stack.add(above);
-
-                Iterator<IEntityIdentifier> i = stack.iterator();
-                IEntityIdentifier prev = null;
-                while (i.hasNext()) {
-                    IEntityIdentifier current = i.next();
-                    if (prev != null) {
-                        secondPhase.add(f.createMountPacket(prev, current));
-                    }
-                    prev = current;
-                }
-
-            }
-            firstPhase.forEach(i -> packet.dispatchPacket(i, p));
-            Bukkit.getScheduler().runTaskLater(
-                    parent,
-                    () -> secondPhase.forEach(i -> packet.dispatchPacket(i, p)),
-                    1);
-        }
-    }
-
-    public void renderStructureChange(
-            int index,
-            RenderedTagLine added,
-            RenderedTagLine removed,
-            Tag t,
-            Set<Player> targets
-    ) {
-        for (Player p : targets) {
-            IEntityIdentifier below = null, above = null;
-            for (int i = index - 1; i >= -1; i--) {
-                if (i == -1) below = t.getBottom().getIdentifier();
-                RenderedTagLine l;
-                if (visibleLines.get(p).contains(l = t.getLines().get(i))) {
-                    below = l.getStack().getLast().getIdentifier();
-                }
-            }
-
-            int addedSize = added != null ? 1 : 0;
-            for (int i = index + addedSize; i <= t.getLines().size(); i++) {
-                if (i == t.getLines().size()) above = t.getBottom().getIdentifier();
-                RenderedTagLine l;
-                if (visibleLines.get(p).contains(l = t.getLines().get(i))) {
-                    above = l.getBottom().getIdentifier();
-                }
-            }
-
-            if (below == null || above == null) throw new IllegalStateException();
-
-            IEntityPacketFactory f = packet.getPacketFactory();
-
-            Set<IEntityPacket> firstPhase = new HashSet<>();
-            Set<IEntityPacket> secondPhase = new HashSet<>();
-
-            if (added == null && removed != null) {
-                firstPhase.add(f.createDestroyPacket(removed.getStack().stream()
-                        .map(IFakeEntity::getIdentifier).toArray(IEntityIdentifier[]::new)));
-                firstPhase.add(f.createMountPacket(below, above));
-                visibleLines.get(p).remove(removed);
-            } else if (added != null && removed == null) {
-                generateObject(f, t.getTop().getIdentifier(), firstPhase, secondPhase);
-
-                List<IEntityIdentifier> stack = new LinkedList<>();
-                stack.add(below);
-
-                boolean skip = true;
-                generateObject(f, added.getBottom().getIdentifier(), firstPhase, secondPhase);
-                for (IFakeEntity e : added.getStack()) {
-                    stack.add(e.getIdentifier());
-                    if (skip) {
-                        skip = false;
-                        continue;
-                    }
-                    firstPhase.add(f.createEntitySpawnPacket(e.getIdentifier()));
-                }
-
-                stack.add(above);
-
-                Iterator<IEntityIdentifier> i = stack.iterator();
-                IEntityIdentifier prev = null;
-                while (i.hasNext()) {
-                    IEntityIdentifier current = i.next();
-                    if (prev != null) {
-                        secondPhase.add(f.createMountPacket(prev, current));
-                    }
-                    prev = current;
-                }
-
-                visibleLines.get(p).add(added);
-            }
-            firstPhase.forEach(i -> packet.dispatchPacket(i, p));
-            Bukkit.getScheduler().runTaskLater(
-                    parent,
-                    () -> secondPhase.forEach(i -> packet.dispatchPacket(i, p)),
-                    1);
-        }
-    }
-
-    public void renderLineChange(RenderedTagLine line, String value, Set<Player> targets) {
-        lineFactory.updateName(line.getBottom(), value);
-        IEntityPacket d = packet.getPacketFactory().createDataPacket(line.getBottom().getIdentifier());
-        targets.forEach(p -> packet.dispatchPacket(d, p));
-    }
-
     public Stream<Player> getNearby(Tag tag, double err) {
         return packet.getViewers(packet.wrap(tag.getTarget()), err);
-    }
-
-    public boolean isShown(Player target, RenderedTagLine l) {
-        return visibleLines.get(target).contains(l);
-    }
-
-    public void queueName(RenderedTagLine line, String value) {
-        lineFactory.updateName(line.getBottom(), value);
     }
 
     public void setVisible(Tag tag, Player target, Boolean val) {
@@ -245,7 +65,7 @@ public class TagRenderer {
 
     public void purge(Player player) {
         tagVisibility.rowMap().remove(player);
-        visibleLines.remove(player);
+        visibleLines.removeAll(player);
     }
 
     public void spawnTag(Tag t, Player p, IEntityPacketContext c) {
@@ -259,6 +79,70 @@ public class TagRenderer {
         s2.add(packets[1]);
     }
 
+    public void processTransaction(StructureTransaction t) {
+        IEntityPacketFactory f = packet.getPacketFactory();
+        Set<IEntityPacket> firstPhase = new HashSet<>(), secondPhase = null;
+
+        if (t instanceof AddTransaction) {
+            AddTransaction at = (AddTransaction) t;
+            secondPhase = new HashSet<>();
+            List<IEntityIdentifier> stack = new LinkedList<>();
+            stack.add(at.getBelow());
+
+            Location loc = ((AddTransaction) t).getTagged().getLocation();
+            for (RenderedTagLine l : at.getAdded()) {
+                boolean skip = true;
+                generateObject(f, l.getBottom().getIdentifier(), firstPhase, secondPhase);
+                for (IFakeEntity e : l.getStack()) {
+                    stack.add(e.getIdentifier());
+                    if (skip) {
+                        skip = false;
+                        continue;
+                    }
+                    lineFactory.updateLocation(loc, e);
+                    firstPhase.add(f.createEntitySpawnPacket(e.getIdentifier()));
+                }
+                visibleLines.put(t.getTarget(), l);
+            }
+
+            stack.add(at.getAbove());
+
+            Iterator<IEntityIdentifier> i = stack.iterator();
+            IEntityIdentifier prev = null;
+            while (i.hasNext()) {
+                IEntityIdentifier current = i.next();
+                if (prev != null) {
+                    secondPhase.add(f.createMountPacket(prev, current));
+                }
+                prev = current;
+            }
+        } else if (t instanceof RemoveTransaction) {
+            RemoveTransaction rt = (RemoveTransaction) t;
+            secondPhase = new HashSet<>();
+            Bukkit.broadcastMessage("REMOVED: " + rt.getRemoved().size());
+            if (rt.getRemoved().size() == 1) {
+                Bukkit.broadcastMessage("firing breakpoint...");
+            }
+            firstPhase.add(f.createDestroyPacket(rt.getRemoved().stream().flatMap(l -> l.getStack().stream())
+                    .map(IFakeEntity::getIdentifier).toArray(IEntityIdentifier[]::new)));
+            secondPhase.add(f.createMountPacket(rt.getBelow(), rt.getAbove()));
+            visibleLines.get(t.getTarget()).removeAll(((RemoveTransaction) t).getRemoved());
+        } else if (t instanceof NameTransaction) {
+            NameTransaction nt = (NameTransaction) t;
+            for (Map.Entry<RenderedTagLine, String> q : nt.getQueuedNames().entrySet()) {
+                lineFactory.updateName(q.getKey().getBottom(), q.getValue());
+                if (visibleLines.containsEntry(t.getTarget(), q.getKey())) {
+                    firstPhase.add(f.createDataPacket(q.getKey().getBottom().getIdentifier()));
+                }
+            }
+        }
+        if (!firstPhase.isEmpty()) firstPhase.forEach(i -> packet.dispatchPacket(i, t.getTarget()));
+        if (secondPhase != null) {
+            Set<IEntityPacket> finalSecondPhase = secondPhase;
+            Bukkit.getScheduler().runTaskLater(parent,
+                    () -> finalSecondPhase.forEach(i -> packet.dispatchPacket(i, t.getTarget())), 1L);
+        }
+    }
 
     public void spawnTag(Tag t, Player p, IEntityMountPacket mountPacket, IEntityPacketContext c) {
         Boolean visible = tagVisibility.get(p, t);
@@ -271,16 +155,23 @@ public class TagRenderer {
         Set<IEntityPacket> secondPhase = new HashSet<>();
 
         firstPhase.add(f.createEntitySpawnPacket(t.getBottom().getIdentifier()));
-        generateObject(f, t.getTop().getIdentifier(), firstPhase, secondPhase);
+
+        Location loc = t.getTarget().getLocation();
+
+        lineFactory.updateLocation(loc, t.getBottom());
 
         List<IFakeEntity> stack = new LinkedList<>();
         stack.add(t.getBottom());
 
         for (RenderedTagLine l : t.getLines()) {
-            Bukkit.broadcastMessage("ADDING LINE TO " + t.getTarget().getCustomName());
             boolean skip = true;
-            generateObject(f, l.getBottom().getIdentifier(), firstPhase, secondPhase);
+            String newName;
+            lineFactory.updateName(l.getBottom(), (newName = l.get(p)));
+            if (newName == null && l.shouldRemoveSpaceWhenNull()) continue;
+            lineFactory.updateLocation(loc, l.getBottom());
+            generateObject(f, l.getBottom().getIdentifier(), firstPhase, firstPhase);
             for (IFakeEntity e : l.getStack()) {
+                lineFactory.updateLocation(loc, e);
                 stack.add(e);
                 if (skip) {
                     skip = false;
@@ -288,18 +179,15 @@ public class TagRenderer {
                 }
                 firstPhase.add(f.createEntitySpawnPacket(e.getIdentifier()));
             }
-            lineFactory.updateName(l.getBottom(), l.get(p));
-            secondPhase.add(packet.getPacketFactory().createDataPacket(l.getBottom().getIdentifier()));
-            visibleLines.get(p).add(l);
+            visibleLines.put(p, l);
         }
 
         if (t.getTarget().isCustomNameVisible()) {
+            //FIXME
             lineFactory.updateName(t.getTop(), t.getTarget().getCustomName());
             stack.add(t.getTop());
-            secondPhase.add(packet.getPacketFactory().createDataPacket(t.getTop().getIdentifier()));
+            generateObject(f, t.getTop().getIdentifier(), firstPhase, firstPhase);
         }
-
-        lineFactory.updateLocations(t.getTarget().getLocation(), stack);
 
         Iterator<IFakeEntity> i = stack.iterator();
         IEntityIdentifier last = null;
@@ -317,44 +205,49 @@ public class TagRenderer {
             last = current;
         }
 
-        if (c != null) {
-            c.queueDispatch(firstPhase).queueDispatch(secondPhase, 2);
-        } else {
-            firstPhase.forEach(ep -> packet.dispatchPacket(ep, p));
-            Bukkit.getScheduler().runTaskLater(
-                    parent,
-                    () -> secondPhase.forEach(ep -> packet.dispatchPacket(ep, p)),
-                    1
-            );
-        }
+        firstPhase.forEach(ep -> packet.dispatchPacket(ep, p));
+        Bukkit.getScheduler().runTask(
+                parent,
+                () -> secondPhase.forEach(ep -> packet.dispatchPacket(ep, p))
+        );
+        visibleTags.put(p, t);
     }
 
     public void destroyTag(Tag t, Player player, IEntityDestroyPacket destroyPacket) {
-        Bukkit.broadcastMessage("DESTROY CALLED");
+        boolean event = destroyPacket != null;
         if (destroyPacket == null)
             destroyPacket = (IEntityDestroyPacket) packet.getPacketFactory().createDestroyPacket();
         IEntityDestroyPacket finalDestroyPacket = destroyPacket;
-        Set<RenderedTagLine> lines = visibleLines.get(player);
-        if (lines == null) lines = new HashSet<>();
-        t.getLines().stream().filter(lines::remove)
-                .forEach(r -> {
-                    Bukkit.broadcastMessage("DESTROYING LINE");
-                    r.getStack().forEach(e -> {
-                        Bukkit.broadcastMessage("ADDING DESTROY ENTITY");
-                        finalDestroyPacket.addToGroup(e.getIdentifier());
-                    });
-                });
-        destroyPacket.addToGroup(t.getBottom().getIdentifier());
-        Bukkit.broadcastMessage("DESTROYED BOTTOm");
-        destroyPacket.addToGroup(t.getTop().getIdentifier());
-        Bukkit.broadcastMessage("DESTROYING TOP");
+        Collection<RenderedTagLine> lines = visibleLines.get(player);
+        t.getLines().stream()
+                .filter(lines::remove)
+                .forEach(r -> r.getStack().forEach(e -> finalDestroyPacket.addToGroup(e.getIdentifier())));
+        finalDestroyPacket.addToGroup(t.getBottom().getIdentifier());
+        finalDestroyPacket.addToGroup(t.getTop().getIdentifier());
+        if (!event) {
+            packet.dispatchPacket(finalDestroyPacket, player);
+        }
+        visibleTags.remove(player, t);
     }
 
     public void batchDestroyTags(Stream<Tag> tags, Player player) {
         IEntityDestroyPacket destroyPacket = (IEntityDestroyPacket) packet.getPacketFactory().createDestroyPacket();
-        Set<RenderedTagLine> lines = visibleLines.get(player);
-        tags.flatMap(tag -> tag.getLines().stream())
-                .filter(lines::remove)
-                .forEach(r -> r.getStack().forEach(e -> destroyPacket.addToGroup(e.getIdentifier())));
+        Collection<RenderedTagLine> lines = visibleLines.get(player);
+        tags.forEach(tag -> {
+            tag.getLines().stream().filter(lines::remove)
+                    .forEach(l -> l.getStack().forEach(e -> destroyPacket.addToGroup(e.getIdentifier())));
+            destroyPacket.addToGroup(tag.getTop().getIdentifier());
+            destroyPacket.addToGroup(tag.getBottom().getIdentifier());
+        });
+        packet.dispatchPacket(destroyPacket, player);
+
+    }
+
+    public Multimap<Player, RenderedTagLine> getVisibilityMap() {
+        return visibleLines;
+    }
+
+    public boolean isSpawned(Player viewer, Tag t) {
+        return visibleTags.containsEntry(viewer, t);
     }
 }

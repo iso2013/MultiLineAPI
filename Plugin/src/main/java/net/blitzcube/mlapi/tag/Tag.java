@@ -4,13 +4,12 @@ import com.google.common.collect.ImmutableList;
 import net.blitzcube.mlapi.api.tag.ITag;
 import net.blitzcube.mlapi.api.tag.ITagController;
 import net.blitzcube.mlapi.renderer.TagRenderer;
-import net.blitzcube.mlapi.util.RangeSeries;
+import net.blitzcube.mlapi.structure.TagStructure;
 import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Created by iso2013 on 6/4/2018.
@@ -25,8 +24,8 @@ public class Tag implements ITag {
     //Target information
     private final Entity target;
 
-    //Lines
-    private final List<RenderedTagLine> lines;
+    //Structure information
+    private final TagStructure structure;
 
     //Tag controller information
     private final SortedSet<ITagController> sortedControllers;
@@ -42,7 +41,7 @@ public class Tag implements ITag {
         this.renderer = renderer;
 
         //Sorted collections
-        this.lines = new ArrayList<>();
+        this.structure = new TagStructure(this, renderer.getLineEntityFactory(), renderer.getVisibilityMap());
         this.sortedControllers = new TreeSet<>(Comparator.comparingInt(ITagController::getNamePriority));
 
         //Bottom and top of stack
@@ -55,7 +54,7 @@ public class Tag implements ITag {
     @Override
     public ImmutableList<ITagController> getTagControllers(boolean sortByLines) {
         if (sortByLines) {
-            return lines.stream().map(RenderedTagLine::getController).distinct().collect(ImmutableList
+            return structure.getLines().stream().map(RenderedTagLine::getController).distinct().collect(ImmutableList
                     .toImmutableList());
         }
         return ImmutableList.copyOf(sortedControllers);
@@ -63,47 +62,15 @@ public class Tag implements ITag {
 
     @Override
     public void addTagController(ITagController c) {
-        //Get the lines from the controller
-        List<RenderedTagLine> newLines =
-                c.getFor(target).stream()
-                        .map(l -> new RenderedTagLine(c, l, target, renderer.getLineEntityFactory()))
-                        .collect(Collectors.toList());
-        if (newLines.size() == 0) return;
-        //Add the controller to the sorted set
         sortedControllers.add(c);
-        //Insert lines at the proper position in the array
-        int idx = lines.size();
-        for (int i = 0; i < lines.size(); i++) {
-            if (controllerComparator.compare(c, lines.get(i).getController()) < 0) idx = i;
-        }
-        lines.addAll(
-                idx,
-                newLines
-        );
-        //Determine if updating is necessary
-        Set<Player> nearby;
-        if (!(nearby = renderer.getNearby(this, 1.0).collect(Collectors.toSet())).isEmpty()) {
-            renderer.renderStructureChange(idx, newLines, null, this, nearby, 0);
-        }
+        structure.addTagController(c, renderer.getNearby(this, 1.0)).forEach(renderer::processTransaction);
     }
 
     @Override
     public void removeTagController(ITagController c) {
         if (!sortedControllers.contains(c)) return;
-        int idx = -1;
-        for (int i = 0; i < lines.size(); i++) {
-            if (lines.get(i).getController() == c) {
-                idx = i;
-                break;
-            }
-        }
-        List<RenderedTagLine> removed = lines.stream().filter(l -> l.getController() == c).collect(Collectors.toList());
-        lines.removeAll(removed);
-
-        Set<Player> nearby;
-        if (!(nearby = renderer.getNearby(this, 1.0).collect(Collectors.toSet())).isEmpty()) {
-            renderer.renderStructureChange(idx, null, removed, this, nearby, 0);
-        }
+        sortedControllers.remove(c);
+        structure.removeTagController(c, renderer.getNearby(this, 1.0)).forEach(renderer::processTransaction);
     }
 
     @Override
@@ -133,24 +100,9 @@ public class Tag implements ITag {
 
     @Override
     public void update(Player target) {
-        if (!renderer.isVisible(this, target)) return;
-        RangeSeries removed = new RangeSeries(), added = new RangeSeries();
-        Map<Integer, String> newNames = new HashMap<>();
-        for (int i = 0; i < this.lines.size(); i++) {
-            RenderedTagLine l = this.lines.get(i);
-            boolean v = renderer.isShown(target, l);
-            String newVal = l.get(target);
-            if (newVal == null && v && l.shouldRemoveSpaceWhenNull()) {
-                removed.put(i);
-            } else if (newVal != null && !v) {
-                added.put(i);
-                renderer.queueName(l, newVal);
-            } else {
-                newNames.put(i, newVal);
-            }
-        }
-        Set<Player> targets = Collections.singleton(target);
-        updateInternal(added, removed, newNames, targets);
+        Boolean b = renderer.isVisible(this, target);
+        if ((b == null && !this.defaultVisible) || (b != null && !b)) return;
+        structure.createUpdateTransactions(l -> true, target).forEach(renderer::processTransaction);
     }
 
     @Override
@@ -159,26 +111,11 @@ public class Tag implements ITag {
     }
 
     @Override
-    public void update(ITagController controller, Player target) {
-        if (!renderer.isVisible(this, target)) return;
-        RangeSeries removed = new RangeSeries(), added = new RangeSeries();
-        Map<Integer, String> newNames = new HashMap<>();
-        for (int i = 0; i < this.lines.size(); i++) {
-            RenderedTagLine l = this.lines.get(i);
-            if (l.getController() != controller) continue;
-            boolean v = renderer.isShown(target, l);
-            String newVal = l.get(target);
-            if (newVal == null && v && l.shouldRemoveSpaceWhenNull()) {
-                removed.put(i);
-            } else if (newVal != null && !v) {
-                added.put(i);
-                renderer.queueName(l, newVal);
-            } else {
-                newNames.put(i, newVal);
-            }
-        }
-        Set<Player> targets = Collections.singleton(target);
-        updateInternal(added, removed, newNames, targets);
+    public void update(ITagController c, Player target) {
+        Boolean b = renderer.isVisible(this, target);
+        if ((b == null && !this.defaultVisible) || (b != null && !b)) return;
+        structure.createUpdateTransactions(l -> l.getController().equals(c), target).forEach
+                (renderer::processTransaction);
     }
 
     @Override
@@ -188,50 +125,14 @@ public class Tag implements ITag {
 
     @Override
     public void update(ITagController.TagLine line, Player target) {
-        if (!renderer.isVisible(this, target)) return;
-        RenderedTagLine l = null;
-        int idx = -1;
-        for (int i = 0; i < this.lines.size(); i++) {
-            if ((l = this.lines.get(i)).isRenderedBy(line)) {
-                idx = i;
-                break;
-            }
-        }
-        if (idx == -1)
-            throw new IllegalArgumentException("Cannot update a line object that is not registered to this tag!");
-        boolean v = renderer.isShown(target, l);
-        String newVal = l.get(target);
-        if (newVal == null && v && l.shouldRemoveSpaceWhenNull()) {
-            renderer.renderStructureChange(idx, null, l, this, Collections.singleton(target));
-        } else if (newVal != null && !v) {
-            renderer.queueName(l, newVal);
-            renderer.renderStructureChange(idx, l, null, this, Collections.singleton(target));
-        } else {
-            renderer.renderLineChange(l, newVal, Collections.singleton(target));
-        }
+        Boolean b = renderer.isVisible(this, target);
+        if ((b == null && !this.defaultVisible) || (b != null && !b)) return;
+        structure.createUpdateTransactions(l -> l.isRenderedBy(line), target).forEach(renderer::processTransaction);
     }
 
     @Override
     public void update(ITagController.TagLine line) {
         renderer.getNearby(this, 1.0).forEach(p -> update(line, p));
-    }
-
-    private void updateInternal(RangeSeries added, RangeSeries removed, Map<Integer, String> newNames, Set<Player>
-            targets) {
-        List<RenderedTagLine> subjectLines = new ArrayList<>();
-        for (RangeSeries.Range r : removed.getRanges()) {
-            for (int j : r) subjectLines.add(this.lines.get(j));
-            renderer.renderStructureChange(r.getLower(), null, subjectLines, this,
-                    targets, r.size());
-            subjectLines.clear();
-        }
-        for (RangeSeries.Range r : added.getRanges()) {
-            for (int j : r) subjectLines.add(this.lines.get(j));
-            renderer.renderStructureChange(r.getLower(), subjectLines, null, this, targets, 0);
-            subjectLines.clear();
-        }
-        for (Map.Entry<Integer, String> e : newNames.entrySet())
-            renderer.renderLineChange(this.lines.get(e.getKey()), e.getValue(), targets);
     }
 
 
@@ -249,6 +150,6 @@ public class Tag implements ITag {
     }
 
     public List<RenderedTagLine> getLines() {
-        return lines;
+        return structure.getLines();
     }
 }

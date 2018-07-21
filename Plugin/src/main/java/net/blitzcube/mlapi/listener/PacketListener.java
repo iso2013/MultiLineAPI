@@ -9,7 +9,6 @@ import net.blitzcube.peapi.api.entity.modifier.IModifiableEntity;
 import net.blitzcube.peapi.api.event.IEntityPacketEvent;
 import net.blitzcube.peapi.api.listener.IListener;
 import net.blitzcube.peapi.api.packet.*;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
@@ -38,6 +37,7 @@ public class PacketListener implements IListener {
     public void onEvent(IEntityPacketEvent e) {
         if (e.getPacketType() == IEntityPacketEvent.EntityPacketType.DESTROY) {
             manageDestroyPacket((IEntityDestroyPacket) e.getPacket(), e.getPlayer());
+            return;
         }
         IEntityIdentifier i = e.getPacket().getIdentifier();
         if (i == null || i.isFakeEntity()) return;
@@ -46,16 +46,22 @@ public class PacketListener implements IListener {
         switch (e.getPacketType()) {
             case OBJECT_SPAWN:
             case ENTITY_SPAWN:
-                Bukkit.broadcastMessage("SPAWNED " + i.getEntityID());
                 renderer.spawnTag(t, e.getPlayer(), e.context());
                 break;
             case MOUNT:
                 IEntityMountPacket p = (IEntityMountPacket) e.getPacket();
-                if (p.getGroup().stream().allMatch(IEntityIdentifier::isFakeEntity)) {
+                boolean tagEntities = p.getGroup().stream().allMatch(i1 -> {
+                    i1.moreSpecific();
+                    return i1.isFakeEntity();
+                });
+                boolean isSpawned = renderer.isSpawned(e.getPlayer(), t);
+                Boolean shouldSpawn = renderer.isVisible(t, e.getPlayer());
+                shouldSpawn = shouldSpawn != null ? shouldSpawn : t.getDefaultVisible();
+                if (!shouldSpawn) break;
+                if (!tagEntities && isSpawned) {
+                    renderer.destroyTag(t, e.getPlayer(), null);
+                } else if (tagEntities && !isSpawned) {
                     renderer.spawnTag(t, e.getPlayer(), (IEntityMountPacket) e.getPacket(), e.context());
-                } else {
-                    renderer.destroyTag(t, e.getPlayer(),
-                            (IEntityDestroyPacket) packet.getPacketFactory().createDestroyPacket());
                 }
                 break;
             case DATA:
@@ -90,13 +96,9 @@ public class PacketListener implements IListener {
     }
 
     private void manageDestroyPacket(IEntityDestroyPacket packet, Player player) {
-        Bukkit.broadcastMessage("DESTROY PACKET CALLED " + entityTags.size());
         packet.getGroup().forEach(identifier -> {
-            Bukkit.broadcastMessage("DESTROY IDENTIFIER CALLED " + identifier.getEntityID());
-            for (int i : entityTags.keySet()) System.out.println(i);
             Tag t1;
             if ((t1 = entityTags.get(identifier.getEntityID())) == null) return;
-            Bukkit.broadcastMessage("DESTROYING TAG?!?!");
             renderer.destroyTag(t1, player, packet);
         });
     }

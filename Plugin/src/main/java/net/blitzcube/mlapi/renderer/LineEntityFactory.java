@@ -8,8 +8,6 @@ import net.blitzcube.peapi.api.entity.modifier.IModifiableEntity;
 import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
 
-import java.util.List;
-
 /**
  * Created by iso2013 on 6/4/2018.
  */
@@ -49,7 +47,6 @@ public class LineEntityFactory {
         e.setLocation(l);
         IModifiableEntity m = e.getModifiableEntity();
         armorStandInvisible.setValue(m, true);
-        nameVisible.setValue(m, true);
         marker.setValue(m, true);
         return e;
     }
@@ -78,14 +75,12 @@ public class LineEntityFactory {
             nameVisible.setValue(entity.getModifiableEntity(), true);
             name.setValue(entity.getModifiableEntity(), newName);
         } else {
-            name.setValue(entity.getModifiableEntity(), "You're not supposed to see me :D");
+            name.setValue(entity.getModifiableEntity(), ":D");
             nameVisible.setValue(entity.getModifiableEntity(), false);
         }
     }
 
-    public void updateLocations(Location l, List<IFakeEntity> entities) {
-        for (IFakeEntity e : entities) {
-            e.setLocation(l);
-        }
+    public void updateLocation(Location l, IFakeEntity e) {
+        e.setLocation(l);
     }
 }

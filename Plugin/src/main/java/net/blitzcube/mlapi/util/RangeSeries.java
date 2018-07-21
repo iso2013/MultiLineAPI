@@ -27,6 +27,10 @@ public class RangeSeries {
         return r.values();
     }
 
+    public boolean contains(int idx) {
+        return backingMap.containsKey(idx);
+    }
+
     public static class Range implements Iterable<Integer> {
         private int lower;
         private int upper;
@@ -48,5 +52,7 @@ public class RangeSeries {
         public int getLower() {
             return lower;
         }
+
+        public int getUpper() { return upper; }
     }
 }

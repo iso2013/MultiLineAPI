@@ -12,6 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 
@@ -32,7 +33,16 @@ public class ServerListener implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         renderer.purge(e.getPlayer());
-        onDespawn(e.getPlayer());
+        onDespawn(e.getPlayer(), 1L);
+    }
+
+    @EventHandler
+    public void onSneak(PlayerToggleSneakEvent e) {
+        if (e.isSneaking()) {
+            MultiLineAPI.DemoController c = MultiLineAPI.DemoController.getInst(null);
+            c.refreshes--;
+            c.refreshAll();
+        }
     }
 
     @EventHandler
@@ -50,6 +60,7 @@ public class ServerListener implements Listener {
     @EventHandler
     public void onChunkLoad(ChunkLoadEvent e) {
         for (Entity en : e.getChunk().getEntities()) {
+            if (!en.isValid()) continue;
             onSpawn(en);
         }
     }
@@ -62,14 +73,14 @@ public class ServerListener implements Listener {
     @EventHandler
     public void onDespawn(EntityDeathEvent e) {
         if (e instanceof PlayerDeathEvent) return;
-        Bukkit.getScheduler().runTaskLater(parent, () -> onDespawn(e.getEntity()), 60);
+        onDespawn(e.getEntity(), 40L);
     }
 
     @EventHandler
     public void onUnload(ChunkUnloadEvent e) {
         Bukkit.getScheduler().runTaskLater(parent, () -> {
             for (Entity en : e.getChunk().getEntities()) {
-                onDespawn(en);
+                onDespawn(en, 1L);
             }
         }, 60);
     }
@@ -81,10 +92,12 @@ public class ServerListener implements Listener {
             renderer.batchDestroyTags(packet.getVisible(e.getPlayer(), 1.03, false)
                     .map(identifier -> {
                         Entity e1 = identifier.getEntity().get();
-                        return e1 != null ? (Tag) parent.getTag(e1) : null;
+                        if (e1 == null) return null;
+                        if (parent.getTag(e1) == null) return null;
+                        return (Tag) parent.getTag(e1);
                     }).filter(tag -> {
-                        Boolean v = renderer.isVisible(tag, e.getPlayer());
                         if (tag == null) return false;
+                        Boolean v = renderer.isVisible(tag, e.getPlayer());
                         if (v == null) v = tag.getDefaultVisible();
                         return v;
                     }), e.getPlayer());
@@ -103,7 +116,7 @@ public class ServerListener implements Listener {
         }
     }
 
-    private void onDespawn(Entity e) {
-        parent.deleteTag(e);
+    private void onDespawn(Entity e, long l) {
+        Bukkit.getScheduler().runTaskLater(parent, () -> parent.deleteTag(e), l);
     }
 }

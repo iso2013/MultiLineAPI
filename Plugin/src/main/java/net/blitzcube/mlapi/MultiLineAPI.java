@@ -38,52 +38,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
         packetAPI.addListener(new PacketListener(tags, renderer, packetAPI));
         this.getServer().getPluginManager().registerEvents(new ServerListener(this, renderer, packetAPI), this);
 
-        JavaPlugin parent = this;
-
-        this.addDefaultTagController(new ITagController() {
-            private final TagLine line = new TagLine() {
-                @Override
-                public String getText(Entity target, Player viewer) {
-                    Bukkit.broadcastMessage("Text accessed for " + target.getType());
-                    return viewer.getDisplayName() + " " + target.getEntityId();
-                }
-
-                @Override
-                public boolean keepSpaceWhenNull(Entity target) {
-                    return false;
-                }
-            };
-
-            @Override
-            public List<TagLine> getFor(Entity target) {
-                return Collections.singletonList(line);
-            }
-
-            @Override
-            public String getName(Entity target, Player viewer) {
-                return "- %PREV% -";
-            }
-
-            @Override
-            public EntityType[] getAutoApplyFor() {
-                return EntityType.values();
-            }
-
-            @Override
-            public JavaPlugin getPlugin() {
-                return parent;
-            }
-
-            @Override
-            public int getPriority() {
-                return 0;
-            }
-
-            @Override
-            public int getNamePriority() {
-                return 0;
-            }
-        });
+        this.addDefaultTagController(DemoController.getInst(this));
     }
 
     @Override
@@ -159,5 +114,119 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
 
     public boolean hasTag(int entityID) {
         return tags.containsKey(entityID);
+    }
+
+    public Collection<Tag> getTags() {
+        return tags.values();
+    }
+
+    public static class DemoController implements ITagController {
+        private static DemoController inst;
+        private final MultiLineAPI parent;
+        public int refreshes = 15;
+        private final TagLine line = new TagLine() {
+            @Override
+            public String getText(Entity target, Player viewer) {
+                if (refreshes % 2 == 0) return null;
+                String s = "";
+                for (int i = 0; i < refreshes / 2; i++)
+                    if (s.length() < 10) {
+                        s = s + "逕";
+                    } else {
+                        s = s + "逡";
+                    }
+                if (refreshes % 2 == 1) if (s.length() < 10) {
+                    s = s + "逖";
+                } else {
+                    s = s + "逢";
+                }
+                while (s.length() < 10) s = s + "逓";
+                return s;
+                //return "逕逕逕逕逕逕逖逓逓逓";
+                //return viewer.getDisplayName() + " " + target.getType().name() + " - " + refreshes;
+            }
+
+            @Override
+            public boolean keepSpaceWhenNull(Entity target) {
+                return true;
+            }
+        };
+        private final TagLine line2 = new TagLine() {
+            @Override
+            public String getText(Entity target, Player viewer) {
+                if (refreshes % 3 == 0) return null;
+                return refreshes + ", " + viewer.getDisplayName();
+            }
+
+            @Override
+            public boolean keepSpaceWhenNull(Entity target) {
+                return true;
+            }
+        };
+        private final TagLine line3 = new TagLine() {
+            @Override
+            public String getText(Entity target, Player viewer) {
+                if (refreshes % 4 == 0) return null;
+                return refreshes + " 3, " + viewer.getDisplayName();
+            }
+
+            @Override
+            public boolean keepSpaceWhenNull(Entity target) {
+                return true;
+            }
+        };
+        private Set<Entity> enabledFor;
+
+        public DemoController(MultiLineAPI parent) {
+            this.parent = parent;
+            this.enabledFor = new HashSet<>();
+        }
+
+        public static DemoController getInst(MultiLineAPI parent) {
+            if (inst == null) inst = new DemoController(parent);
+            return inst;
+        }
+
+        @Override
+        public List<TagLine> getFor(Entity target) {
+            enabledFor.add(target);
+            return new ArrayList<TagLine>() {{
+                add(line);
+                add(line2);
+                add(line3);
+            }};
+        }
+
+        public void refreshAll() {
+            for (Entity e : enabledFor) {
+                if (parent.getTag(e) == null) continue;
+                parent.getTag(e).update(this);
+            }
+        }
+
+        @Override
+        public String getName(Entity target, Player viewer) {
+            return "- %PREV% -";
+        }
+
+        @Override
+        public EntityType[] getAutoApplyFor() {
+            return EntityType.values();
+        }
+
+        @Override
+        public JavaPlugin getPlugin() {
+            return parent;
+        }
+
+        @Override
+        public int getPriority() {
+            return 0;
+        }
+
+        @Override
+        public int getNamePriority() {
+            return 0;
+        }
     }
 }
