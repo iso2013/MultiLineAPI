@@ -51,8 +51,8 @@ public class TagStructure {
 
         int fIdx = idx;
         return players.map(p -> new AddTransaction(
-                getBelow(fIdx - 1, p),
-                getAbove(fIdx + lines.size(), p, null),
+                getBelow(fIdx - 1, p, null, null),
+                getAbove(fIdx + lines.size(), p, null, null),
                 newLines,
                 p,
                 tag.getTarget()
@@ -74,8 +74,8 @@ public class TagStructure {
 
         int fIdx = idx;
         return players.map(p -> new RemoveTransaction(
-                getBelow(fIdx - 1, p),
-                getAbove(fIdx, p, null),
+                getBelow(fIdx - 1, p, null, null),
+                getAbove(fIdx, p, null, null),
                 removed,
                 p
         ));
@@ -104,12 +104,12 @@ public class TagStructure {
 
         transactions.add(new NameTransaction(lines, player));
 
-        Set<RenderedTagLine> subjectLines = new HashSet<>();
+        List<RenderedTagLine> subjectLines = new LinkedList<>();
         for (RangeSeries.Range r : removed.getRanges()) {
             for (int j : r) subjectLines.add(this.lines.get(j));
             transactions.add(new RemoveTransaction(
-                    getBelow(r.getLower() - 1, player),
-                    getAbove(r.getUpper() + 1, player, removed),
+                    getBelow(r.getLower() - 1, player, added, removed),
+                    getAbove(r.getUpper() + 1, player, added, removed),
                     ImmutableSet.copyOf(subjectLines),
                     player
             ));
@@ -117,11 +117,12 @@ public class TagStructure {
         }
 
         for (RangeSeries.Range r : added.getRanges()) {
+            subjectLines = new LinkedList<>();
             for (int j : r) subjectLines.add(this.lines.get(j));
             transactions.add(new AddTransaction(
-                    getBelow(r.getLower() - 1, player),
-                    getAbove(r.getUpper() + 1, player, removed),
-                    ImmutableSet.copyOf(subjectLines),
+                    getBelow(r.getLower() - 1, player, added, removed),
+                    getAbove(r.getUpper() + 1, player, added, removed),
+                    subjectLines,
                     player,
                     tag.getTarget()
             ));
@@ -130,12 +131,12 @@ public class TagStructure {
         return transactions.stream();
     }
 
-    private IEntityIdentifier getAbove(int idx, Player player, RangeSeries removed) {
+    private IEntityIdentifier getAbove(int idx, Player player, RangeSeries added, RangeSeries removed) {
         for (int i = idx; i <= lines.size(); i++) {
             if (i == lines.size()) return tag.getTop().getIdentifier();
-            if (visible.containsEntry(player, lines.get(idx))
-                //&& (removed == null || !removed.contains(idx))
-                    ) {
+            if ((visible.containsEntry(player, lines.get(idx))
+                    && (removed == null || !removed.contains(idx)))
+                    || (added != null && added.contains(idx))) {
                 Bukkit.broadcastMessage("Returned line. " + lines.get(idx).get(player));
                 return lines.get(idx).getBottom().getIdentifier();
             }
@@ -143,12 +144,14 @@ public class TagStructure {
         throw new IllegalStateException("This should never happen! Failed to find a suitable top entity");
     }
 
-    private IEntityIdentifier getBelow(int idx, Player player) {
+    private IEntityIdentifier getBelow(int idx, Player player, RangeSeries added, RangeSeries removed) {
         for (int i = idx; i >= -1; i--) {
             if (i == -1) {
                 return tag.getBottom().getIdentifier();
             }
-            if (visible.containsEntry(player, lines.get(idx)))
+            if ((visible.containsEntry(player, lines.get(idx))
+                    && (removed == null || !removed.contains(idx)))
+                    || (added != null && added.contains(idx)))
                 return lines.get(idx).getStack().getLast().getIdentifier();
         }
         throw new IllegalStateException("This should never happen! Failed to find a suitable bottom entity");

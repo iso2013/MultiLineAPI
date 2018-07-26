@@ -85,6 +85,9 @@ public class ServerListener implements Listener {
         }, 60);
     }
 
+    //FIXME: Add item & arrow pickup events. Or figure out a better way to do this. There's a better way to do this I
+    //FIXME: just thought of - add a task one tick later and check if the entity is invalid.
+
     @EventHandler
     public void onGameModeChange(PlayerGameModeChangeEvent e) {
         if (e.getNewGameMode() == GameMode.SPECTATOR && e.getPlayer().getGameMode() != GameMode.SPECTATOR) {

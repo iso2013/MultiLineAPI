@@ -148,7 +148,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
 
             @Override
             public boolean keepSpaceWhenNull(Entity target) {
-                return true;
+                return false;
             }
         };
         private final TagLine line2 = new TagLine() {
@@ -160,7 +160,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
 
             @Override
             public boolean keepSpaceWhenNull(Entity target) {
-                return true;
+                return false;
             }
         };
         private final TagLine line3 = new TagLine() {
@@ -172,7 +172,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
 
             @Override
             public boolean keepSpaceWhenNull(Entity target) {
-                return true;
+                return false;
             }
         };
         private Set<Entity> enabledFor;
