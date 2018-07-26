@@ -128,22 +128,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
             @Override
             public String getText(Entity target, Player viewer) {
                 if (refreshes % 2 == 0) return null;
-                String s = "";
-                for (int i = 0; i < refreshes / 2; i++)
-                    if (s.length() < 10) {
-                        s = s + "逕";
-                    } else {
-                        s = s + "逡";
-                    }
-                if (refreshes % 2 == 1) if (s.length() < 10) {
-                    s = s + "逖";
-                } else {
-                    s = s + "逢";
-                }
-                while (s.length() < 10) s = s + "逓";
-                return s;
-                //return "逕逕逕逕逕逕逖逓逓逓";
-                //return viewer.getDisplayName() + " " + target.getType().name() + " - " + refreshes;
+                return "Three";
             }
 
             @Override
@@ -155,7 +140,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
             @Override
             public String getText(Entity target, Player viewer) {
                 if (refreshes % 3 == 0) return null;
-                return refreshes + ", " + viewer.getDisplayName();
+                return "Two";
             }
 
             @Override
@@ -167,7 +152,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
             @Override
             public String getText(Entity target, Player viewer) {
                 if (refreshes % 4 == 0) return null;
-                return refreshes + " 3, " + viewer.getDisplayName();
+                return "One";
             }
 
             @Override

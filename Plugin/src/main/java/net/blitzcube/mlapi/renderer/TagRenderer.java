@@ -79,6 +79,10 @@ public class TagRenderer {
         s2.add(packets[1]);
     }
 
+    //FIXME: Issue Notes below.
+    //When "Two" is removed and Three is added, One becomes separated.
+    //When "Two" is removed and One is added, Three becomes separated.
+    //
     public void processTransaction(StructureTransaction t) {
         IEntityPacketFactory f = packet.getPacketFactory();
         Set<IEntityPacket> firstPhase = new HashSet<>(), secondPhase = null;
