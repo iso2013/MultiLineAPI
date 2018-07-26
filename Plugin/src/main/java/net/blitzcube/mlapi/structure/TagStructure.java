@@ -13,7 +13,6 @@ import net.blitzcube.mlapi.tag.RenderedTagLine;
 import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.mlapi.util.RangeSeries;
 import net.blitzcube.peapi.api.entity.IEntityIdentifier;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.*;
@@ -133,67 +132,21 @@ public class TagStructure {
     }
 
     private IEntityIdentifier getAbove(int idx, Player player, RangeSeries added, RangeSeries removed) {
-        Bukkit.broadcastMessage("Calculating line above " + (idx - 1) + "! (" + (idx >= 1 && idx < lines.size() ?
-                lines.get(idx - 1).get(player) : "bottom of tag?") + ")");
-        for (int i = 0; i < lines.size(); i++) {
-            Bukkit.broadcastMessage("Current value: " + i + " - " + lines.get(i).get(player));
-        }
-        for (int i = idx; i <= lines.size(); i++) {
-            if (i == lines.size()) {
-                Bukkit.broadcastMessage("Returned top of tag for above.");
-                return tag.getTop().getIdentifier();
-            }
+        for (int i = idx; i < lines.size(); i++) {
             if ((visible.containsEntry(player, lines.get(i))
                     && (removed == null || !removed.contains(i)))
-                    || (added != null && added.contains(i))) {
-                Bukkit.broadcastMessage("Returned line for above: " + lines.get(i).get(player));
+                    || (added != null && added.contains(i)))
                 return lines.get(i).getBottom().getIdentifier();
-            } else {
-                if (visible.containsEntry(player, lines.get(i))) {
-                    Bukkit.broadcastMessage("Above: " + i + " is currently visible to the player. (" + lines.get(i)
-                            .get(player) + ")");
-                }
-                if (!(removed == null || !removed.contains(i))) {
-                    Bukkit.broadcastMessage("Above: " + i + " is scheduled for removal. (" + lines.get(i).get(player)
-                            + ")");
-                }
-                if (added != null && added.contains(i)) {
-                    Bukkit.broadcastMessage("Above: " + i + " is scheduled for addition. (" + lines.get(i).get(player) + ")");
-                }
-            }
         }
         return tag.getTop().getIdentifier();
     }
 
     private IEntityIdentifier getBelow(int idx, Player player, RangeSeries added, RangeSeries removed) {
-        Bukkit.broadcastMessage("Calculating line below " + (idx + 1) + "! (" + ((idx + 1 < lines.size() && idx >=
-                -1) ? lines.get(idx + 1).get(player) : "top of tag?") + ")");
-        for (int i = 0; i < lines.size(); i++) {
-            Bukkit.broadcastMessage("Current value: " + i + " - " + lines.get(i).get(player));
-        }
-        for (int i = idx; i >= -1; i--) {
-            if (i == -1) {
-                Bukkit.broadcastMessage("Returned bottom of tag for below.");
-                return tag.getBottom().getIdentifier();
-            }
+        for (int i = idx; i >= 0; i--) {
             if ((visible.containsEntry(player, lines.get(i))
                     && (removed == null || !removed.contains(i)))
-                    || (added != null && added.contains(i))) {
-                Bukkit.broadcastMessage("Returned line for below: " + lines.get(i).get(player));
+                    || (added != null && added.contains(i)))
                 return lines.get(i).getStack().getLast().getIdentifier();
-            } else {
-                if (visible.containsEntry(player, lines.get(i))) {
-                    Bukkit.broadcastMessage("Below: " + i + " is currently visible to the player. (" + lines.get(i)
-                            .get(player) + ")");
-                }
-                if (!(removed == null || !removed.contains(i))) {
-                    Bukkit.broadcastMessage("Below: " + i + " is scheduled for removal. (" + lines.get(i).get(player)
-                            + ")");
-                }
-                if (added != null && added.contains(i)) {
-                    Bukkit.broadcastMessage("Below: " + i + " is scheduled for addition. (" + lines.get(i).get(player) + ")");
-                }
-            }
         }
         return tag.getBottom().getIdentifier();
     }

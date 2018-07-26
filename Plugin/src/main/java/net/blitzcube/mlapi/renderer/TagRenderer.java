@@ -15,7 +15,6 @@ import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
 import net.blitzcube.peapi.api.entity.IEntityIdentifier;
 import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
-import net.blitzcube.peapi.api.event.IEntityPacketContext;
 import net.blitzcube.peapi.api.packet.IEntityDestroyPacket;
 import net.blitzcube.peapi.api.packet.IEntityMountPacket;
 import net.blitzcube.peapi.api.packet.IEntityPacket;
@@ -68,10 +67,6 @@ public class TagRenderer {
     public void purge(Player player) {
         tagVisibility.rowMap().remove(player);
         visibleLines.removeAll(player);
-    }
-
-    public void spawnTag(Tag t, Player p, IEntityPacketContext c) {
-        spawnTag(t, p, null, c);
     }
 
     private void generateObject(IEntityPacketFactory f, IEntityIdentifier i, Set<IEntityPacket> s, Set<IEntityPacket>
@@ -142,7 +137,7 @@ public class TagRenderer {
         }
     }
 
-    public void spawnTag(Tag t, Player p, IEntityMountPacket mountPacket, IEntityPacketContext c) {
+    public void spawnTag(Tag t, Player p, IEntityMountPacket mountPacket) {
         Boolean visible = tagVisibility.get(p, t);
         visible = visible != null ? visible : t.getDefaultVisible();
         if (!visible) return;

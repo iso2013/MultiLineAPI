@@ -46,7 +46,7 @@ public class PacketListener implements IListener {
         switch (e.getPacketType()) {
             case OBJECT_SPAWN:
             case ENTITY_SPAWN:
-                renderer.spawnTag(t, e.getPlayer(), e.context());
+                renderer.spawnTag(t, e.getPlayer(), null);
                 break;
             case MOUNT:
                 IEntityMountPacket p = (IEntityMountPacket) e.getPacket();
@@ -61,7 +61,7 @@ public class PacketListener implements IListener {
                 if (!tagEntities && isSpawned) {
                     renderer.destroyTag(t, e.getPlayer(), null);
                 } else if (tagEntities && !isSpawned) {
-                    renderer.spawnTag(t, e.getPlayer(), (IEntityMountPacket) e.getPacket(), e.context());
+                    renderer.spawnTag(t, e.getPlayer(), (IEntityMountPacket) e.getPacket());
                 }
                 break;
             case DATA:
@@ -73,7 +73,7 @@ public class PacketListener implements IListener {
                     i.moreSpecific();
                     Entity en = i.getEntity().get();
                     if (en instanceof LivingEntity) {
-                        renderer.spawnTag(t, e.getPlayer(), e.context());
+                        renderer.spawnTag(t, e.getPlayer(), null);
                     }
                 }
                 break;
@@ -86,7 +86,7 @@ public class PacketListener implements IListener {
             case REMOVE_EFFECT:
                 IEntityPotionRemovePacket p3 = (IEntityPotionRemovePacket) e.getPacket();
                 if (p3.getEffectType() == PotionEffectType.INVISIBILITY) {
-                    renderer.spawnTag(t, e.getPlayer(), e.context());
+                    renderer.spawnTag(t, e.getPlayer(), null);
                 }
                 break;
         }

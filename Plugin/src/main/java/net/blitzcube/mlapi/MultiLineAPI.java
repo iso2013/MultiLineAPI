@@ -26,8 +26,8 @@ import java.util.*;
 @SuppressWarnings("unused")
 public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
     private TagRenderer renderer;
-    private Map<Integer, Tag> tags = new HashMap<>();
-    private Multimap<EntityType, ITagController> controllersMap = HashMultimap.create();
+    private final Map<Integer, Tag> tags = new HashMap<>();
+    private final Multimap<EntityType, ITagController> controllersMap = HashMultimap.create();
 
     @Override
     public void onEnable() {
@@ -162,9 +162,9 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
                 return false;
             }
         };
-        private Set<Entity> enabledFor;
+        private final Set<Entity> enabledFor;
 
-        public DemoController(MultiLineAPI parent) {
+        DemoController(MultiLineAPI parent) {
             this.parent = parent;
             this.enabledFor = new HashSet<>();
         }
@@ -220,11 +220,10 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
     public static class DemoController2 implements ITagController {
         private static DemoController2 inst;
         private final MultiLineAPI parent;
-        public int refreshes = 15;
+        private final int refreshes = 15;
         private final TagLine line = new TagLine() {
             @Override
             public String getText(Entity target, Player viewer) {
-                if (refreshes % 2 == 0) return null;
                 return "One TWO";
             }
 
@@ -236,8 +235,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
         private final TagLine line2 = new TagLine() {
             @Override
             public String getText(Entity target, Player viewer) {
-                if (refreshes % 3 == 0) return null;
-                return "Two TWO";
+                return null;
             }
 
             @Override
@@ -248,7 +246,6 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
         private final TagLine line3 = new TagLine() {
             @Override
             public String getText(Entity target, Player viewer) {
-                if (refreshes % 4 == 0) return null;
                 return "Three TWO";
             }
 
@@ -257,14 +254,14 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
                 return false;
             }
         };
-        private Set<Entity> enabledFor;
+        private final Set<Entity> enabledFor;
 
-        public DemoController2(MultiLineAPI parent) {
+        DemoController2(MultiLineAPI parent) {
             this.parent = parent;
             this.enabledFor = new HashSet<>();
         }
 
-        public static DemoController2 getInst(MultiLineAPI parent) {
+        static DemoController2 getInst(MultiLineAPI parent) {
             if (inst == null) inst = new DemoController2(parent);
             return inst;
         }

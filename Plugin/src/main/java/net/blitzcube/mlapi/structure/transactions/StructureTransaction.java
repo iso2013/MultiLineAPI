@@ -8,7 +8,7 @@ import org.bukkit.entity.Player;
 public abstract class StructureTransaction {
     private final Player target;
 
-    public StructureTransaction(Player target) {
+    StructureTransaction(Player target) {
         this.target = target;
     }
 

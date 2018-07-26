@@ -2,7 +2,6 @@ package net.blitzcube.mlapi.structure.transactions;
 
 import net.blitzcube.mlapi.tag.RenderedTagLine;
 import net.blitzcube.peapi.api.entity.IEntityIdentifier;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.Collection;
@@ -24,12 +23,6 @@ public class RemoveTransaction extends StructureTransaction {
         this.below = below;
         this.above = above;
         this.removed = removed;
-        String bI = below.isFakeEntity() ? " Fake entity - " + below.getFakeEntity().get().getEntityID() + " " : " " +
-                "Real entity - " + below.getEntity().get().getCustomName() + " ";
-        String aI = below.isFakeEntity() ? " Fake entity - " + above.getFakeEntity().get().getEntityID() + " " : " " +
-                "Real entity - " + above.getEntity().get().getCustomName() + " ";
-        Bukkit.broadcastMessage("MOUNTING ENTITY " + aI + " ONTO " + bI);
-        Bukkit.broadcastMessage("Number of Removed: " + removed.size());
     }
 
     public IEntityIdentifier getBelow() {

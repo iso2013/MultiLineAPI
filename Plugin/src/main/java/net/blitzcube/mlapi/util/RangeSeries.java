@@ -42,8 +42,6 @@ public class RangeSeries {
             this.upper = Math.max(i, upper);
         }
 
-        public int size() { return (upper - lower) + 1; }
-
         @Override
         public Iterator<Integer> iterator() {
             return IntStream.range(lower, upper + 1).iterator();
