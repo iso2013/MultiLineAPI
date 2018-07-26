@@ -13,6 +13,7 @@ import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.event.vehicle.VehicleCreateEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 
@@ -56,6 +57,11 @@ public class ServerListener implements Listener {
 
     @EventHandler
     public void onSpawn(ProjectileLaunchEvent e) { onSpawn(e.getEntity()); }
+
+    @EventHandler
+    public void onSpawn(VehicleCreateEvent e) {
+        onSpawn(e.getVehicle());
+    }
 
     @EventHandler
     public void onChunkLoad(ChunkLoadEvent e) {

@@ -104,6 +104,7 @@ public class Tag implements ITag {
 
     @Override
     public void update(Player target) {
+        if (this.getTarget().getPassengers().size() > 0) return;
         Boolean b = renderer.isVisible(this, target);
         if ((b == null && !this.defaultVisible) || (b != null && !b)) return;
         structure.createUpdateTransactions(l -> true, target).forEach(renderer::processTransaction);
@@ -116,6 +117,7 @@ public class Tag implements ITag {
 
     @Override
     public void update(ITagController c, Player target) {
+        if (this.getTarget().getPassengers().size() > 0) return;
         Boolean b = renderer.isVisible(this, target);
         if ((b == null && !this.defaultVisible) || (b != null && !b)) return;
         structure.createUpdateTransactions(l -> l.getController().equals(c), target).forEach
@@ -129,6 +131,7 @@ public class Tag implements ITag {
 
     @Override
     public void update(ITagController.TagLine line, Player target) {
+        if (this.getTarget().getPassengers().size() > 0) return;
         Boolean b = renderer.isVisible(this, target);
         if ((b == null && !this.defaultVisible) || (b != null && !b)) return;
         structure.createUpdateTransactions(l -> l.isRenderedBy(line), target).forEach(renderer::processTransaction);
