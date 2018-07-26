@@ -13,7 +13,7 @@ import java.util.List;
 public interface ITagController {
     List<TagLine> getFor(Entity target);
 
-    String getName(Entity target, Player viewer);
+    String getName(Entity target, Player viewer, String previous);
 
     EntityType[] getAutoApplyFor();
 

@@ -9,7 +9,9 @@ import net.blitzcube.peapi.api.entity.modifier.IModifiableEntity;
 import net.blitzcube.peapi.api.event.IEntityPacketEvent;
 import net.blitzcube.peapi.api.listener.IListener;
 import net.blitzcube.peapi.api.packet.*;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 
@@ -23,14 +25,12 @@ public class PacketListener implements IListener {
     private final TagRenderer renderer;
     private final IPacketEntityAPI packet;
     private final IEntityModifier<Boolean> invisible;
-    //private final IEntityModifier<Color> effectColor;
 
     public PacketListener(Map<Integer, Tag> entityTags, TagRenderer renderer, IPacketEntityAPI packet) {
         this.entityTags = entityTags;
         this.renderer = renderer;
         this.packet = packet;
         this.invisible = packet.getModifierRegistry().lookup(EntityType.SHEEP, "INVISIBLE", Boolean.class);
-        //this.effectColor = packet.getModifierRegistry().lookup(EntityType.SHEEP, "POTION_COLOR", Color.class);
     }
 
     @Override
@@ -66,20 +66,17 @@ public class PacketListener implements IListener {
                 break;
             case DATA:
                 IModifiableEntity m = packet.wrap(((IEntityDataPacket) e.getPacket()).getMetadata());
-                if (invisible.specifies(m) && invisible.getValue(m)) {
+                if (!invisible.specifies(m)) break;
+                if (invisible.getValue(m)) {
                     renderer.destroyTag(t, e.getPlayer(), null);
+                } else {
+                    i.moreSpecific();
+                    Entity en = i.getEntity().get();
+                    if (en instanceof LivingEntity) {
+                        renderer.spawnTag(t, e.getPlayer(), e.context());
+                    }
                 }
-                break;// else if(effectColor.specifies(m) &&
-//                        (effectColor.getValue(m) == null || effectColor.getValue(m).asRGB() == 0)){
-//                    i.moreSpecific();
-//                    Entity en = i.getEntity().get();
-//                    if(en instanceof LivingEntity){
-//                        if(((LivingEntity) en).getActivePotionEffects().stream()
-//                                .anyMatch(pe -> pe.getType() == PotionEffectType.INVISIBILITY)){
-//
-//                        }
-//                    }
-//                }
+                break;
             case ADD_EFFECT:
                 IEntityPotionAddPacket p2 = (IEntityPotionAddPacket) e.getPacket();
                 if (p2.getEffect().getType() == PotionEffectType.INVISIBILITY) {
