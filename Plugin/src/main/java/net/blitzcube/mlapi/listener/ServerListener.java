@@ -80,13 +80,10 @@ public class ServerListener implements Listener {
     public void onUnload(ChunkUnloadEvent e) {
         Bukkit.getScheduler().runTaskLater(parent, () -> {
             for (Entity en : e.getChunk().getEntities()) {
-                onDespawn(en, 1L);
+                onDespawn(en, 0);
             }
         }, 60);
     }
-
-    //FIXME: Add item & arrow pickup events. Or figure out a better way to do this. There's a better way to do this I
-    //FIXME: just thought of - add a task one tick later and check if the entity is invalid.
 
     @EventHandler
     public void onGameModeChange(PlayerGameModeChangeEvent e) {
@@ -120,6 +117,8 @@ public class ServerListener implements Listener {
     }
 
     private void onDespawn(Entity e, long l) {
-        Bukkit.getScheduler().runTaskLater(parent, () -> parent.deleteTag(e), l);
+        if (l > 0) {
+            Bukkit.getScheduler().runTaskLater(parent, () -> parent.deleteTag(e), l);
+        } else parent.deleteTag(e);
     }
 }

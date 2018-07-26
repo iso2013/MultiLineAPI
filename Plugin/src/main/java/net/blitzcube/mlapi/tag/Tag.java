@@ -5,11 +5,13 @@ import net.blitzcube.mlapi.api.tag.ITag;
 import net.blitzcube.mlapi.api.tag.ITagController;
 import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.structure.TagStructure;
+import net.blitzcube.mlapi.structure.transactions.StructureTransaction;
 import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Created by iso2013 on 6/4/2018.
@@ -63,14 +65,16 @@ public class Tag implements ITag {
     @Override
     public void addTagController(ITagController c) {
         sortedControllers.add(c);
-        structure.addTagController(c, renderer.getNearby(this, 1.0)).forEach(renderer::processTransaction);
+        Stream<StructureTransaction> s = structure.addTagController(c, renderer.getNearby(this, 1.0));
+        if (s != null) s.forEach(renderer::processTransaction);
     }
 
     @Override
     public void removeTagController(ITagController c) {
         if (!sortedControllers.contains(c)) return;
         sortedControllers.remove(c);
-        structure.removeTagController(c, renderer.getNearby(this, 1.0)).forEach(renderer::processTransaction);
+        Stream<StructureTransaction> s = structure.removeTagController(c, renderer.getNearby(this, 1.0));
+        if (s != null) s.forEach(renderer::processTransaction);
     }
 
     @Override

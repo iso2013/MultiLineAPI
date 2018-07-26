@@ -5,6 +5,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import net.blitzcube.mlapi.api.tag.ITag;
+import net.blitzcube.mlapi.api.tag.ITagController;
 import net.blitzcube.mlapi.structure.transactions.AddTransaction;
 import net.blitzcube.mlapi.structure.transactions.NameTransaction;
 import net.blitzcube.mlapi.structure.transactions.RemoveTransaction;
@@ -20,6 +21,7 @@ import net.blitzcube.peapi.api.packet.IEntityMountPacket;
 import net.blitzcube.peapi.api.packet.IEntityPacket;
 import net.blitzcube.peapi.api.packet.IEntityPacketFactory;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -79,10 +81,6 @@ public class TagRenderer {
         s2.add(packets[1]);
     }
 
-    //FIXME: Issue Notes below.
-    //When "Two" is removed and Three is added, One becomes separated.
-    //When "Two" is removed and One is added, Three becomes separated.
-    //
     public void processTransaction(StructureTransaction t) {
         IEntityPacketFactory f = packet.getPacketFactory();
         Set<IEntityPacket> firstPhase = new HashSet<>(), secondPhase = null;
@@ -123,10 +121,6 @@ public class TagRenderer {
         } else if (t instanceof RemoveTransaction) {
             RemoveTransaction rt = (RemoveTransaction) t;
             secondPhase = new HashSet<>();
-            Bukkit.broadcastMessage("REMOVED: " + rt.getRemoved().size());
-            if (rt.getRemoved().size() == 1) {
-                Bukkit.broadcastMessage("firing breakpoint...");
-            }
             firstPhase.add(f.createDestroyPacket(rt.getRemoved().stream().flatMap(l -> l.getStack().stream())
                     .map(IFakeEntity::getIdentifier).toArray(IEntityIdentifier[]::new)));
             secondPhase.add(f.createMountPacket(rt.getBelow(), rt.getAbove()));
@@ -143,8 +137,8 @@ public class TagRenderer {
         if (!firstPhase.isEmpty()) firstPhase.forEach(i -> packet.dispatchPacket(i, t.getTarget()));
         if (secondPhase != null) {
             Set<IEntityPacket> finalSecondPhase = secondPhase;
-            Bukkit.getScheduler().runTaskLater(parent,
-                    () -> finalSecondPhase.forEach(i -> packet.dispatchPacket(i, t.getTarget())), 1L);
+            Bukkit.getScheduler().runTask(parent,
+                    () -> finalSecondPhase.forEach(i -> packet.dispatchPacket(i, t.getTarget())));
         }
     }
 
@@ -187,8 +181,12 @@ public class TagRenderer {
         }
 
         if (t.getTarget().isCustomNameVisible()) {
-            //FIXME
-            lineFactory.updateName(t.getTop(), t.getTarget().getCustomName());
+            String name = t.getTarget().getCustomName();
+            for (ITagController tc : t.getTagControllers(false)) {
+                name = tc.getName(t.getTarget(), p, name);
+                if (name.contains(ChatColor.COLOR_CHAR + "")) name = name + ChatColor.RESET;
+            }
+            lineFactory.updateName(t.getTop(), name);
             stack.add(t.getTop());
             generateObject(f, t.getTop().getIdentifier(), firstPhase, firstPhase);
         }

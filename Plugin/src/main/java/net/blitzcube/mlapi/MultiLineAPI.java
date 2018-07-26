@@ -12,6 +12,7 @@ import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -39,6 +40,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
         this.getServer().getPluginManager().registerEvents(new ServerListener(this, renderer, packetAPI), this);
 
         this.addDefaultTagController(DemoController.getInst(this));
+        this.addDefaultTagController(DemoController2.getInst(this));
     }
 
     @Override
@@ -128,7 +130,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
             @Override
             public String getText(Entity target, Player viewer) {
                 if (refreshes % 2 == 0) return null;
-                return "Three";
+                return "One";
             }
 
             @Override
@@ -152,7 +154,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
             @Override
             public String getText(Entity target, Player viewer) {
                 if (refreshes % 4 == 0) return null;
-                return "One";
+                return "Three";
             }
 
             @Override
@@ -190,8 +192,8 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
         }
 
         @Override
-        public String getName(Entity target, Player viewer) {
-            return "- %PREV% -";
+        public String getName(Entity target, Player viewer, String previous) {
+            return "- " + previous + " -";
         }
 
         @Override
@@ -212,6 +214,101 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
         @Override
         public int getNamePriority() {
             return 0;
+        }
+    }
+
+    public static class DemoController2 implements ITagController {
+        private static DemoController2 inst;
+        private final MultiLineAPI parent;
+        public int refreshes = 15;
+        private final TagLine line = new TagLine() {
+            @Override
+            public String getText(Entity target, Player viewer) {
+                if (refreshes % 2 == 0) return null;
+                return "One TWO";
+            }
+
+            @Override
+            public boolean keepSpaceWhenNull(Entity target) {
+                return false;
+            }
+        };
+        private final TagLine line2 = new TagLine() {
+            @Override
+            public String getText(Entity target, Player viewer) {
+                if (refreshes % 3 == 0) return null;
+                return "Two TWO";
+            }
+
+            @Override
+            public boolean keepSpaceWhenNull(Entity target) {
+                return false;
+            }
+        };
+        private final TagLine line3 = new TagLine() {
+            @Override
+            public String getText(Entity target, Player viewer) {
+                if (refreshes % 4 == 0) return null;
+                return "Three TWO";
+            }
+
+            @Override
+            public boolean keepSpaceWhenNull(Entity target) {
+                return false;
+            }
+        };
+        private Set<Entity> enabledFor;
+
+        public DemoController2(MultiLineAPI parent) {
+            this.parent = parent;
+            this.enabledFor = new HashSet<>();
+        }
+
+        public static DemoController2 getInst(MultiLineAPI parent) {
+            if (inst == null) inst = new DemoController2(parent);
+            return inst;
+        }
+
+        @Override
+        public List<TagLine> getFor(Entity target) {
+            enabledFor.add(target);
+            return new ArrayList<TagLine>() {{
+                add(line);
+                add(line2);
+                add(line3);
+            }};
+        }
+
+        public void refreshAll() {
+            for (Entity e : enabledFor) {
+                if (parent.getTag(e) == null) continue;
+                parent.getTag(e).update(this);
+            }
+        }
+
+        @Override
+        public String getName(Entity target, Player viewer, String previous) {
+            return ChatColor.AQUA + "! " + previous + " !";
+        }
+
+        @Override
+        public EntityType[] getAutoApplyFor() {
+            return EntityType.values();
+        }
+
+        @Override
+        public JavaPlugin getPlugin() {
+            return parent;
+        }
+
+        @Override
+        public int getPriority() {
+            return 50;
+        }
+
+        @Override
+        public int getNamePriority() {
+            return -10;
         }
     }
 }

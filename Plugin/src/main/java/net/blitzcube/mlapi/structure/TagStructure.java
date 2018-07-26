@@ -42,6 +42,7 @@ public class TagStructure {
     public Stream<StructureTransaction> addTagController(ITagController c, Stream<Player> players) {
         List<RenderedTagLine> newLines = c.getFor(tag.getTarget()).stream()
                 .map(l -> new RenderedTagLine(c, l, tag.getTarget(), factory)).collect(Collectors.toList());
+        Collections.reverse(newLines);
         if (newLines.size() == 0) return null;
 
         int idx = lines.size();
@@ -161,7 +162,7 @@ public class TagStructure {
                 }
             }
         }
-        throw new IllegalStateException("This should never happen! Failed to find a suitable top entity");
+        return tag.getTop().getIdentifier();
     }
 
     private IEntityIdentifier getBelow(int idx, Player player, RangeSeries added, RangeSeries removed) {
@@ -194,7 +195,7 @@ public class TagStructure {
                 }
             }
         }
-        throw new IllegalStateException("This should never happen! Failed to find a suitable bottom entity");
+        return tag.getBottom().getIdentifier();
     }
 
     public ImmutableList<RenderedTagLine> getLines() {
