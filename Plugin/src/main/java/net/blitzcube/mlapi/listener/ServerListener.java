@@ -9,8 +9,12 @@ import org.bukkit.GameMode;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.*;
+import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.ItemSpawnEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.event.entity.SpawnerSpawnEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.event.vehicle.VehicleCreateEvent;
@@ -32,18 +36,8 @@ public class ServerListener implements Listener {
     }
 
     @EventHandler
-    public void onQuit(PlayerQuitEvent e) {
-        renderer.purge(e.getPlayer());
-        onDespawn(e.getPlayer(), 1L);
-    }
-
-    @EventHandler
-    public void onSneak(PlayerToggleSneakEvent e) {
-        if (e.isSneaking()) {
-            MultiLineAPI.DemoController c = MultiLineAPI.DemoController.getInst(null);
-            c.refreshes--;
-            c.refreshAll();
-        }
+    public void onLogin(PlayerLoginEvent e) {
+        onSpawn(e.getPlayer());
     }
 
     @EventHandler
@@ -71,24 +65,15 @@ public class ServerListener implements Listener {
         }
     }
 
-    private void onSpawn(Entity e) {
-        if (parent.hasDefaultTagControllers(e.getType()))
-            parent.createTagIfMissing(e);
-    }
-
     @EventHandler
-    public void onDespawn(EntityDeathEvent e) {
-        if (e instanceof PlayerDeathEvent) return;
-        onDespawn(e.getEntity(), 40L);
+    public void onQuit(PlayerQuitEvent e) {
+        renderer.purge(e.getPlayer());
     }
 
     @EventHandler
     public void onUnload(ChunkUnloadEvent e) {
-        Bukkit.getScheduler().runTaskLater(parent, () -> {
-            for (Entity en : e.getChunk().getEntities()) {
-                onDespawn(en, 0);
-            }
-        }, 60);
+        for (Entity en : e.getChunk().getEntities())
+            onDespawn(en);
     }
 
     @EventHandler
@@ -122,9 +107,21 @@ public class ServerListener implements Listener {
         }
     }
 
-    private void onDespawn(Entity e, long l) {
-        if (l > 0) {
-            Bukkit.getScheduler().runTaskLater(parent, () -> parent.deleteTag(e), l);
-        } else parent.deleteTag(e);
+    @EventHandler
+    public void onSneak(PlayerToggleSneakEvent e) {
+        if (e.isSneaking()) {
+            MultiLineAPI.DemoController c = MultiLineAPI.DemoController.getInst(null);
+            c.refreshes--;
+            c.refreshAll();
+        }
+    }
+
+    private void onSpawn(Entity e) {
+        if (parent.hasDefaultTagControllers(e.getType()))
+            parent.createTagIfMissing(e);
+    }
+
+    private void onDespawn(Entity e) {
+        Bukkit.getScheduler().runTaskLater(parent, () -> parent.deleteTag(e), 1);
     }
 }

@@ -1,5 +1,6 @@
 package net.blitzcube.mlapi.listener;
 
+import net.blitzcube.mlapi.MultiLineAPI;
 import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
@@ -9,24 +10,30 @@ import net.blitzcube.peapi.api.entity.modifier.IModifiableEntity;
 import net.blitzcube.peapi.api.event.IEntityPacketEvent;
 import net.blitzcube.peapi.api.listener.IListener;
 import net.blitzcube.peapi.api.packet.*;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by iso2013 on 5/24/2018.
  */
 public class PacketListener implements IListener {
+    private final MultiLineAPI parent;
     private final Map<Integer, Tag> entityTags;
     private final TagRenderer renderer;
     private final IPacketEntityAPI packet;
     private final IEntityModifier<Boolean> invisible;
 
-    public PacketListener(Map<Integer, Tag> entityTags, TagRenderer renderer, IPacketEntityAPI packet) {
+    public PacketListener(MultiLineAPI parent, Map<Integer, Tag> entityTags, TagRenderer renderer, IPacketEntityAPI
+            packet) {
+        this.parent = parent;
         this.entityTags = entityTags;
         this.renderer = renderer;
         this.packet = packet;
@@ -71,6 +78,7 @@ public class PacketListener implements IListener {
                     renderer.destroyTag(t, e.getPlayer(), null);
                 } else {
                     i.moreSpecific();
+                    if (i.getEntity() == null) break;
                     Entity en = i.getEntity().get();
                     if (en instanceof LivingEntity) {
                         renderer.spawnTag(t, e.getPlayer(), null);
@@ -93,11 +101,20 @@ public class PacketListener implements IListener {
     }
 
     private void manageDestroyPacket(IEntityDestroyPacket packet, Player player) {
+        Set<Tag> possibleDeletions = new HashSet<>();
         packet.getGroup().forEach(identifier -> {
             Tag t1;
             if ((t1 = entityTags.get(identifier.getEntityID())) == null) return;
             renderer.destroyTag(t1, player, packet);
+            possibleDeletions.add(t1);
         });
+        Bukkit.getScheduler().runTaskLater(parent, () -> {
+            for (Tag t : possibleDeletions) {
+                if (!t.getTarget().isValid()) {
+                    parent.deleteTag(t.getTarget());
+                }
+            }
+        }, 1L);
     }
 
     @Override

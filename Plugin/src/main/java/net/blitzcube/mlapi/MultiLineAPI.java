@@ -36,7 +36,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
             throw new IllegalStateException("Failed to start MultiLineAPI! PacketEntityAPI could not be found!");
         }
         this.renderer = new TagRenderer(packetAPI, this);
-        packetAPI.addListener(new PacketListener(tags, renderer, packetAPI));
+        packetAPI.addListener(new PacketListener(this, tags, renderer, packetAPI));
         this.getServer().getPluginManager().registerEvents(new ServerListener(this, renderer, packetAPI), this);
 
         this.addDefaultTagController(DemoController.getInst(this));
