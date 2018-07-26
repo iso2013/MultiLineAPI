@@ -5,7 +5,7 @@ import net.blitzcube.peapi.api.entity.IEntityIdentifier;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-import java.util.Collection;
+import java.util.List;
 
 /**
  * Created by iso2013 on 6/13/2018.
@@ -13,13 +13,13 @@ import java.util.Collection;
 public class AddTransaction extends StructureTransaction {
     private final IEntityIdentifier below;
     private final IEntityIdentifier above;
-    private final Collection<RenderedTagLine> added;
+    private final List<RenderedTagLine> added;
     private final Entity tagged;
 
     public AddTransaction(
             IEntityIdentifier below,
             IEntityIdentifier above,
-            Collection<RenderedTagLine> added,
+            List<RenderedTagLine> added,
             Player target,
             Entity tagged) {
         super(target);
@@ -37,7 +37,7 @@ public class AddTransaction extends StructureTransaction {
         return above;
     }
 
-    public Collection<RenderedTagLine> getAdded() {
+    public List<RenderedTagLine> getAdded() {
         return added;
     }
 
