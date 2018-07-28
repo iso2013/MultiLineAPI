@@ -175,12 +175,14 @@ public class TagRenderer {
             visibleLines.put(p, l);
         }
 
-        if (t.getTarget().isCustomNameVisible()) {
-            String name = t.getTarget().getCustomName();
+        if (t.getTarget().isCustomNameVisible() || t.getTarget() instanceof Player) {
+            String name = t.getTarget() instanceof Player ? ((Player) t.getTarget()).getDisplayName() : t.getTarget()
+                    .getCustomName();
             for (ITagController tc : t.getTagControllers(false)) {
                 name = tc.getName(t.getTarget(), p, name);
                 if (name.contains(ChatColor.COLOR_CHAR + "")) name = name + ChatColor.RESET;
             }
+            lineFactory.updateLocation(loc, t.getTop());
             lineFactory.updateName(t.getTop(), name);
             stack.add(t.getTop());
             generateObject(f, t.getTop().getIdentifier(), firstPhase, firstPhase);
