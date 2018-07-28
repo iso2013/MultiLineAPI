@@ -72,13 +72,6 @@ public class TagRenderer {
         visibleLines.removeAll(player);
     }
 
-    private void generateObject(IEntityPacketFactory f, IEntityIdentifier i, Set<IEntityPacket> s, Set<IEntityPacket>
-            s2) {
-        IEntityPacket[] packets = f.createObjectSpawnPacket(i);
-        s.add(packets[0]);
-        s2.add(packets[1]);
-    }
-
     public void processTransaction(StructureTransaction t) {
         IEntityPacketFactory f = packet.getPacketFactory();
         Set<IEntityPacket> firstPhase = new HashSet<>(), secondPhase = null;
@@ -95,7 +88,7 @@ public class TagRenderer {
             for (RenderedTagLine l : at.getAdded()) {
                 loc.add(0, LINE_HEIGHT, 0);
                 boolean skip = true;
-                generateObject(f, l.getBottom().getIdentifier(), firstPhase, secondPhase);
+                Collections.addAll(firstPhase, f.createObjectSpawnPacket(l.getBottom().getIdentifier()));
                 for (IFakeEntity e : l.getStack()) {
                     stack.add(e.getIdentifier());
                     if (skip) {
@@ -171,7 +164,7 @@ public class TagRenderer {
             lineFactory.updateName(l.getBottom(), (newName = l.get(p)));
             if (newName == null && l.shouldRemoveSpaceWhenNull()) continue;
             lineFactory.updateLocation(loc, l.getBottom());
-            generateObject(f, l.getBottom().getIdentifier(), firstPhase, firstPhase);
+            Collections.addAll(firstPhase, f.createObjectSpawnPacket(l.getBottom().getIdentifier()));
             for (IFakeEntity e : l.getStack()) {
                 lineFactory.updateLocation(loc, e);
                 stack.add(e);
@@ -194,7 +187,7 @@ public class TagRenderer {
             lineFactory.updateLocation(loc, t.getTop());
             lineFactory.updateName(t.getTop(), name);
             stack.add(t.getTop());
-            generateObject(f, t.getTop().getIdentifier(), firstPhase, firstPhase);
+            Collections.addAll(firstPhase, f.createObjectSpawnPacket(t.getTop().getIdentifier()));
         }
 
         Iterator<IFakeEntity> i = stack.iterator();

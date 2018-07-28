@@ -18,9 +18,6 @@ import java.util.stream.Stream;
  * Created by iso2013 on 6/4/2018.
  */
 public class Tag implements ITag {
-    //Order comparator
-    private final static Comparator<ITagController> controllerComparator =
-            Comparator.comparingInt(ITagController::getPriority);
     //The renderer
     private final TagRenderer renderer;
 
