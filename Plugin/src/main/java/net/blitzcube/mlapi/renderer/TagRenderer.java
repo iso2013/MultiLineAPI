@@ -15,6 +15,7 @@ import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
 import net.blitzcube.peapi.api.entity.IEntityIdentifier;
 import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
+import net.blitzcube.peapi.api.entity.hitbox.IHitbox;
 import net.blitzcube.peapi.api.packet.IEntityDestroyPacket;
 import net.blitzcube.peapi.api.packet.IEntityMountPacket;
 import net.blitzcube.peapi.api.packet.IEntityPacket;
@@ -32,6 +33,8 @@ import java.util.stream.Stream;
  * Created by iso2013 on 6/4/2018.
  */
 public class TagRenderer {
+    private static final double LINE_HEIGHT = 0.15;
+    private static final double BOTTOM_LINE_HEIGHT = 0.12;
     private final IPacketEntityAPI packet;
     private final JavaPlugin parent;
     private final LineEntityFactory lineFactory;
@@ -86,8 +89,11 @@ public class TagRenderer {
             List<IEntityIdentifier> stack = new LinkedList<>();
             stack.add(at.getBelow());
 
-            Location loc = ((AddTransaction) t).getTagged().getLocation();
+            Location loc = at.getTag().getTarget().getLocation();
+            IHitbox hb = at.getTag().getTargetHitbox();
+            loc.add(0, (hb.getMax().getY() - hb.getMin().getY()) + BOTTOM_LINE_HEIGHT - LINE_HEIGHT, 0);
             for (RenderedTagLine l : at.getAdded()) {
+                loc.add(0, LINE_HEIGHT, 0);
                 boolean skip = true;
                 generateObject(f, l.getBottom().getIdentifier(), firstPhase, secondPhase);
                 for (IFakeEntity e : l.getStack()) {
@@ -150,6 +156,8 @@ public class TagRenderer {
         firstPhase.add(f.createEntitySpawnPacket(t.getBottom().getIdentifier()));
 
         Location loc = t.getTarget().getLocation();
+        IHitbox hb = t.getTargetHitbox();
+        loc.add(0, (hb.getMax().getY() - hb.getMin().getY()) + BOTTOM_LINE_HEIGHT - LINE_HEIGHT, 0);
 
         lineFactory.updateLocation(loc, t.getBottom());
 
@@ -157,6 +165,7 @@ public class TagRenderer {
         stack.add(t.getBottom());
 
         for (RenderedTagLine l : t.getLines()) {
+            loc.add(0, LINE_HEIGHT, 0);
             boolean skip = true;
             String newName;
             lineFactory.updateName(l.getBottom(), (newName = l.get(p)));

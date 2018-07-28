@@ -1,8 +1,8 @@
 package net.blitzcube.mlapi.structure.transactions;
 
 import net.blitzcube.mlapi.tag.RenderedTagLine;
+import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.peapi.api.entity.IEntityIdentifier;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 import java.util.List;
@@ -14,19 +14,19 @@ public class AddTransaction extends StructureTransaction {
     private final IEntityIdentifier below;
     private final IEntityIdentifier above;
     private final List<RenderedTagLine> added;
-    private final Entity tagged;
+    private final Tag tag;
 
     public AddTransaction(
             IEntityIdentifier below,
             IEntityIdentifier above,
             List<RenderedTagLine> added,
             Player target,
-            Entity tagged) {
+            Tag tag) {
         super(target);
         this.below = below;
         this.above = above;
         this.added = added;
-        this.tagged = tagged;
+        this.tag = tag;
     }
 
     public IEntityIdentifier getBelow() {
@@ -41,7 +41,7 @@ public class AddTransaction extends StructureTransaction {
         return added;
     }
 
-    public Entity getTagged() {
-        return tagged;
+    public Tag getTag() {
+        return tag;
     }
 }

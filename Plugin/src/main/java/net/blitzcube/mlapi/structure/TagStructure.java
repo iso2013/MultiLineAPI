@@ -55,7 +55,7 @@ public class TagStructure {
                 getAbove(fIdx + lines.size(), p, null, null),
                 newLines,
                 p,
-                tag.getTarget()
+                tag
         ));
     }
 
@@ -125,7 +125,7 @@ public class TagStructure {
                     getAbove(r.getUpper() + 1, player, added, removed),
                     subjectLines,
                     player,
-                    tag.getTarget()
+                    tag
             ));
         }
 

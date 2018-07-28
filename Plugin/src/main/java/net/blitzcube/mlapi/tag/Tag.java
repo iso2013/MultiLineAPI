@@ -7,6 +7,7 @@ import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.structure.TagStructure;
 import net.blitzcube.mlapi.structure.transactions.StructureTransaction;
 import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
+import net.blitzcube.peapi.api.entity.hitbox.IHitbox;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
@@ -37,6 +38,8 @@ public class Tag implements ITag {
     //Default visibility state
     private boolean defaultVisible = true;
 
+    private final IHitbox hitbox;
+
     public Tag(Entity target, TagRenderer renderer, Collection<ITagController> controllers) {
         //Constructor parameters
         this.target = target;
@@ -49,6 +52,8 @@ public class Tag implements ITag {
         //Bottom and top of stack
         bottom = renderer.getLineEntityFactory().createSilverfish(target.getLocation(), target);
         top = renderer.getLineEntityFactory().createArmorStand(target.getLocation(), target);
+
+        hitbox = renderer.getLineEntityFactory().getHitbox(target);
 
         controllers.forEach(this::addTagController);
     }
@@ -158,5 +163,9 @@ public class Tag implements ITag {
 
     public List<RenderedTagLine> getLines() {
         return structure.getLines();
+    }
+
+    public IHitbox getTargetHitbox() {
+        return hitbox;
     }
 }
