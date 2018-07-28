@@ -55,8 +55,13 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
 
     @Override
     public ITag createTagIfMissing(Entity entity) {
-        return tags.computeIfAbsent(entity.getEntityId(), id ->
-                new Tag(entity, renderer, controllersMap.get(entity.getType())));
+        int id = entity.getEntityId();
+        if (!tags.containsKey(id)) {
+            Tag t = new Tag(entity, renderer, controllersMap.get(entity.getType()));
+            tags.put(id, t);
+            renderer.getNearby(t, 1.0).forEach(player -> renderer.spawnTag(t, player, null));
+        }
+        return tags.get(id);
     }
 
     @Override

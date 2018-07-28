@@ -85,10 +85,19 @@ public class Tag implements ITag {
     @Override
     public void setVisible(Player target, boolean val) {
         renderer.setVisible(this, target, val);
+        if (renderer.isSpawned(target, this)) {
+            renderer.destroyTag(this, target, null);
+        }
     }
 
     @Override
     public void clearVisible(Player target) {
+        Boolean oldVal = renderer.isVisible(this, target);
+        if (oldVal != null && oldVal && renderer.isSpawned(target, this) && !this.defaultVisible) {
+            renderer.destroyTag(this, target, null);
+        } else if (oldVal != null && !oldVal && renderer.isSpawned(target, this) && this.defaultVisible) {
+            renderer.spawnTag(this, target, null);
+        }
         renderer.setVisible(this, target, null);
     }
 
@@ -104,6 +113,13 @@ public class Tag implements ITag {
 
     @Override
     public void setDefaultVisible(boolean val) {
+        Tag t = this;
+        Stream<Player> ps = renderer.getNearby(this, 1.0).filter(player -> renderer.isVisible(t, player) == null);
+        if (val && !this.defaultVisible) {
+            ps.filter(player -> !renderer.isSpawned(player, t)).forEach(player -> renderer.spawnTag(t, player, null));
+        } else if (!val && this.defaultVisible) {
+            ps.filter(player -> renderer.isSpawned(player, t)).forEach(player -> renderer.destroyTag(t, player, null));
+        }
         this.defaultVisible = val;
     }
 
