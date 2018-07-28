@@ -16,7 +16,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 
@@ -82,15 +81,10 @@ public class PacketListener implements IListener {
             case DATA:
                 IModifiableEntity m = packet.wrap(((IEntityDataPacket) e.getPacket()).getMetadata());
                 if (!invisible.specifies(m)) break;
-                if (invisible.getValue(m)) {
+                if (invisible.getValue(m) && renderer.isSpawned(e.getPlayer(), t)) {
                     renderer.destroyTag(t, e.getPlayer(), null);
-                } else {
-                    i.moreSpecific();
-                    if (i.getEntity() == null) break;
-                    Entity en = i.getEntity().get();
-                    if (en instanceof LivingEntity) {
-                        renderer.spawnTag(t, e.getPlayer(), null);
-                    }
+                } else if (!invisible.getValue(m) && !renderer.isSpawned(e.getPlayer(), t)) {
+                    renderer.spawnTag(t, e.getPlayer(), null);
                 }
                 break;
             case ADD_EFFECT:
