@@ -53,8 +53,9 @@ public class PacketListener implements IListener {
             return;
         }
         IEntityIdentifier i = e.getPacket().getIdentifier();
+        if (i == null) return;
         i.moreSpecific();
-        if (i == null || i.isFakeEntity()) return;
+        if (i.isFakeEntity()) return;
         Tag t = entityTags.get(i.getEntityID());
         if (t == null) return;
         switch (e.getPacketType()) {
