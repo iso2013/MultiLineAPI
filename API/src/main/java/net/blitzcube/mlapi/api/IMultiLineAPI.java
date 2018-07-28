@@ -32,4 +32,16 @@ public interface IMultiLineAPI {
     void update(Entity entity, Player target);
 
     void update(Entity entity);
+
+    void update(ITagController controller, Player target);
+
+    void update(ITagController controller);
+
+    void update(ITagController.TagLine line, Player target);
+
+    void update(ITagController.TagLine line);
+
+    void updateNames(Player target);
+
+    void updateNames();
 }

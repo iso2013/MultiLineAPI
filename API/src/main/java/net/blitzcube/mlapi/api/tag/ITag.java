@@ -36,5 +36,9 @@ public interface ITag {
 
     void update(ITagController.TagLine line);
 
+    void updateName(Player target);
+
+    void updateName();
+
     Entity getTarget();
 }

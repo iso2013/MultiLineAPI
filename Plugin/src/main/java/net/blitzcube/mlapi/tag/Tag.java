@@ -10,6 +10,7 @@ import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
 import net.blitzcube.peapi.api.entity.hitbox.IHitbox;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -158,6 +159,16 @@ public class Tag implements ITag {
     @Override
     public void update(ITagController.TagLine line) {
         renderer.getNearby(this, 1.0).forEach(p -> update(line, p));
+    }
+
+    @Override
+    public void updateName(Player target) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void updateName() {
+        throw new NotImplementedException();
     }
 
 

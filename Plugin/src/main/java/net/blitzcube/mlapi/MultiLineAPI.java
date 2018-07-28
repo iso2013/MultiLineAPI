@@ -17,6 +17,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.*;
 
@@ -116,6 +117,36 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
         Preconditions.checkArgument((t = tags.get(entity.getEntityId())) != null, "This entity "
                 + "does not have a tag associated with it!");
         t.update();
+    }
+
+    @Override
+    public void update(ITagController controller, Player target) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void update(ITagController controller) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void update(ITagController.TagLine line, Player target) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void update(ITagController.TagLine line) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void updateNames(Player target) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void updateNames() {
+        throw new NotImplementedException();
     }
 
     public boolean hasDefaultTagControllers(EntityType type) {
