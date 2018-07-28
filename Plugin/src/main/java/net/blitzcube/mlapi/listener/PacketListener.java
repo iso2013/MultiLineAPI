@@ -5,18 +5,22 @@ import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
 import net.blitzcube.peapi.api.entity.IEntityIdentifier;
+import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
+import net.blitzcube.peapi.api.entity.hitbox.IHitbox;
 import net.blitzcube.peapi.api.entity.modifier.IEntityModifier;
 import net.blitzcube.peapi.api.entity.modifier.IModifiableEntity;
 import net.blitzcube.peapi.api.event.IEntityPacketEvent;
 import net.blitzcube.peapi.api.listener.IListener;
 import net.blitzcube.peapi.api.packet.*;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 
+import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -45,8 +49,12 @@ public class PacketListener implements IListener {
         if (e.getPacketType() == IEntityPacketEvent.EntityPacketType.DESTROY) {
             manageDestroyPacket((IEntityDestroyPacket) e.getPacket(), e.getPlayer());
             return;
+        } else if (e.getPacketType() == IEntityPacketEvent.EntityPacketType.CLICK) {
+            manageClick(e, e.getPlayer());
+            return;
         }
         IEntityIdentifier i = e.getPacket().getIdentifier();
+        i.moreSpecific();
         if (i == null || i.isFakeEntity()) return;
         Tag t = entityTags.get(i.getEntityID());
         if (t == null) return;
@@ -100,6 +108,25 @@ public class PacketListener implements IListener {
         }
     }
 
+    private void manageClick(IEntityPacketEvent event, Player player) {
+        IEntityIdentifier identifier = event.getPacket().getIdentifier();
+        if (identifier == null) return;
+        identifier.moreSpecific();
+        WeakReference<IFakeEntity> fe = identifier.getFakeEntity();
+        if (fe == null || fe.get() == null) return;
+        Entity newEntity = renderer.getLineEntityFactory().getByTagEntity(fe.get());
+        if (newEntity == null) return;
+        IHitbox hitbox = renderer.getLineEntityFactory().getHitbox(newEntity);
+        Location eyeLoc = player.getEyeLocation();
+        if (hitbox.intersects(
+                eyeLoc.toVector(),
+                eyeLoc.getDirection(),
+                newEntity.getLocation().toVector()
+        )) {
+            event.getPacket().setIdentifier(this.packet.wrap(newEntity));
+        } else event.setCancelled(true);
+    }
+
     private void manageDestroyPacket(IEntityDestroyPacket packet, Player player) {
         Set<Tag> possibleDeletions = new HashSet<>();
         packet.getGroup().forEach(identifier -> {
@@ -125,5 +152,10 @@ public class PacketListener implements IListener {
     @Override
     public EntityType[] getTargets() {
         return EntityType.values();
+    }
+
+    @Override
+    public boolean shouldFireForFake() {
+        return true;
     }
 }

@@ -28,11 +28,11 @@ public class RenderedTagLine {
         this.spaceWhenNull = tagLine.keepSpaceWhenNull(target);
 
         this.stack = new LinkedList<>();
-        this.bottom = factory.createArmorStand(target.getLocation());
+        this.bottom = factory.createArmorStand(target.getLocation(), target);
         this.stack.add(bottom);
-        this.stack.add(factory.createSlime(target.getLocation()));
-        this.stack.add(factory.createSilverfish(target.getLocation()));
-        this.stack.add(factory.createSilverfish(target.getLocation()));
+        this.stack.add(factory.createSlime(target.getLocation(), target));
+        this.stack.add(factory.createSilverfish(target.getLocation(), target));
+        this.stack.add(factory.createSilverfish(target.getLocation(), target));
     }
 
     public String get(Player viewer) {

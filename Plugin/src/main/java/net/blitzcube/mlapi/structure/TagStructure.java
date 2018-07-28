@@ -71,6 +71,7 @@ public class TagStructure {
 
         List<RenderedTagLine> removed = lines.stream().filter(l -> l.getController() == c).collect(Collectors.toList());
         lines.removeAll(removed);
+        removed.forEach(line -> line.getStack().forEach(factory::purge));
 
         int fIdx = idx;
         return players.map(p -> new RemoveTransaction(

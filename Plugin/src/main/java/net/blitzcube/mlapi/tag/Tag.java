@@ -47,8 +47,8 @@ public class Tag implements ITag {
         this.sortedControllers = new TreeSet<>(Comparator.comparingInt(ITagController::getNamePriority));
 
         //Bottom and top of stack
-        bottom = renderer.getLineEntityFactory().createSilverfish(target.getLocation());
-        top = renderer.getLineEntityFactory().createArmorStand(target.getLocation());
+        bottom = renderer.getLineEntityFactory().createSilverfish(target.getLocation(), target);
+        top = renderer.getLineEntityFactory().createArmorStand(target.getLocation(), target);
 
         controllers.forEach(this::addTagController);
     }

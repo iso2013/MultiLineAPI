@@ -247,4 +247,8 @@ public class TagRenderer {
     public boolean isSpawned(Player viewer, Tag t) {
         return visibleTags.containsEntry(viewer, t);
     }
+
+    public void purge(Tag remove) {
+        lineFactory.purge(remove.getTarget());
+    }
 }

@@ -61,7 +61,10 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
 
     @Override
     public void deleteTag(Entity entity) {
-        tags.remove(entity.getEntityId());
+        Tag t = tags.remove(entity.getEntityId());
+        if (t == null) return;
+        renderer.purge(t);
+        //FIXME: Make this actually *despawn* the tag.
     }
 
     @Override
