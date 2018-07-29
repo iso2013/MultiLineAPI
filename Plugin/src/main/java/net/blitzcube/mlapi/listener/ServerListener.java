@@ -80,18 +80,7 @@ public class ServerListener implements Listener {
     public void onGameModeChange(PlayerGameModeChangeEvent e) {
         if (e.getNewGameMode() == GameMode.SPECTATOR && e.getPlayer().getGameMode() != GameMode.SPECTATOR) {
             //Player is changing into SPECTATOR, so we should despawn all tags.
-            renderer.batchDestroyTags(packet.getVisible(e.getPlayer(), 1.03, false)
-                    .map(identifier -> {
-                        Entity e1 = identifier.getEntity().get();
-                        if (e1 == null) return null;
-                        if (parent.getTag(e1) == null) return null;
-                        return (Tag) parent.getTag(e1);
-                    }).filter(tag -> {
-                        if (tag == null) return false;
-                        Boolean v = renderer.isVisible(tag, e.getPlayer());
-                        if (v == null) v = tag.getDefaultVisible();
-                        return v;
-                    }), e.getPlayer());
+            renderer.batchDestroyTags(renderer.getVisible(e.getPlayer()), e.getPlayer());
         } else if (e.getNewGameMode() != GameMode.SPECTATOR && e.getPlayer().getGameMode() == GameMode.SPECTATOR) {
             //Player is changing out of SPECTATOR, so we should spawn all tags.
             packet.getVisible(e.getPlayer(), 1, false)

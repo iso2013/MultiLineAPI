@@ -137,6 +137,7 @@ public class TagRenderer {
     }
 
     public void spawnTag(Tag t, Player p, IEntityMountPacket mountPacket) {
+        if (t.getTarget() == p) return;
         Boolean visible = tagVisibility.get(p, t);
         visible = visible != null ? visible : t.getDefaultVisible();
         if (!visible) return;
@@ -254,5 +255,9 @@ public class TagRenderer {
 
     public void purge(Tag remove) {
         lineFactory.purge(remove.getTarget());
+    }
+
+    public Stream<Tag> getVisible(Player target) {
+        return visibleTags.get(target).stream();
     }
 }

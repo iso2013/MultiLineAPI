@@ -8,9 +8,9 @@ import net.blitzcube.mlapi.structure.TagStructure;
 import net.blitzcube.mlapi.structure.transactions.StructureTransaction;
 import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
 import net.blitzcube.peapi.api.entity.hitbox.IHitbox;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -136,7 +136,7 @@ public class Tag implements ITag {
 
     @Override
     public void update(ITagController c, Player target) {
-        if (this.getTarget().getPassengers().size() > 0) return;
+        if (this.getTarget().getPassengers().size() > 0 || target.getGameMode() == GameMode.SPECTATOR) return;
         Boolean b = renderer.isVisible(this, target);
         if ((b == null && !this.defaultVisible) || (b != null && !b)) return;
         structure.createUpdateTransactions(l -> l.getController().equals(c), target).forEach
@@ -150,7 +150,7 @@ public class Tag implements ITag {
 
     @Override
     public void update(ITagController.TagLine line, Player target) {
-        if (this.getTarget().getPassengers().size() > 0) return;
+        if (this.getTarget().getPassengers().size() > 0 || target.getGameMode() == GameMode.SPECTATOR) return;
         Boolean b = renderer.isVisible(this, target);
         if ((b == null && !this.defaultVisible) || (b != null && !b)) return;
         structure.createUpdateTransactions(l -> l.isRenderedBy(line), target).forEach(renderer::processTransaction);
@@ -163,12 +163,12 @@ public class Tag implements ITag {
 
     @Override
     public void updateName(Player target) {
-        throw new NotImplementedException();
+        //TODO: Implement this.
     }
 
     @Override
     public void updateName() {
-        throw new NotImplementedException();
+        //TODO: Implement this.
     }
 
 

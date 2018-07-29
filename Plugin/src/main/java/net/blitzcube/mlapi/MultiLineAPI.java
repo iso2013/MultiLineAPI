@@ -17,7 +17,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.*;
 
@@ -60,7 +59,8 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
         if (!tags.containsKey(id)) {
             Tag t = new Tag(entity, renderer, controllersMap.get(entity.getType()));
             tags.put(id, t);
-            renderer.getNearby(t, 1.0).forEach(player -> renderer.spawnTag(t, player, null));
+            renderer.getNearby(t, 1.0).filter(input -> input != entity)
+                    .forEach(player -> renderer.spawnTag(t, player, null));
         }
         return tags.get(id);
     }
@@ -119,34 +119,35 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
         t.update();
     }
 
+
     @Override
     public void update(ITagController controller, Player target) {
-        throw new NotImplementedException();
+        //TODO: Implement this.
     }
 
     @Override
     public void update(ITagController controller) {
-        throw new NotImplementedException();
+        //TODO: Implement this.
     }
 
     @Override
     public void update(ITagController.TagLine line, Player target) {
-        throw new NotImplementedException();
+        //TODO: Implement this.
     }
 
     @Override
     public void update(ITagController.TagLine line) {
-        throw new NotImplementedException();
+        //TODO: Implement this.
     }
 
     @Override
     public void updateNames(Player target) {
-        throw new NotImplementedException();
+        //TODO: Implement this.
     }
 
     @Override
     public void updateNames() {
-        throw new NotImplementedException();
+        //TODO: Implement this.
     }
 
     public boolean hasDefaultTagControllers(EntityType type) {
