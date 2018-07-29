@@ -122,32 +122,33 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
 
     @Override
     public void update(ITagController controller, Player target) {
-        //TODO: Implement this.
+        renderer.getVisible(target).filter(input -> input.getTagControllers(false).contains(controller))
+                .forEach(tag -> tag.update(controller));
     }
 
     @Override
     public void update(ITagController controller) {
-        //TODO: Implement this.
+        Bukkit.getOnlinePlayers().forEach(p -> update(controller, p));
     }
 
     @Override
     public void update(ITagController.TagLine line, Player target) {
-        //TODO: Implement this.
+        renderer.getVisible(target).forEach(tag -> tag.update(line));
     }
 
     @Override
     public void update(ITagController.TagLine line) {
-        //TODO: Implement this.
+        Bukkit.getOnlinePlayers().forEach(player -> update(line, player));
     }
 
     @Override
     public void updateNames(Player target) {
-        //TODO: Implement this.
+        renderer.getVisible(target).forEach(tag -> tag.updateName(target));
     }
 
     @Override
     public void updateNames() {
-        //TODO: Implement this.
+        tags.values().forEach(Tag::updateName);
     }
 
     public boolean hasDefaultTagControllers(EntityType type) {

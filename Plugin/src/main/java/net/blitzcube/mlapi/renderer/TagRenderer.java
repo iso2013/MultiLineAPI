@@ -183,7 +183,7 @@ public class TagRenderer {
                     .getCustomName();
             for (ITagController tc : t.getTagControllers(false)) {
                 name = tc.getName(t.getTarget(), p, name);
-                if (name.contains(ChatColor.COLOR_CHAR + "")) name = name + ChatColor.RESET;
+                if (name != null && name.contains(ChatColor.COLOR_CHAR + "")) name = name + ChatColor.RESET;
             }
             lineFactory.updateLocation(loc, t.getTop());
             lineFactory.updateName(t.getTop(), name);
@@ -259,5 +259,15 @@ public class TagRenderer {
 
     public Stream<Tag> getVisible(Player target) {
         return visibleTags.get(target).stream();
+    }
+
+    public void updateName(Tag tag, Player viewer) {
+        String name;
+        name = tag.getTarget() instanceof Player ? ((Player) tag.getTarget()).getDisplayName() : tag.getTarget()
+                .getCustomName();
+        for (ITagController tc : tag.getTagControllers(false)) {
+            name = tc.getName(tag.getTarget(), viewer, name);
+            if (name != null && name.contains(ChatColor.COLOR_CHAR + "")) name = name + ChatColor.RESET;
+        }
     }
 }

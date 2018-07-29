@@ -136,6 +136,7 @@ public class Tag implements ITag {
 
     @Override
     public void update(ITagController c, Player target) {
+        if (!this.sortedControllers.contains(c)) return;
         if (this.getTarget().getPassengers().size() > 0 || target.getGameMode() == GameMode.SPECTATOR) return;
         Boolean b = renderer.isVisible(this, target);
         if ((b == null && !this.defaultVisible) || (b != null && !b)) return;
@@ -145,6 +146,7 @@ public class Tag implements ITag {
 
     @Override
     public void update(ITagController controller) {
+        if (!this.sortedControllers.contains(controller)) return;
         renderer.getNearby(this, 1.0).forEach(p -> update(controller, p));
     }
 
@@ -162,13 +164,13 @@ public class Tag implements ITag {
     }
 
     @Override
-    public void updateName(Player target) {
-        //TODO: Implement this.
+    public void updateName(Player viewer) {
+        renderer.updateName(this, viewer);
     }
 
     @Override
     public void updateName() {
-        //TODO: Implement this.
+        renderer.getNearby(this, 1.0).forEach(this::updateName);
     }
 
 
