@@ -134,7 +134,7 @@ public class TagRenderer {
                 IEntityIdentifier prev = null;
                 for (IFakeEntity fe : l.getStack()) {
                     if (prev != null) {
-                        lineFactory.updateLocation(loc, l.getBottom());
+                        lineFactory.updateLocation(loc, fe);
                         firstPhase.add(f.createEntitySpawnPacket(fe.getIdentifier()));
                         secondPhase.add(f.createMountPacket(prev, fe.getIdentifier()));
                     }
