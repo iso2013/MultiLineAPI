@@ -69,6 +69,8 @@ public class PacketListener implements IListener {
                     i1.moreSpecific();
                     return i1.isFakeEntity();
                 });
+                if (i.getEntity() != null && i.getEntity().get() != null &&
+                        i.getEntity().get().getPassengers().size() > 0) tagEntities = false;
                 boolean isSpawned = renderer.isSpawned(e.getPlayer(), t);
                 Boolean shouldSpawn = renderer.isVisible(t, e.getPlayer());
                 shouldSpawn = shouldSpawn != null ? shouldSpawn : t.getDefaultVisible();

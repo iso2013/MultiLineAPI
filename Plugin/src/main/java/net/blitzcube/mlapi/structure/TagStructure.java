@@ -1,14 +1,10 @@
 package net.blitzcube.mlapi.structure;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import net.blitzcube.mlapi.api.tag.ITagController;
 import net.blitzcube.mlapi.renderer.LineEntityFactory;
-import net.blitzcube.mlapi.structure.transactions.AddTransaction;
-import net.blitzcube.mlapi.structure.transactions.NameTransaction;
-import net.blitzcube.mlapi.structure.transactions.RemoveTransaction;
-import net.blitzcube.mlapi.structure.transactions.StructureTransaction;
+import net.blitzcube.mlapi.structure.transactions.*;
 import net.blitzcube.mlapi.tag.RenderedTagLine;
 import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.mlapi.util.RangeSeries;
@@ -95,6 +91,7 @@ public class TagStructure {
             String newVal = l.get(player);
             if (newVal == null && v && l.shouldRemoveSpaceWhenNull()) {
                 removed.put(i);
+                lines.put(l, null);
             } else if (newVal != null && !v) {
                 added.put(i);
                 lines.put(l, newVal);
@@ -108,11 +105,12 @@ public class TagStructure {
         List<RenderedTagLine> subjectLines = new LinkedList<>();
         for (RangeSeries.Range r : removed.getRanges()) {
             for (int j : r) subjectLines.add(this.lines.get(j));
-            transactions.add(new RemoveTransaction(
+            transactions.add(new MoveTransaction(
                     getBelow(r.getLower() - 1, player, added, removed),
                     getAbove(r.getUpper() + 1, player, added, removed),
-                    ImmutableSet.copyOf(subjectLines),
-                    player
+                    ImmutableList.copyOf(subjectLines),
+                    player,
+                    true
             ));
             subjectLines.clear();
         }
@@ -120,12 +118,12 @@ public class TagStructure {
         for (RangeSeries.Range r : added.getRanges()) {
             subjectLines = new LinkedList<>();
             for (int j : r) subjectLines.add(this.lines.get(j));
-            transactions.add(new AddTransaction(
+            transactions.add(new MoveTransaction(
                     getBelow(r.getLower() - 1, player, added, removed),
                     getAbove(r.getUpper() + 1, player, added, removed),
                     subjectLines,
                     player,
-                    tag
+                    false
             ));
         }
 
