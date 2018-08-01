@@ -40,6 +40,7 @@ public class TagStructure {
         Collections.reverse(newLines);
         if (newLines.size() == 0) return null;
 
+        //Question: Does this work? Is this the cause of https://github.com/iso2013/MultiLineAPI/issues/39?
         int idx = lines.size();
         for (int i = 0; i < lines.size(); i++)
             if (comp.compare(c, lines.get(i).getController()) > 0) idx = i + 1;
