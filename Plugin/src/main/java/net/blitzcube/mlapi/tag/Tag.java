@@ -1,8 +1,10 @@
 package net.blitzcube.mlapi.tag;
 
 import com.google.common.collect.ImmutableList;
+import net.blitzcube.mlapi.VisibilityStates;
 import net.blitzcube.mlapi.api.tag.ITag;
 import net.blitzcube.mlapi.api.tag.ITagController;
+import net.blitzcube.mlapi.renderer.LineEntityFactory;
 import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.structure.TagStructure;
 import net.blitzcube.mlapi.structure.transactions.StructureTransaction;
@@ -33,25 +35,28 @@ public class Tag implements ITag {
     //Bottom and top entities
     private final IFakeEntity bottom;
     private final IFakeEntity top;
+    private final VisibilityStates state;
     //Default visibility state
     private boolean defaultVisible = true;
 
     private final IHitbox hitbox;
 
-    public Tag(Entity target, TagRenderer renderer, Collection<ITagController> controllers) {
+    public Tag(Entity target, TagRenderer renderer, Collection<ITagController> controllers, LineEntityFactory
+            lineFactory, VisibilityStates state) {
         //Constructor parameters
         this.target = target;
         this.renderer = renderer;
+        this.state = state;
 
         //Sorted collections
-        this.structure = new TagStructure(this, renderer.getLineEntityFactory(), renderer.getVisibilityMap());
+        this.structure = new TagStructure(this, lineFactory, state.getVisibilityMap());
         this.sortedControllers = new TreeSet<>(Comparator.comparingInt(ITagController::getNamePriority));
 
         //Bottom and top of stack
-        bottom = renderer.getLineEntityFactory().createSilverfish(target.getLocation(), target);
-        top = renderer.getLineEntityFactory().createArmorStand(target.getLocation(), target);
+        bottom = this.renderer.createBottom(this);
+        top = this.renderer.createTop(this);
 
-        hitbox = renderer.getLineEntityFactory().getHitbox(target);
+        hitbox = lineFactory.getHitbox(target);
 
         controllers.forEach(this::addTagController);
     }
@@ -82,26 +87,28 @@ public class Tag implements ITag {
 
     @Override
     public void setVisible(Player target, boolean val) {
-        renderer.setVisible(this, target, val);
-        if (renderer.isSpawned(target, this)) {
+        state.setVisible(this, target, val);
+        if (state.isSpawned(target, this) && !val) {
             renderer.destroyTag(this, target, null);
+        } else if (!state.isSpawned(target, this) && val) {
+            renderer.spawnTag(this, target, null);
         }
     }
 
     @Override
     public void clearVisible(Player target) {
-        Boolean oldVal = renderer.isVisible(this, target);
-        if (oldVal != null && oldVal && renderer.isSpawned(target, this) && !this.defaultVisible) {
+        Boolean oldVal = state.isVisible(this, target);
+        if (oldVal != null && oldVal && state.isSpawned(target, this) && !this.defaultVisible) {
             renderer.destroyTag(this, target, null);
-        } else if (oldVal != null && !oldVal && renderer.isSpawned(target, this) && this.defaultVisible) {
+        } else if (oldVal != null && !oldVal && state.isSpawned(target, this) && this.defaultVisible) {
             renderer.spawnTag(this, target, null);
         }
-        renderer.setVisible(this, target, null);
+        state.setVisible(this, target, null);
     }
 
     @Override
     public Boolean isVisible(Player target) {
-        return renderer.isVisible(this, target);
+        return state.isVisible(this, target);
     }
 
     @Override
@@ -112,11 +119,11 @@ public class Tag implements ITag {
     @Override
     public void setDefaultVisible(boolean val) {
         Tag t = this;
-        Stream<Player> ps = renderer.getNearby(this, 1.0).filter(player -> renderer.isVisible(t, player) == null);
+        Stream<Player> ps = renderer.getNearby(this, 1.0).filter(player -> state.isVisible(t, player) == null);
         if (val && !this.defaultVisible) {
-            ps.filter(player -> !renderer.isSpawned(player, t)).forEach(player -> renderer.spawnTag(t, player, null));
+            ps.filter(player -> !state.isSpawned(player, t)).forEach(player -> renderer.spawnTag(t, player, null));
         } else if (!val && this.defaultVisible) {
-            ps.filter(player -> renderer.isSpawned(player, t)).forEach(player -> renderer.destroyTag(t, player, null));
+            ps.filter(player -> state.isSpawned(player, t)).forEach(player -> renderer.destroyTag(t, player, null));
         }
         this.defaultVisible = val;
     }
@@ -124,7 +131,7 @@ public class Tag implements ITag {
     @Override
     public void update(Player target) {
         if (this.getTarget().getPassengers().size() > 0) return;
-        Boolean b = renderer.isVisible(this, target);
+        Boolean b = state.isVisible(this, target);
         if ((b == null && !this.defaultVisible) || (b != null && !b)) return;
         structure.createUpdateTransactions(l -> true, target).forEach(renderer::processTransaction);
     }
@@ -138,7 +145,7 @@ public class Tag implements ITag {
     public void update(ITagController c, Player target) {
         if (!this.sortedControllers.contains(c)) return;
         if (this.getTarget().getPassengers().size() > 0 || target.getGameMode() == GameMode.SPECTATOR) return;
-        Boolean b = renderer.isVisible(this, target);
+        Boolean b = state.isVisible(this, target);
         if ((b == null && !this.defaultVisible) || (b != null && !b)) return;
         structure.createUpdateTransactions(l -> l.getController().equals(c), target).forEach
                 (renderer::processTransaction);
@@ -153,7 +160,7 @@ public class Tag implements ITag {
     @Override
     public void update(ITagController.TagLine line, Player target) {
         if (this.getTarget().getPassengers().size() > 0 || target.getGameMode() == GameMode.SPECTATOR) return;
-        Boolean b = renderer.isVisible(this, target);
+        Boolean b = state.isVisible(this, target);
         if ((b == null && !this.defaultVisible) || (b != null && !b)) return;
         structure.createUpdateTransactions(l -> l.isRenderedBy(line), target).forEach(renderer::processTransaction);
     }
@@ -193,5 +200,9 @@ public class Tag implements ITag {
 
     public IHitbox getTargetHitbox() {
         return hitbox;
+    }
+
+    public TagRenderer getRenderer() {
+        return renderer;
     }
 }

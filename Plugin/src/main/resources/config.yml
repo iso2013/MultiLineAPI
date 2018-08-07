@@ -1,0 +1,8 @@
+#MUST be 'MOUNT' or 'TELEPORT'
+defaultRenderer: "MOUNT"
+
+#Here you can define overrides for specific entity types to use one or the other. The key must be the name of the entity
+#type.
+typeRenderers:
+    UNKNOWN: "MOUNT"
+    ARROW: "TELEPORT"

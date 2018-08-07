@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
 import net.blitzcube.mlapi.api.tag.ITagController;
 import net.blitzcube.mlapi.renderer.LineEntityFactory;
+import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.structure.transactions.*;
 import net.blitzcube.mlapi.tag.RenderedTagLine;
 import net.blitzcube.mlapi.tag.Tag;
@@ -20,10 +21,12 @@ import java.util.stream.Stream;
  * Created by iso2013 on 6/12/2018.
  */
 public class TagStructure {
-    private static final Comparator<ITagController> comp = Comparator.comparingInt(ITagController::getPriority);
+    private static final Comparator<ITagController> CONTROLLER_COMPARATOR = Comparator.comparingInt
+            (ITagController::getPriority);
 
     private final List<RenderedTagLine> lines;
     private final Tag tag;
+    private final TagRenderer renderer;
     private final LineEntityFactory factory;
     private final Multimap<Player, RenderedTagLine> visible;
 
@@ -32,24 +35,34 @@ public class TagStructure {
         this.tag = tag;
         this.factory = factory;
         this.visible = visible;
+        this.renderer = tag.getRenderer();
     }
 
     public Stream<StructureTransaction> addTagController(ITagController c, Stream<Player> players) {
-        List<RenderedTagLine> newLines = c.getFor(tag.getTarget()).stream()
-                .map(l -> new RenderedTagLine(c, l, tag.getTarget(), factory)).collect(Collectors.toList());
+        int idx = 0;
+        for (int i = 0; i < lines.size(); i++) {
+            int comp = CONTROLLER_COMPARATOR.compare(c, lines.get(i).getController());
+            if (comp > 0) {
+                idx = i + 1;
+            }
+        }
+
+        RangeSeries added = new RangeSeries();
+        int lIdx = idx;
+        List<RenderedTagLine> newLines = new LinkedList<>();
+        for (ITagController.TagLine line : c.getFor(tag.getTarget())) {
+            added.put(lIdx);
+            newLines.add(new RenderedTagLine(c, line, tag.getTarget(), renderer.createStack(tag, lIdx++)));
+        }
         Collections.reverse(newLines);
         if (newLines.size() == 0) return null;
 
-        //Question: Does this work? Is this the cause of https://github.com/iso2013/MultiLineAPI/issues/39?
-        int idx = lines.size();
-        for (int i = 0; i < lines.size(); i++)
-            if (comp.compare(c, lines.get(i).getController()) > 0) idx = i + 1;
         lines.addAll(idx, newLines);
 
         int fIdx = idx;
         return players.map(p -> new AddTransaction(
-                getBelow(fIdx - 1, p, null, null),
-                getAbove(fIdx + lines.size(), p, null, null),
+                getBelow(fIdx - 1, p, added, null),
+                getAbove(fIdx + newLines.size(), p, added, null),
                 newLines,
                 p,
                 tag
@@ -68,7 +81,7 @@ public class TagStructure {
 
         List<RenderedTagLine> removed = lines.stream().filter(l -> l.getController() == c).collect(Collectors.toList());
         lines.removeAll(removed);
-        removed.forEach(line -> line.getStack().forEach(factory::purge));
+        removed.forEach(line -> line.getStack().forEach(renderer::purge));
 
         int fIdx = idx;
         return players.map(p -> new RemoveTransaction(

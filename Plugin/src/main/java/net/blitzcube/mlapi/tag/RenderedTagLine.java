@@ -1,7 +1,6 @@
 package net.blitzcube.mlapi.tag;
 
 import net.blitzcube.mlapi.api.tag.ITagController;
-import net.blitzcube.mlapi.renderer.LineEntityFactory;
 import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -21,18 +20,14 @@ public class RenderedTagLine {
     private final boolean spaceWhenNull;
 
     public RenderedTagLine(ITagController controller, ITagController.TagLine tagLine, Entity target,
-                           LineEntityFactory factory) {
+                           LinkedList<IFakeEntity> stack) {
         this.controller = controller;
         this.lineGenerator = tagLine;
         this.target = target;
         this.spaceWhenNull = tagLine.keepSpaceWhenNull(target);
 
-        this.stack = new LinkedList<>();
-        this.bottom = factory.createArmorStand(target.getLocation(), target);
-        this.stack.add(bottom);
-        this.stack.add(factory.createSlime(target.getLocation(), target));
-        this.stack.add(factory.createSilverfish(target.getLocation(), target));
-        this.stack.add(factory.createSilverfish(target.getLocation(), target));
+        this.stack = stack;
+        this.bottom = stack.getFirst();
     }
 
     public String get(Player viewer) {

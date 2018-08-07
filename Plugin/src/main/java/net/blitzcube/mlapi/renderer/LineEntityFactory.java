@@ -10,9 +10,6 @@ import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Created by iso2013 on 6/4/2018.
  */
@@ -35,11 +32,8 @@ public class LineEntityFactory {
 
     private final IFakeEntityFactory factory;
 
-    private final Map<IFakeEntity, Entity> tagEntities;
-
     public LineEntityFactory(IEntityModifierRegistry reg, IFakeEntityFactory factory) {
         this.factory = factory;
-        this.tagEntities = new HashMap<>();
         this.name = reg.lookup(EntityType.ARMOR_STAND, "CUSTOM_NAME", String.class);
         this.nameVisible = reg.lookup(EntityType.ARMOR_STAND, "CUSTOM_NAME_VISIBLE", Boolean.class);
         this.size = reg.lookup(EntityType.SLIME, "SIZE", Integer.class);
@@ -50,9 +44,8 @@ public class LineEntityFactory {
         this.silent = reg.lookup(EntityType.SILVERFISH, "SILENT", Boolean.class);
     }
 
-    public IFakeEntity createArmorStand(Location l, Entity target) {
+    public IFakeEntity createArmorStand(Location l) {
         IFakeEntity e = factory.createFakeEntity(EntityType.ARMOR_STAND);
-        tagEntities.put(e, target);
         e.setLocation(l);
         IModifiableEntity m = e.getModifiableEntity();
         armorStandInvisible.setValue(m, true);
@@ -60,9 +53,8 @@ public class LineEntityFactory {
         return e;
     }
 
-    public IFakeEntity createSlime(Location l, Entity target) {
+    public IFakeEntity createSlime(Location l) {
         IFakeEntity e = factory.createFakeEntity(EntityType.SLIME);
-        tagEntities.put(e, target);
         e.setLocation(l);
         IModifiableEntity m = e.getModifiableEntity();
         entityInvisible.setValue(m, true);
@@ -70,23 +62,14 @@ public class LineEntityFactory {
         return e;
     }
 
-    public IFakeEntity createSilverfish(Location l, Entity target) {
+    public IFakeEntity createSilverfish(Location l) {
         IFakeEntity e = factory.createFakeEntity(EntityType.SILVERFISH);
-        tagEntities.put(e, target);
         e.setLocation(l);
         IModifiableEntity m = e.getModifiableEntity();
         entityInvisible.setValue(m, true);
         silent.setValue(m, true);
         noAI.setValue(m, true);
         return e;
-    }
-
-    public void purge(IFakeEntity entity) {
-        tagEntities.remove(entity);
-    }
-
-    public void purge(Entity target) {
-        tagEntities.entrySet().removeIf(e -> e.getValue() == target);
     }
 
     public void updateName(IFakeEntity entity, String newName) {
@@ -101,10 +84,6 @@ public class LineEntityFactory {
 
     public void updateLocation(Location l, IFakeEntity e) {
         e.setLocation(l);
-    }
-
-    public Entity getByTagEntity(IFakeEntity fakeEntity) {
-        return tagEntities.get(fakeEntity);
     }
 
     public IHitbox getHitbox(Entity newEntity) {

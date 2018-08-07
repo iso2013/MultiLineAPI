@@ -8,6 +8,7 @@ import net.blitzcube.mlapi.api.tag.ITag;
 import net.blitzcube.mlapi.api.tag.ITagController;
 import net.blitzcube.mlapi.listener.PacketListener;
 import net.blitzcube.mlapi.listener.ServerListener;
+import net.blitzcube.mlapi.renderer.LineEntityFactory;
 import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
@@ -25,9 +26,11 @@ import java.util.*;
  */
 @SuppressWarnings("unused")
 public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
-    private TagRenderer renderer;
+    private final VisibilityStates states = new VisibilityStates();
     private final Map<Integer, Tag> tags = new HashMap<>();
     private final Multimap<EntityType, ITagController> controllersMap = HashMultimap.create();
+
+    private LineEntityFactory lineFactory;
 
     @Override
     public void onEnable() {
@@ -35,17 +38,19 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
         if ((packetAPI = (IPacketEntityAPI) Bukkit.getPluginManager().getPlugin("PacketEntityAPI")) == null) {
             throw new IllegalStateException("Failed to start MultiLineAPI! PacketEntityAPI could not be found!");
         }
-        this.renderer = new TagRenderer(packetAPI, this);
-        packetAPI.addListener(new PacketListener(this, tags, renderer, packetAPI));
-        this.getServer().getPluginManager().registerEvents(new ServerListener(this, renderer, packetAPI), this);
+
+        this.lineFactory = new LineEntityFactory(packetAPI.getModifierRegistry(),
+                packetAPI.getEntityFactory());
+
+        packetAPI.addListener(new PacketListener(this, tags, states, packetAPI));
+        this.getServer().getPluginManager().registerEvents(new ServerListener(this, states, packetAPI), this);
 
         this.addDefaultTagController(DemoController.getInst(this));
         this.addDefaultTagController(DemoController2.getInst(this));
-    }
 
-    @Override
-    public void onDisable() {
+        this.saveDefaultConfig();
 
+        TagRenderer.init(packetAPI, lineFactory, states, this, this.getConfig());
     }
 
     @Override
@@ -57,7 +62,8 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
     public ITag createTagIfMissing(Entity entity) {
         int id = entity.getEntityId();
         if (!tags.containsKey(id)) {
-            Tag t = new Tag(entity, renderer, controllersMap.get(entity.getType()));
+            TagRenderer renderer = TagRenderer.createInstance(entity.getType());
+            Tag t = new Tag(entity, renderer, controllersMap.get(entity.getType()), lineFactory, states);
             tags.put(id, t);
             renderer.getNearby(t, 1.0).filter(input -> input != entity)
                     .forEach(player -> renderer.spawnTag(t, player, null));
@@ -69,8 +75,9 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
     public void deleteTag(Entity entity) {
         Tag t = tags.remove(entity.getEntityId());
         if (t == null) return;
-        renderer.getNearby(t, 1.1).forEach(player -> renderer.destroyTag(t, player, null));
-        renderer.purge(t);
+        TagRenderer r = t.getRenderer();
+        r.getNearby(t, 1.1).forEach(player -> r.destroyTag(t, player, null));
+        r.purge(t);
     }
 
     @Override
@@ -122,7 +129,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
 
     @Override
     public void update(ITagController controller, Player target) {
-        renderer.getVisible(target).filter(input -> input.getTagControllers(false).contains(controller))
+        states.getVisible(target).filter(input -> input.getTagControllers(false).contains(controller))
                 .forEach(tag -> tag.update(controller));
     }
 
@@ -133,7 +140,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
 
     @Override
     public void update(ITagController.TagLine line, Player target) {
-        renderer.getVisible(target).forEach(tag -> tag.update(line));
+        states.getVisible(target).forEach(tag -> tag.update(line));
     }
 
     @Override
@@ -143,7 +150,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
 
     @Override
     public void updateNames(Player target) {
-        renderer.getVisible(target).forEach(tag -> tag.updateName(target));
+        states.getVisible(target).forEach(tag -> tag.updateName(target));
     }
 
     @Override
