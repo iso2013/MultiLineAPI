@@ -1,6 +1,13 @@
 #MUST be 'MOUNT' or 'TELEPORT'
 defaultRenderer: "MOUNT"
 
+#Here are the options for each renderer
+options:
+    lineHeight: 0.28
+    bottomLineHeight: 0.12
+    teleport:
+        animated: true
+
 #Here you can define overrides for specific entity types to use one or the other. The key must be the name of the entity
 #type.
 typeRenderers:

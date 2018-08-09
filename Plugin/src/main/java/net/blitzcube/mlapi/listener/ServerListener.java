@@ -3,7 +3,6 @@ package net.blitzcube.mlapi.listener;
 import net.blitzcube.mlapi.MultiLineAPI;
 import net.blitzcube.mlapi.VisibilityStates;
 import net.blitzcube.mlapi.renderer.TagRenderer;
-import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -14,10 +13,7 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.entity.SpawnerSpawnEvent;
-import org.bukkit.event.player.PlayerGameModeChangeEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.event.vehicle.VehicleCreateEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
@@ -87,7 +83,7 @@ public class ServerListener implements Listener {
             packet.getVisible(e.getPlayer(), 1, false)
                     .map(identifier -> {
                         Entity e1 = identifier.getEntity().get();
-                        return e1 != null ? (Tag) parent.getTag(e1) : null;
+                        return e1 != null ? parent.getTag(e1) : null;
                     }).filter(tag -> {
                 Boolean v = states.isVisible(tag, e.getPlayer());
                 if (tag == null) return false;
@@ -103,6 +99,13 @@ public class ServerListener implements Listener {
             MultiLineAPI.DemoController c = MultiLineAPI.DemoController.getInst(null);
             c.refreshes--;
             c.refreshAll();
+        }
+    }
+
+    @EventHandler
+    public void onNameChange(PlayerInteractAtEntityEvent e) {
+        if (parent.hasTag(e.getRightClicked())) {
+            Bukkit.getScheduler().runTaskLater(parent, () -> parent.getTag(e.getRightClicked()).updateName(), 1L);
         }
     }
 

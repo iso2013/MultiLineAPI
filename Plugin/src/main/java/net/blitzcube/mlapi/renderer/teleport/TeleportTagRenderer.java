@@ -26,9 +26,12 @@ import java.util.List;
  * Created by iso2013 on 8/7/2018.
  */
 public class TeleportTagRenderer extends TagRenderer {
+    private final boolean animated;
+
     public TeleportTagRenderer(IPacketEntityAPI packet, LineEntityFactory lineFactory, VisibilityStates state,
-                               MultiLineAPI parent) {
+                               MultiLineAPI parent, boolean animated) {
         super(packet, lineFactory, state, parent);
+        this.animated = animated;
         packetAPI.addListener(new TeleportTagPacketListener(LINE_HEIGHT, BOTTOM_LINE_HEIGHT, parent, state));
     }
 
@@ -139,15 +142,24 @@ public class TeleportTagRenderer extends TagRenderer {
 
         if (firstPhase != null && !firstPhase.isEmpty())
             firstPhase.forEach(packet -> packetAPI.dispatchPacket(packet, target, 0));
-        if (secondPhase != null && !secondPhase.isEmpty()) {
-            List<IEntityPacket> finalSecondPhase = secondPhase;
-            Bukkit.getScheduler().runTaskLater(parent,
-                    () -> finalSecondPhase.forEach(packet -> packetAPI.dispatchPacket(packet, target, 0)), 1L);
-        }
-        if (thirdPhase != null && !thirdPhase.isEmpty()) {
-            List<IEntityPacket> finalThirdPhase = thirdPhase;
-            Bukkit.getScheduler().runTaskLater(parent,
-                    () -> finalThirdPhase.forEach(packet -> packetAPI.dispatchPacket(packet, target, 0)), 2L);
+        if (!animated) {
+            if (secondPhase != null && !secondPhase.isEmpty()) {
+                secondPhase.forEach(packet -> packetAPI.dispatchPacket(packet, target, 0));
+            }
+            if (thirdPhase != null && !thirdPhase.isEmpty()) {
+                thirdPhase.forEach(packet -> packetAPI.dispatchPacket(packet, target, 0));
+            }
+        } else {
+            if (secondPhase != null && !secondPhase.isEmpty()) {
+                List<IEntityPacket> finalSecondPhase = secondPhase;
+                Bukkit.getScheduler().runTaskLater(parent, () -> finalSecondPhase.forEach(packet -> packetAPI
+                        .dispatchPacket(packet, target, 0)), 1L);
+            }
+            if (thirdPhase != null && !thirdPhase.isEmpty()) {
+                List<IEntityPacket> finalThirdPhase = thirdPhase;
+                Bukkit.getScheduler().runTaskLater(parent, () -> finalThirdPhase.forEach(packet -> packetAPI
+                        .dispatchPacket(packet, target, 0)), 2L);
+            }
         }
     }
 

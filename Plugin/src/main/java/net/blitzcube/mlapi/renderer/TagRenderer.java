@@ -27,8 +27,8 @@ import java.util.stream.Stream;
  * Created by iso2013 on 8/7/2018.
  */
 public abstract class TagRenderer {
-    protected static final double LINE_HEIGHT = 0.275;
-    protected static final double BOTTOM_LINE_HEIGHT = 0.12;
+    protected static double LINE_HEIGHT = 0.275;
+    protected static double BOTTOM_LINE_HEIGHT = 0.12;
     private static Map<EntityType, TagRenderer> renderers = new HashMap<>();
     protected final IPacketEntityAPI packetAPI;
     protected final VisibilityStates state;
@@ -45,6 +45,9 @@ public abstract class TagRenderer {
 
     public static void init(IPacketEntityAPI packetAPI, LineEntityFactory lineFactory, VisibilityStates states,
                             MultiLineAPI parent, FileConfiguration config) {
+        LINE_HEIGHT = config.getDouble("options.lineHeight");
+        BOTTOM_LINE_HEIGHT = config.getDouble("options.bottomLineHeight");
+
         TagRenderer mtr = null, tptr = null;
 
         String defVal = config.getString("defaultRenderer");
@@ -53,7 +56,8 @@ public abstract class TagRenderer {
             def = new MountTagRenderer(packetAPI, lineFactory, states, parent);
             mtr = def;
         } else if (defVal.equalsIgnoreCase("teleport")) {
-            def = new TeleportTagRenderer(packetAPI, lineFactory, states, parent);
+            def = new TeleportTagRenderer(packetAPI, lineFactory, states, parent, config.getBoolean("options.teleport" +
+                    ".animated"));
             tptr = def;
         } else {
             parent.getLogger().severe("Could not find renderer for name `" + defVal + "`!");
@@ -66,7 +70,8 @@ public abstract class TagRenderer {
                     if (mtr == null) mtr = new MountTagRenderer(packetAPI, lineFactory, states, parent);
                     renderers.put(t, mtr);
                 } else if (val.equalsIgnoreCase("teleport")) {
-                    if (tptr == null) tptr = new TeleportTagRenderer(packetAPI, lineFactory, states, parent);
+                    if (tptr == null)
+                        tptr = new TeleportTagRenderer(packetAPI, lineFactory, states, parent, config.getBoolean("options.teleport.animated"));
                     renderers.put(t, tptr);
                 } else {
                     parent.getLogger().severe("Could not find renderer for name `" + val + "`!");

@@ -9,7 +9,6 @@ import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.structure.TagStructure;
 import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
 import net.blitzcube.peapi.api.entity.hitbox.IHitbox;
-import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -74,7 +73,6 @@ public class Tag implements ITag {
     public void addTagController(ITagController c) {
         sortedControllers.add(c);
         Tag t = this;
-        Bukkit.broadcastMessage("TICKS LIVED: " + this.target.getTicksLived());
         structure.addTagController(c,
                 this.target.getTicksLived() > 0 ? renderer.getNearby(this, 1.0) : Stream.empty()
         ).forEach(e -> renderer.processTransactions(e.getValue(), t, e.getKey()));
