@@ -74,7 +74,7 @@ public class Tag implements ITag {
         sortedControllers.add(c);
         Tag t = this;
         structure.addTagController(c,
-                this.target.getTicksLived() > 0 ? renderer.getNearby(this, 1.0) : Stream.empty()
+                renderer.getNearby(this, 1.0)
         ).forEach(e -> renderer.processTransactions(e.getValue(), t, e.getKey()));
     }
 

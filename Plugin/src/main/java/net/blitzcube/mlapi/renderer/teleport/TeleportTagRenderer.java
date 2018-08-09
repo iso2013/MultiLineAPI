@@ -38,6 +38,7 @@ public class TeleportTagRenderer extends TagRenderer {
     @Override
     public void processTransactions(Collection<StructureTransaction> transactions, Tag tag, Player target) {
         if (tag.getTarget() == target) return;
+        if (!state.isSpawned(target, tag)) return;
 
         IEntityPacketFactory f = packetAPI.getPacketFactory();
         List<IEntityPacket> firstPhase = null,

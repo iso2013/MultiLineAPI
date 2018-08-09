@@ -57,6 +57,7 @@ public class MountTagRenderer extends TagRenderer {
     private void processTransaction(StructureTransaction t, List<IEntityPacket> firstPhase, List<IEntityPacket>
             secondPhase, Tag tag, Player target) {
         if (tag.getTarget() == target) return;
+        if (!state.isSpawned(target, tag)) return;
 
         IEntityPacketFactory f = packetAPI.getPacketFactory();
         if (t instanceof AddTransaction) {
