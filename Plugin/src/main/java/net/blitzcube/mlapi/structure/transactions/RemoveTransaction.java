@@ -2,7 +2,6 @@ package net.blitzcube.mlapi.structure.transactions;
 
 import net.blitzcube.mlapi.tag.RenderedTagLine;
 import net.blitzcube.peapi.api.entity.IEntityIdentifier;
-import org.bukkit.entity.Player;
 
 import java.util.Collection;
 
@@ -17,9 +16,7 @@ public class RemoveTransaction extends StructureTransaction {
     public RemoveTransaction(
             IEntityIdentifier below,
             IEntityIdentifier above,
-            Collection<RenderedTagLine> removed,
-            Player target) {
-        super(target);
+            Collection<RenderedTagLine> removed) {
         this.below = below;
         this.above = above;
         this.removed = removed;

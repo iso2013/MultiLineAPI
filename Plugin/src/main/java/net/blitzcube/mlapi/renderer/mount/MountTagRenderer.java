@@ -37,31 +37,34 @@ public class MountTagRenderer extends TagRenderer {
     }
 
     @Override
-    public void processTransaction(StructureTransaction t) {
+    public void processTransactions(Collection<StructureTransaction> transactions, Tag tag, Player target) {
         List<IEntityPacket> firstPhase = new LinkedList<>(),
-                secondPhase = t instanceof RemoveTransaction ? null : new LinkedList<>();
+                secondPhase = new LinkedList<>();
 
-        processTransaction(t, firstPhase, secondPhase);
+        for (StructureTransaction t : transactions)
+            processTransaction(t, firstPhase, secondPhase, tag, target);
 
-        if (!firstPhase.isEmpty()) firstPhase.forEach(i -> packetAPI.dispatchPacket(i, t.getTarget(), 0));
-        if (secondPhase != null && !secondPhase.isEmpty()) {
+        if (!firstPhase.isEmpty()) firstPhase.forEach(i -> packetAPI.dispatchPacket(i, target, 0));
+        if (!secondPhase.isEmpty()) {
             Bukkit.getScheduler().runTaskLater(
                     parent,
-                    () -> secondPhase.forEach(i -> packetAPI.dispatchPacket(i, t.getTarget(), 0)),
+                    () -> secondPhase.forEach(i -> packetAPI.dispatchPacket(i, target, 0)),
                     1L
             );
         }
     }
 
     private void processTransaction(StructureTransaction t, List<IEntityPacket> firstPhase, List<IEntityPacket>
-            secondPhase) {
+            secondPhase, Tag tag, Player target) {
+        if (tag.getTarget() == target) return;
+
         IEntityPacketFactory f = packetAPI.getPacketFactory();
         if (t instanceof AddTransaction) {
             AddTransaction at = (AddTransaction) t;
-            if (t.getTarget() == at.getTag().getTarget()) return;
+            if (target == tag.getTarget()) return;
 
-            Location loc = at.getTag().getTarget().getLocation();
-            IHitbox hb = at.getTag().getTargetHitbox();
+            Location loc = tag.getTarget().getLocation();
+            IHitbox hb = tag.getTargetHitbox();
             if (hb != null)
                 loc.add(0, (hb.getMax().getY() - hb.getMin().getY()) + BOTTOM_LINE_HEIGHT - LINE_HEIGHT, 0);
 
@@ -71,7 +74,7 @@ public class MountTagRenderer extends TagRenderer {
             for (RenderedTagLine l : at.getAdded()) {
                 loc.add(0, LINE_HEIGHT, 0);
 
-                String value = l.get(at.getTarget());
+                String value = l.get(target);
 
                 lineFactory.updateName(l.getBottom(), value);
                 lineFactory.updateLocation(loc, l.getBottom());
@@ -109,7 +112,7 @@ public class MountTagRenderer extends TagRenderer {
                     prev = fe.getIdentifier();
                 }
 
-                state.addVisibleLine(at.getTarget(), l);
+                state.addSpawnedLine(target, l);
             }
 
             IEntityIdentifier vehicle = last == null ? at.getBelow() : last.getStack().getLast().getIdentifier();
@@ -137,7 +140,7 @@ public class MountTagRenderer extends TagRenderer {
                 });
                 identifiers.add(mt.getAbove());
                 firstPhase.add(f.createMountPacket(mt.getBelow(), identifiers.toArray(new IEntityIdentifier[0])));
-                state.getVisibleLines(mt.getTarget()).removeAll(mt.getMoved());
+                state.getSpawnedLines(target).removeAll(mt.getMoved());
             } else {
                 RenderedTagLine last = null;
                 for (RenderedTagLine l : mt.getMoved()) {
@@ -153,7 +156,7 @@ public class MountTagRenderer extends TagRenderer {
                         ));
                     }
                     last = l;
-                    state.addVisibleLine(t.getTarget(), l);
+                    state.addSpawnedLine(target, l);
                 }
                 if (last != null) {
                     firstPhase.add(f.createMountPacket(last.getStack().getLast().getIdentifier(), mt.getAbove()));
@@ -170,7 +173,7 @@ public class MountTagRenderer extends TagRenderer {
             IEntityDestroyPacket destroyPacket = packetAPI.getPacketFactory().createDestroyPacket();
             rt.getRemoved().forEach(r -> r.getStack().forEach(e -> destroyPacket.addToGroup(e.getIdentifier())));
             firstPhase.add(destroyPacket);
-            state.getVisibleLines(rt.getTarget()).removeAll(rt.getRemoved());
+            state.getSpawnedLines(target).removeAll(rt.getRemoved());
         }
     }
 
@@ -216,32 +219,15 @@ public class MountTagRenderer extends TagRenderer {
         processTransaction(new AddTransaction(
                 t.getBottom().getIdentifier(),
                 t.getTop().getIdentifier(),
-                t.getLines(),
-                p,
-                t
-        ), firstPhase, secondPhase);
+                t.getLines()
+        ), firstPhase, secondPhase, t, p);
 
         firstPhase.forEach(ep -> packetAPI.dispatchPacket(ep, p, 0));
         Bukkit.getScheduler().runTask(
                 parent,
                 () -> secondPhase.forEach(ep -> packetAPI.dispatchPacket(ep, p, 0))
         );
-        state.addVisibleTag(p, t);
-    }
-
-    @Override
-    public void destroyTag(Tag t, Player player, IEntityDestroyPacket destroyPacket) {
-        boolean event = destroyPacket != null;
-        if (destroyPacket == null)
-            destroyPacket = packetAPI.getPacketFactory().createDestroyPacket();
-        IEntityDestroyPacket finalDestroyPacket = destroyPacket;
-        t.getLines().forEach(r -> r.getStack().forEach(e -> finalDestroyPacket.addToGroup(e.getIdentifier())));
-        finalDestroyPacket.addToGroup(t.getBottom().getIdentifier());
-        finalDestroyPacket.addToGroup(t.getTop().getIdentifier());
-        if (!event) {
-            packetAPI.dispatchPacket(finalDestroyPacket, player, 0);
-        }
-        state.removeVisibleTag(player, t);
+        state.addSpawnedTag(p, t);
     }
 
     public void purge(Tag remove) {
@@ -267,19 +253,6 @@ public class MountTagRenderer extends TagRenderer {
     @Override
     public void purge(IFakeEntity entity) {
         tagEntities.remove(entity);
-    }
-
-    @Override
-    public void updateName(Tag tag, Player viewer) {
-        String name;
-        name = tag.getTarget() instanceof Player ? ((Player) tag.getTarget()).getDisplayName() : tag.getTarget()
-                .getCustomName();
-        for (ITagController tc : tag.getTagControllers(false)) {
-            name = tc.getName(tag.getTarget(), viewer, name);
-            if (name != null && name.contains(ChatColor.COLOR_CHAR + "")) name = name + ChatColor.RESET;
-        }
-        lineFactory.updateName(tag.getTop(), name);
-        packetAPI.dispatchPacket(packetAPI.getPacketFactory().createDataPacket(tag.getTop().getIdentifier()), viewer);
     }
 
     @Override

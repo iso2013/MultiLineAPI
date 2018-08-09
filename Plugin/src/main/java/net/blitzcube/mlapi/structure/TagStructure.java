@@ -3,7 +3,6 @@ package net.blitzcube.mlapi.structure;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
 import net.blitzcube.mlapi.api.tag.ITagController;
-import net.blitzcube.mlapi.renderer.LineEntityFactory;
 import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.structure.transactions.*;
 import net.blitzcube.mlapi.tag.RenderedTagLine;
@@ -27,18 +26,17 @@ public class TagStructure {
     private final List<RenderedTagLine> lines;
     private final Tag tag;
     private final TagRenderer renderer;
-    private final LineEntityFactory factory;
     private final Multimap<Player, RenderedTagLine> visible;
 
-    public TagStructure(Tag tag, LineEntityFactory factory, Multimap<Player, RenderedTagLine> visible) {
+    public TagStructure(Tag tag, Multimap<Player, RenderedTagLine> visible) {
         this.lines = new ArrayList<>();
         this.tag = tag;
-        this.factory = factory;
         this.visible = visible;
         this.renderer = tag.getRenderer();
     }
 
-    public Stream<StructureTransaction> addTagController(ITagController c, Stream<Player> players) {
+    public Stream<Map.Entry<Player, Collection<StructureTransaction>>> addTagController(ITagController c,
+                                                                                        Stream<Player> players) {
         int idx = 0;
         for (int i = 0; i < lines.size(); i++) {
             int comp = CONTROLLER_COMPARATOR.compare(c, lines.get(i).getController());
@@ -60,16 +58,18 @@ public class TagStructure {
         lines.addAll(idx, newLines);
 
         int fIdx = idx;
-        return players.map(p -> new AddTransaction(
+        Map<Player, Collection<StructureTransaction>> transactions = new HashMap<>();
+
+        players.forEach(p -> transactions.put(p, Collections.singleton(new AddTransaction(
                 getBelow(fIdx - 1, p, added, null),
                 getAbove(fIdx + newLines.size(), p, added, null),
-                newLines,
-                p,
-                tag
-        ));
+                newLines
+        ))));
+
+        return transactions.entrySet().stream();
     }
 
-    public Stream<StructureTransaction> removeTagController(ITagController c, Stream<Player> players) {
+    public Stream<Map.Entry<Player, Collection<StructureTransaction>>> removeTagController(ITagController c, Stream<Player> players) {
         int idx = -1;
 
         for (int i = 0; i < lines.size(); i++)
@@ -84,15 +84,18 @@ public class TagStructure {
         removed.forEach(line -> line.getStack().forEach(renderer::purge));
 
         int fIdx = idx;
-        return players.map(p -> new RemoveTransaction(
+        Map<Player, Collection<StructureTransaction>> transactions = new HashMap<>();
+
+        players.forEach(p -> transactions.put(p, Collections.singleton(new RemoveTransaction(
                 getBelow(fIdx - 1, p, null, null),
                 getAbove(fIdx, p, null, null),
-                removed,
-                p
-        ));
+                removed
+        ))));
+
+        return transactions.entrySet().stream();
     }
 
-    public Stream<StructureTransaction> createUpdateTransactions(Predicate<RenderedTagLine> matcher, Player player) {
+    public Collection<StructureTransaction> createUpdateTransactions(Predicate<RenderedTagLine> matcher, Player player) {
         if (matcher == null) matcher = l -> true;
         List<StructureTransaction> transactions = new LinkedList<>();
         Map<RenderedTagLine, String> lines = new HashMap<>();
@@ -114,7 +117,7 @@ public class TagStructure {
             }
         }
 
-        transactions.add(new NameTransaction(lines, player));
+        transactions.add(new NameTransaction(lines));
 
         List<RenderedTagLine> subjectLines = new LinkedList<>();
         for (RangeSeries.Range r : removed.getRanges()) {
@@ -123,7 +126,6 @@ public class TagStructure {
                     getBelow(r.getLower() - 1, player, added, removed),
                     getAbove(r.getUpper() + 1, player, added, removed),
                     ImmutableList.copyOf(subjectLines),
-                    player,
                     true
             ));
             subjectLines.clear();
@@ -136,12 +138,11 @@ public class TagStructure {
                     getBelow(r.getLower() - 1, player, added, removed),
                     getAbove(r.getUpper() + 1, player, added, removed),
                     subjectLines,
-                    player,
                     false
             ));
         }
 
-        return transactions.stream();
+        return transactions;
     }
 
     private IEntityIdentifier getAbove(int idx, Player player, RangeSeries added, RangeSeries removed) {

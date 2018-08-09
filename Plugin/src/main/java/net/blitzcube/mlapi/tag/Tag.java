@@ -7,9 +7,9 @@ import net.blitzcube.mlapi.api.tag.ITagController;
 import net.blitzcube.mlapi.renderer.LineEntityFactory;
 import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.structure.TagStructure;
-import net.blitzcube.mlapi.structure.transactions.StructureTransaction;
 import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
 import net.blitzcube.peapi.api.entity.hitbox.IHitbox;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -49,7 +49,7 @@ public class Tag implements ITag {
         this.state = state;
 
         //Sorted collections
-        this.structure = new TagStructure(this, lineFactory, state.getVisibilityMap());
+        this.structure = new TagStructure(this, state.getVisibilityMap());
         this.sortedControllers = new TreeSet<>(Comparator.comparingInt(ITagController::getNamePriority));
 
         //Bottom and top of stack
@@ -73,16 +73,21 @@ public class Tag implements ITag {
     @Override
     public void addTagController(ITagController c) {
         sortedControllers.add(c);
-        Stream<StructureTransaction> s = structure.addTagController(c, renderer.getNearby(this, 1.0));
-        if (s != null) s.forEach(renderer::processTransaction);
+        Tag t = this;
+        Bukkit.broadcastMessage("TICKS LIVED: " + this.target.getTicksLived());
+        structure.addTagController(c,
+                this.target.getTicksLived() > 0 ? renderer.getNearby(this, 1.0) : Stream.empty()
+        ).forEach(e -> renderer.processTransactions(e.getValue(), t, e.getKey()));
     }
 
     @Override
     public void removeTagController(ITagController c) {
         if (!sortedControllers.contains(c)) return;
         sortedControllers.remove(c);
-        Stream<StructureTransaction> s = structure.removeTagController(c, renderer.getNearby(this, 1.0));
-        if (s != null) s.forEach(renderer::processTransaction);
+        Tag t = this;
+        structure.removeTagController(c,
+                this.target.getTicksLived() > 0 ? renderer.getNearby(this, 1.0) : Stream.empty()
+        ).forEach(e -> renderer.processTransactions(e.getValue(), t, e.getKey()));
     }
 
     @Override
@@ -133,7 +138,7 @@ public class Tag implements ITag {
         if (this.getTarget().getPassengers().size() > 0) return;
         Boolean b = state.isVisible(this, target);
         if ((b == null && !this.defaultVisible) || (b != null && !b)) return;
-        structure.createUpdateTransactions(l -> true, target).forEach(renderer::processTransaction);
+        renderer.processTransactions(structure.createUpdateTransactions(l -> true, target), this, target);
     }
 
     @Override
@@ -147,8 +152,8 @@ public class Tag implements ITag {
         if (this.getTarget().getPassengers().size() > 0 || target.getGameMode() == GameMode.SPECTATOR) return;
         Boolean b = state.isVisible(this, target);
         if ((b == null && !this.defaultVisible) || (b != null && !b)) return;
-        structure.createUpdateTransactions(l -> l.getController().equals(c), target).forEach
-                (renderer::processTransaction);
+        renderer.processTransactions(structure.createUpdateTransactions(l -> l.getController().equals(c), target),
+                this, target);
     }
 
     @Override
@@ -162,7 +167,7 @@ public class Tag implements ITag {
         if (this.getTarget().getPassengers().size() > 0 || target.getGameMode() == GameMode.SPECTATOR) return;
         Boolean b = state.isVisible(this, target);
         if ((b == null && !this.defaultVisible) || (b != null && !b)) return;
-        structure.createUpdateTransactions(l -> l.isRenderedBy(line), target).forEach(renderer::processTransaction);
+        renderer.processTransactions(structure.createUpdateTransactions(l -> l.isRenderedBy(line), target), this, target);
     }
 
     @Override

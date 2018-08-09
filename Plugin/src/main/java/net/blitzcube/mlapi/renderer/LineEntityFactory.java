@@ -50,6 +50,8 @@ public class LineEntityFactory {
         IModifiableEntity m = e.getModifiableEntity();
         armorStandInvisible.setValue(m, true);
         marker.setValue(m, true);
+        nameVisible.setValue(m, false);
+        name.setValue(m, "");
         return e;
     }
 

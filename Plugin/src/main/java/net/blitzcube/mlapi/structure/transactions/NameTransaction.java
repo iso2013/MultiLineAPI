@@ -1,7 +1,6 @@
 package net.blitzcube.mlapi.structure.transactions;
 
 import net.blitzcube.mlapi.tag.RenderedTagLine;
-import org.bukkit.entity.Player;
 
 import java.util.Map;
 
@@ -11,8 +10,7 @@ import java.util.Map;
 public class NameTransaction extends StructureTransaction {
     private final Map<RenderedTagLine, String> queuedNames;
 
-    public NameTransaction(Map<RenderedTagLine, String> queuedNames, Player target) {
-        super(target);
+    public NameTransaction(Map<RenderedTagLine, String> queuedNames) {
         this.queuedNames = queuedNames;
     }
 

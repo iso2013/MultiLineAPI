@@ -2,7 +2,6 @@ package net.blitzcube.mlapi.structure.transactions;
 
 import net.blitzcube.mlapi.tag.RenderedTagLine;
 import net.blitzcube.peapi.api.entity.IEntityIdentifier;
-import org.bukkit.entity.Player;
 
 import java.util.List;
 
@@ -19,9 +18,7 @@ public class MoveTransaction extends StructureTransaction {
             IEntityIdentifier below,
             IEntityIdentifier above,
             List<RenderedTagLine> moved,
-            Player target,
             boolean toSameLevel) {
-        super(target);
         this.below = below;
         this.above = above;
         this.moved = moved;

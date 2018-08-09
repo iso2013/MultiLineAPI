@@ -4,7 +4,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import net.blitzcube.mlapi.api.IMultiLineAPI;
-import net.blitzcube.mlapi.api.tag.ITag;
 import net.blitzcube.mlapi.api.tag.ITagController;
 import net.blitzcube.mlapi.listener.PacketListener;
 import net.blitzcube.mlapi.listener.ServerListener;
@@ -54,12 +53,12 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
     }
 
     @Override
-    public ITag getTag(Entity entity) {
+    public Tag getTag(Entity entity) {
         return tags.get(entity.getEntityId());
     }
 
     @Override
-    public ITag createTagIfMissing(Entity entity) {
+    public Tag createTagIfMissing(Entity entity) {
         int id = entity.getEntityId();
         if (!tags.containsKey(id)) {
             TagRenderer renderer = TagRenderer.createInstance(entity.getType());
@@ -190,19 +189,19 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
             @Override
             public String getText(Entity target, Player viewer) {
                 if (refreshes % 3 == 0) return null;
-                return "Two";
+                return refreshes % 2 == 0 ? ChatColor.GREEN + "Two" : "Two";
             }
 
             @Override
             public boolean keepSpaceWhenNull(Entity target) {
-                return false;
+                return true;
             }
         };
         private final TagLine line3 = new TagLine() {
             @Override
             public String getText(Entity target, Player viewer) {
                 if (refreshes % 4 == 0) return null;
-                return "Three";
+                return refreshes % 2 == 0 ? ChatColor.GREEN + "Three" : "Three";
             }
 
             @Override
