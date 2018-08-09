@@ -33,8 +33,8 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
 
     @Override
     public void onEnable() {
-        IPacketEntityAPI packetAPI;
-        if ((packetAPI = (IPacketEntityAPI) Bukkit.getPluginManager().getPlugin("PacketEntityAPI")) == null) {
+        IPacketEntityAPI packetAPI = (IPacketEntityAPI) Bukkit.getPluginManager().getPlugin("PacketEntityAPI");
+        if (packetAPI == null) {
             throw new IllegalStateException("Failed to start MultiLineAPI! PacketEntityAPI could not be found!");
         }
 
@@ -111,17 +111,15 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
 
     @Override
     public void update(Entity entity, Player target) {
-        Tag t;
-        Preconditions.checkArgument((t = tags.get(entity.getEntityId())) != null, "This entity "
-                + "does not have a tag associated with it!");
+        Tag t = tags.get(entity.getEntityId());
+        Preconditions.checkArgument(t != null, "This entity does not have a tag associated with it!");
         t.update(target);
     }
 
     @Override
     public void update(Entity entity) {
-        Tag t;
-        Preconditions.checkArgument((t = tags.get(entity.getEntityId())) != null, "This entity "
-                + "does not have a tag associated with it!");
+        Tag t = tags.get(entity.getEntityId());
+        Preconditions.checkArgument(t != null, "This entity does not have a tag associated with it!");
         t.update();
     }
 

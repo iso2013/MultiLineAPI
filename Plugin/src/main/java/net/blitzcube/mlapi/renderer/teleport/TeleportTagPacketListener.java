@@ -17,7 +17,7 @@ import org.bukkit.util.Vector;
 /**
  * Created by iso2013 on 8/7/2018.
  */
-public class TeleportTagPacketListener implements IListener {
+class TeleportTagPacketListener implements IListener {
     private final double lineHeight, bottomLineHeight;
     private final MultiLineAPI parent;
     private final VisibilityStates state;

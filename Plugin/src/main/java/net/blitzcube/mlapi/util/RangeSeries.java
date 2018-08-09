@@ -15,7 +15,10 @@ public class RangeSeries {
         v = v != null ? v : i;
         backingMap.put(i, v);
         int n = 1;
-        while (backingMap.containsKey(i + n)) backingMap.put(i + n++, v);
+        while (backingMap.containsKey(i + n)) {
+            backingMap.put(i + n, v);
+            n++;
+        }
     }
 
     public Collection<Range> getRanges() {
@@ -35,7 +38,10 @@ public class RangeSeries {
         private int lower;
         private int upper;
 
-        Range(int i) { lower = upper = i; }
+        Range(int i) {
+            upper = i;
+            lower = upper;
+        }
 
         private void expand(int i) {
             this.lower = Math.min(i, lower);

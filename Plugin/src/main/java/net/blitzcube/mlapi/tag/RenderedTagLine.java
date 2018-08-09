@@ -5,6 +5,7 @@ import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
+import java.util.Deque;
 import java.util.LinkedList;
 
 /**
@@ -38,7 +39,7 @@ public class RenderedTagLine {
         return bottom;
     }
 
-    public LinkedList<IFakeEntity> getStack() {
+    public Deque<IFakeEntity> getStack() {
         return stack;
     }
 
@@ -46,7 +47,7 @@ public class RenderedTagLine {
         return controller;
     }
 
-    public boolean isRenderedBy(ITagController.TagLine line) {
+    boolean isRenderedBy(ITagController.TagLine line) {
         return this.lineGenerator == line;
     }
 

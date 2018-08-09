@@ -97,10 +97,8 @@ public class PacketListener implements IListener {
             i1.moreSpecific();
             return i1.isFakeEntity();
         });
-        Entity e;
-        if (i.getEntity() != null &&
-                ((e = i.getEntity().get()) != null) &&
-                e.getPassengers().size() > 0)
+        Entity e = i.getEntity() != null ? i.getEntity().get() : null;
+        if (e != null && e.getPassengers().size() > 0)
             tagEntities = false;
         boolean isSpawned = state.isSpawned(target, t);
         Boolean shouldSpawn = state.isVisible(t, target);
@@ -116,8 +114,8 @@ public class PacketListener implements IListener {
     private void manageDestroyPacket(IEntityDestroyPacket packet, Player player) {
         Set<Tag> possibleDeletions = new HashSet<>();
         packet.getGroup().forEach(identifier -> {
-            Tag t1;
-            if ((t1 = entityTags.get(identifier.getEntityID())) == null) return;
+            Tag t1 = entityTags.get(identifier.getEntityID());
+            if (t1 == null) return;
             t1.getRenderer().destroyTag(t1, player, packet);
             possibleDeletions.add(t1);
         });

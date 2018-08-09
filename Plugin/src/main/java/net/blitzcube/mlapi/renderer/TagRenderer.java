@@ -29,13 +29,13 @@ import java.util.stream.Stream;
 public abstract class TagRenderer {
     protected static double LINE_HEIGHT = 0.275;
     protected static double BOTTOM_LINE_HEIGHT = 0.12;
-    private static Map<EntityType, TagRenderer> renderers = new HashMap<>();
+    private static final Map<EntityType, TagRenderer> renderers = new HashMap<>();
     protected final IPacketEntityAPI packetAPI;
     protected final VisibilityStates state;
     protected final LineEntityFactory lineFactory;
     protected final JavaPlugin parent;
 
-    public TagRenderer(IPacketEntityAPI packet, LineEntityFactory lineFactory, VisibilityStates state, JavaPlugin
+    protected TagRenderer(IPacketEntityAPI packet, LineEntityFactory lineFactory, VisibilityStates state, JavaPlugin
             parent) {
         this.packetAPI = packet;
         this.state = state;
@@ -45,8 +45,8 @@ public abstract class TagRenderer {
 
     public static void init(IPacketEntityAPI packetAPI, LineEntityFactory lineFactory, VisibilityStates states,
                             MultiLineAPI parent, FileConfiguration config) {
-        LINE_HEIGHT = config.getDouble("options.lineHeight", 0.275);
-        BOTTOM_LINE_HEIGHT = config.getDouble("options.bottomLineHeight", 0.12);
+        LINE_HEIGHT = config.getDouble("options.lineHeight", LINE_HEIGHT);
+        BOTTOM_LINE_HEIGHT = config.getDouble("options.bottomLineHeight", BOTTOM_LINE_HEIGHT);
 
         TagRenderer mtr = null, tptr = null;
 
@@ -71,7 +71,8 @@ public abstract class TagRenderer {
                     renderers.put(t, mtr);
                 } else if (val.equalsIgnoreCase("teleport")) {
                     if (tptr == null)
-                        tptr = new TeleportTagRenderer(packetAPI, lineFactory, states, parent, config.getBoolean("options.teleport.animated"));
+                        tptr = new TeleportTagRenderer(packetAPI, lineFactory, states, parent,
+                                config.getBoolean("options.teleport.animated"));
                     renderers.put(t, tptr);
                 } else {
                     parent.getLogger().severe("Could not find renderer for name `" + val + "`!");
@@ -102,9 +103,8 @@ public abstract class TagRenderer {
 
     public void destroyTag(Tag t, Player p, IEntityDestroyPacket destroyPacket) {
         boolean event = destroyPacket != null;
-        if (destroyPacket == null)
-            destroyPacket = packetAPI.getPacketFactory().createDestroyPacket();
-        IEntityDestroyPacket finalDestroyPacket = destroyPacket;
+        IEntityDestroyPacket finalDestroyPacket =
+                destroyPacket == null ? packetAPI.getPacketFactory().createDestroyPacket() : destroyPacket;
         t.getLines().forEach(l -> l.getStack().forEach(e -> finalDestroyPacket.addToGroup(e.getIdentifier())));
         state.getSpawnedLines(p).removeAll(t.getLines());
         finalDestroyPacket.addToGroup(t.getBottom().getIdentifier());
@@ -121,7 +121,7 @@ public abstract class TagRenderer {
                 .getCustomName();
         for (ITagController tc : tag.getTagControllers(false)) {
             name = tc.getName(tag.getTarget(), viewer, name);
-            if (name != null && name.contains(ChatColor.COLOR_CHAR + "")) name = name + ChatColor.RESET;
+            if (name != null && name.contains(ChatColor.COLOR_CHAR + "")) name += ChatColor.RESET;
         }
         lineFactory.updateName(tag.getTop(), name);
         packetAPI.dispatchPacket(packetAPI.getPacketFactory().createDataPacket(tag.getTop().getIdentifier()), viewer);

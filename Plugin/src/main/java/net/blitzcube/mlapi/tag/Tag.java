@@ -165,7 +165,8 @@ public class Tag implements ITag {
         if (this.getTarget().getPassengers().size() > 0 || target.getGameMode() == GameMode.SPECTATOR) return;
         Boolean b = state.isVisible(this, target);
         if ((b == null && !this.defaultVisible) || (b != null && !b)) return;
-        renderer.processTransactions(structure.createUpdateTransactions(l -> l.isRenderedBy(line), target), this, target);
+        renderer.processTransactions(structure.createUpdateTransactions(l -> l.isRenderedBy(line), target), this,
+                target);
     }
 
     @Override

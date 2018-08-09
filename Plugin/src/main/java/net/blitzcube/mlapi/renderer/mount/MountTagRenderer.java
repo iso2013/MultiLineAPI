@@ -175,6 +175,7 @@ public class MountTagRenderer extends TagRenderer {
             rt.getRemoved().forEach(r -> r.getStack().forEach(e -> destroyPacket.addToGroup(e.getIdentifier())));
             firstPhase.add(destroyPacket);
             state.getSpawnedLines(target).removeAll(rt.getRemoved());
+            firstPhase.add(f.createMountPacket(rt.getBelow(), rt.getAbove()));
         }
     }
 
@@ -203,7 +204,7 @@ public class MountTagRenderer extends TagRenderer {
                     ((Player) t.getTarget()).getDisplayName() : t.getTarget().getCustomName();
             for (ITagController tc : t.getTagControllers(false)) {
                 name = tc.getName(t.getTarget(), p, name);
-                if (name != null && name.contains(ChatColor.COLOR_CHAR + "")) name = name + ChatColor.RESET;
+                if (name != null && name.contains(ChatColor.COLOR_CHAR + "")) name += ChatColor.RESET;
             }
             lineFactory.updateName(t.getTop(), name);
         } else lineFactory.updateName(t.getTop(), null);

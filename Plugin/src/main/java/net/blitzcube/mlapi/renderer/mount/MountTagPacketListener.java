@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * Created by iso2013 on 8/7/2018.
  */
-public class MountTagPacketListener implements IListener {
+class MountTagPacketListener implements IListener {
     private final IPacketEntityAPI packetAPI;
     private final LineEntityFactory lineFactory;
     private final Map<IFakeEntity, Entity> tagEntities;

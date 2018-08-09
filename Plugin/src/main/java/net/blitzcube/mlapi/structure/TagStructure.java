@@ -50,7 +50,8 @@ public class TagStructure {
         List<RenderedTagLine> newLines = new LinkedList<>();
         for (ITagController.TagLine line : c.getFor(tag.getTarget())) {
             added.put(lIdx);
-            newLines.add(new RenderedTagLine(c, line, tag.getTarget(), renderer.createStack(tag, lIdx++)));
+            newLines.add(new RenderedTagLine(c, line, tag.getTarget(), renderer.createStack(tag, lIdx)));
+            lIdx++;
         }
         Collections.reverse(newLines);
         if (newLines.size() == 0) return null;
@@ -69,7 +70,8 @@ public class TagStructure {
         return transactions.entrySet().stream();
     }
 
-    public Stream<Map.Entry<Player, Collection<StructureTransaction>>> removeTagController(ITagController c, Stream<Player> players) {
+    public Stream<Map.Entry<Player, Collection<StructureTransaction>>> removeTagController(ITagController c,
+                                                                                           Stream<Player> players) {
         int idx = -1;
 
         for (int i = 0; i < lines.size(); i++)
@@ -95,15 +97,16 @@ public class TagStructure {
         return transactions.entrySet().stream();
     }
 
-    public Collection<StructureTransaction> createUpdateTransactions(Predicate<RenderedTagLine> matcher, Player player) {
-        if (matcher == null) matcher = l -> true;
+    public Collection<StructureTransaction> createUpdateTransactions(Predicate<RenderedTagLine> matcher, Player
+            player) {
         List<StructureTransaction> transactions = new LinkedList<>();
         Map<RenderedTagLine, String> lines = new HashMap<>();
 
         RangeSeries added = new RangeSeries(), removed = new RangeSeries();
         RenderedTagLine l;
         for (int i = 0; i < this.lines.size(); i++) {
-            if (!matcher.test(l = this.lines.get(i))) continue;
+            l = this.lines.get(i);
+            if (matcher != null && !matcher.test(l)) continue;
             boolean v = visible.containsEntry(player, l);
             String newVal = l.get(player);
             if (newVal == null && v && l.shouldRemoveSpaceWhenNull()) {

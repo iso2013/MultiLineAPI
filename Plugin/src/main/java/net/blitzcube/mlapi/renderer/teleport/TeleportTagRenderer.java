@@ -78,8 +78,10 @@ public class TeleportTagRenderer extends TagRenderer {
                             if (value != null) {
                                 if (thirdPhase == null) thirdPhase = new LinkedList<>();
                                 lineFactory.updateName(line.getBottom(), value);
-                                lineFactory.updateLocation(loc.clone().add(0, LINE_HEIGHT * idx++, 0), line.getBottom
-                                        ());
+                                lineFactory.updateLocation(
+                                        loc.clone().add(0, LINE_HEIGHT * idx, 0), line.getBottom()
+                                );
+                                idx++;
 
                                 Collections.addAll(thirdPhase, f.createObjectSpawnPacket(line.getBottom()
                                         .getIdentifier()));
@@ -187,7 +189,7 @@ public class TeleportTagRenderer extends TagRenderer {
                     ((Player) t.getTarget()).getDisplayName() : t.getTarget().getCustomName();
             for (ITagController tc : t.getTagControllers(false)) {
                 name = tc.getName(t.getTarget(), p, name);
-                if (name != null && name.contains(ChatColor.COLOR_CHAR + "")) name = name + ChatColor.RESET;
+                if (name != null && name.contains(ChatColor.COLOR_CHAR + "")) name += ChatColor.RESET;
             }
             lineFactory.updateName(t.getTop(), name);
         } else lineFactory.updateName(t.getTop(), null);
