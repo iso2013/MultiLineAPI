@@ -123,7 +123,7 @@ public class PacketListener implements IListener {
         });
         Bukkit.getScheduler().runTaskLater(parent, () -> {
             for (Tag t : possibleDeletions) {
-                if (!t.getTarget().isValid() || t.getTarget().isEmpty() || t.getTarget().isDead()) {
+                if (!t.getTarget().isValid()) {
                     parent.deleteTag(t.getTarget());
                 }
             }
