@@ -45,19 +45,19 @@ public abstract class TagRenderer {
 
     public static void init(IPacketEntityAPI packetAPI, LineEntityFactory lineFactory, VisibilityStates states,
                             MultiLineAPI parent, FileConfiguration config) {
-        LINE_HEIGHT = config.getDouble("options.lineHeight");
-        BOTTOM_LINE_HEIGHT = config.getDouble("options.bottomLineHeight");
+        LINE_HEIGHT = config.getDouble("options.lineHeight", 0.275);
+        BOTTOM_LINE_HEIGHT = config.getDouble("options.bottomLineHeight", 0.12);
 
         TagRenderer mtr = null, tptr = null;
 
-        String defVal = config.getString("defaultRenderer");
+        String defVal = config.getString("defaultRenderer", "mount");
         TagRenderer def = null;
         if (defVal.equalsIgnoreCase("mount")) {
             def = new MountTagRenderer(packetAPI, lineFactory, states, parent);
             mtr = def;
         } else if (defVal.equalsIgnoreCase("teleport")) {
             def = new TeleportTagRenderer(packetAPI, lineFactory, states, parent, config.getBoolean("options.teleport" +
-                    ".animated"));
+                    ".animated", true));
             tptr = def;
         } else {
             parent.getLogger().severe("Could not find renderer for name `" + defVal + "`!");

@@ -9,7 +9,10 @@ options:
         animated: true
 
 #Here you can define overrides for specific entity types to use one or the other. The key must be the name of the entity
-#type.
+#type, found here: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/entity/EntityType.html
 typeRenderers:
-    UNKNOWN: "MOUNT"
     ARROW: "TELEPORT"
+    DRAGON_FIREBALL: "TELEPORT"
+    ENDER_PEARL: "TELEPORT"
+    ENDER_SIGNAL: "TELEPORT"
+    UNKNOWN: "MOUNT"
