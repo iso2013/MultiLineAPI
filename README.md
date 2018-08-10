@@ -60,26 +60,26 @@ There are a few differences between the two renderers (the mount-based renderer 
   </tr>
   <tr>
     <td style="background: #ddffdd; color: green;">
-        <li> Tag follows entity movements exactly - including client-side assumptions
-        <li> Smooth animations when lines are added and removed
-        <li> Far fewer packets dispatched
-        <li> More stable
+        <li> Tag follows entity movements exactly - including client-side assumptions</li>
+        <li> Smooth animations when lines are added and removed</li>
+        <li> Far fewer packets dispatched</li>
+        <li> More stable</li>
     </td>
     <td style="background: #ffdddd; color: red;">
-        <li> Uses at least 2 entities to customize the display name, with an additional 6 for each line
-        <li> Large amounts of lines can quickly become laggy for clients
-        <li> Collision boxes of spacing entities cause tags to become bouncy (this may be fixed in the future)
-        <li> Projectiles will collide with their passengers during flight; however, the path of the projectile is not altered because the collision is client-side
+        <li> Uses at least 2 entities to customize the display name, with an additional 6 for each line</li>
+        <li> Large amounts of lines can quickly become laggy for clients</li>
+        <li> Collision boxes of spacing entities cause tags to become bouncy (this may be fixed in the future)</li>
+        <li> Projectiles will collide with their passengers during flight; however, the path of the projectile is not altered because the collision is client-side</li>
     </td>
     <td style="background: #ddffdd; color: green;">
-        <li> Fewer entities are used - just 2 entities for the name customization and 1 entity for each line
-        <li> Large amounts of lines are more manageable
-        <li> Projectiles cannot collide with the lines
-        <li> Spacing between lines can be customized
+        <li> Fewer entities are used - just 2 entities for the name customization and 1 entity for each line</li>
+        <li> Large amounts of lines are more manageable</li>
+        <li> Projectiles cannot collide with the lines</li>
+        <li> Spacing between lines can be customized</li>
     </td>
     <td style="background: #ffdddd; color: red;">
-        <li> Sends far more packets - any move packet for an entity with a customized tag has to be cloned for its nametag and each additional line
-        <li> Tags can sometimes lag behind the movement of the entities - especially on things where the client makes assumptions (entities being pushed by pistons, projectiles)
+        <li> Sends far more packets - any move packet for an entity with a customized tag has to be cloned for its nametag and each additional line</li>
+        <li> Tags can sometimes lag behind the movement of the entities - especially on things where the client makes assumptions (entities being pushed by pistons, projectiles)</li>
     </td>
   </tr>
 </table>
