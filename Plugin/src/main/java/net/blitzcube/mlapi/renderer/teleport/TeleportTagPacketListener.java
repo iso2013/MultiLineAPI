@@ -1,5 +1,7 @@
 package net.blitzcube.mlapi.renderer.teleport;
 
+import com.google.common.base.Preconditions;
+
 import net.blitzcube.mlapi.MultiLineAPI;
 import net.blitzcube.mlapi.VisibilityStates;
 import net.blitzcube.mlapi.tag.RenderedTagLine;
@@ -10,6 +12,7 @@ import net.blitzcube.peapi.api.event.IEntityPacketEvent;
 import net.blitzcube.peapi.api.listener.IListener;
 import net.blitzcube.peapi.api.packet.IEntityMovePacket;
 import net.blitzcube.peapi.api.packet.IEntityPacket;
+
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.util.Vector;
@@ -17,12 +20,16 @@ import org.bukkit.util.Vector;
 /**
  * Created by iso2013 on 8/7/2018.
  */
-class TeleportTagPacketListener implements IListener {
+public class TeleportTagPacketListener implements IListener {
+
     private final double lineHeight, bottomLineHeight;
     private final MultiLineAPI parent;
     private final VisibilityStates state;
 
-    TeleportTagPacketListener(double lineHeight, double bottomLineHeight, MultiLineAPI parent, VisibilityStates state) {
+    protected TeleportTagPacketListener(double lineHeight, double bottomLineHeight, MultiLineAPI parent, VisibilityStates state) {
+        Preconditions.checkArgument(parent != null, "MLAPI instance must not be null");
+        Preconditions.checkArgument(state != null, "VisibilityState instance must not be null");
+
         this.lineHeight = lineHeight;
         this.bottomLineHeight = bottomLineHeight;
         this.parent = parent;
@@ -33,57 +40,61 @@ class TeleportTagPacketListener implements IListener {
     public void onEvent(IEntityPacketEvent e) {
         IEntityPacket packet = e.getPacket();
         IEntityIdentifier id = packet.getIdentifier();
-        if (id == null) {
-            return;
-        }
+        if (id == null) return;
+
         id.moreSpecific();
         if (id.isFakeEntity()) return;
+
         if (e.getPacket() instanceof IEntityMovePacket) {
-            IEntityMovePacket p = (IEntityMovePacket) e.getPacket();
-            if (p.getMoveType() == IEntityMovePacket.MoveType.LOOK) return;
-            if (id.getEntity() == null) return;
+            IEntityMovePacket movePacket = (IEntityMovePacket) e.getPacket();
+            if (movePacket.getMoveType() == IEntityMovePacket.MoveType.LOOK || id.getEntity() == null) return;
+
             Entity entity = id.getEntity().get();
             if (entity == null) return;
-            Tag t = parent.getTag(entity);
-            if (t == null) return;
 
-            if (p.getMoveType() == IEntityMovePacket.MoveType.TELEPORT) {
-                Vector loc = p.getNewPosition().clone();
-                IHitbox hb = t.getTargetHitbox();
-                if (hb != null)
-                    loc.setY(loc.getY() + (hb.getMax().getY() - hb.getMin().getY()) + bottomLineHeight);
+            Tag tag = parent.getTag(entity);
+            if (tag == null) return;
 
-                for (RenderedTagLine l : t.getLines()) {
-                    if (!state.isLineSpawned(e.getPlayer(), l)) {
-                        if (!l.shouldRemoveSpaceWhenNull()) {
-                            loc.setY(loc.getY() + lineHeight);
+            if (movePacket.getMoveType() == IEntityMovePacket.MoveType.TELEPORT) {
+                Vector location = movePacket.getNewPosition().clone();
+                IHitbox hitbox = tag.getTargetHitbox();
+                if (hitbox != null) {
+                    location.setY(location.getY() + (hitbox.getMax().getY() - hitbox.getMin().getY()) + bottomLineHeight);
+                }
+
+                for (RenderedTagLine line : tag.getLines()) {
+                    if (!state.isLineSpawned(e.getPlayer(), line)) {
+                        if (!line.shouldRemoveSpaceWhenNull()) {
+                            location.setY(location.getY() + lineHeight);
                         }
+
                         continue;
                     }
-                    IEntityMovePacket nP = (IEntityMovePacket) p.clone();
-                    nP.setIdentifier(l.getBottom().getIdentifier());
-                    nP.setNewPosition(loc, true);
-                    e.context().queueDispatch(nP, 0);
-                    loc.setY(loc.getY() + lineHeight);
+
+                    IEntityMovePacket newMovePacket = (IEntityMovePacket) movePacket.clone();
+                    newMovePacket.setIdentifier(line.getBottom().getIdentifier());
+                    newMovePacket.setNewPosition(location, true);
+                    e.context().queueDispatch(newMovePacket, 0);
+                    location.setY(location.getY() + lineHeight);
                 }
 
-                IEntityMovePacket nP = (IEntityMovePacket) p.clone();
-                nP.setIdentifier(t.getTop().getIdentifier());
-                nP.setNewPosition(loc, true);
-                e.context().queueDispatch(nP, 0);
-            } else {
-                for (RenderedTagLine l : t.getLines()) {
-                    if (!state.isLineSpawned(e.getPlayer(), l)) {
-                        continue;
-                    }
-                    IEntityMovePacket nP = (IEntityMovePacket) p.clone();
-                    nP.setIdentifier(l.getBottom().getIdentifier());
-                    e.context().queueDispatch(nP, 0);
+                IEntityMovePacket newMovePacket = (IEntityMovePacket) movePacket.clone();
+                newMovePacket.setIdentifier(tag.getTop().getIdentifier());
+                newMovePacket.setNewPosition(location, true);
+                e.context().queueDispatch(newMovePacket, 0);
+            }
+            else {
+                for (RenderedTagLine line : tag.getLines()) {
+                    if (!state.isLineSpawned(e.getPlayer(), line)) continue;
+
+                    IEntityMovePacket newMovePacket = (IEntityMovePacket) movePacket.clone();
+                    newMovePacket.setIdentifier(line.getBottom().getIdentifier());
+                    e.context().queueDispatch(newMovePacket, 0);
                 }
 
-                IEntityMovePacket nP = (IEntityMovePacket) p.clone();
-                nP.setIdentifier(t.getTop().getIdentifier());
-                e.context().queueDispatch(nP, 0);
+                IEntityMovePacket newMovePacket = (IEntityMovePacket) movePacket.clone();
+                newMovePacket.setIdentifier(tag.getTop().getIdentifier());
+                e.context().queueDispatch(newMovePacket, 0);
             }
         }
     }

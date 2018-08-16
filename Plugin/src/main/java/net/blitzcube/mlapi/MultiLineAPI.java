@@ -1,8 +1,17 @@
 package net.blitzcube.mlapi;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+
 import net.blitzcube.mlapi.api.IMultiLineAPI;
 import net.blitzcube.mlapi.api.tag.ITagController;
 import net.blitzcube.mlapi.listener.PacketListener;
@@ -11,6 +20,7 @@ import net.blitzcube.mlapi.renderer.LineEntityFactory;
 import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Entity;
@@ -18,13 +28,11 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.*;
-
 /**
  * Created by iso2013 on 5/23/2018.
  */
-@SuppressWarnings("unused")
 public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
+
     private final VisibilityStates states = new VisibilityStates();
     private final Map<Integer, Tag> tags = new HashMap<>();
     private final Multimap<EntityType, ITagController> controllersMap = HashMultimap.create();
@@ -38,11 +46,10 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
             throw new IllegalStateException("Failed to start MultiLineAPI! PacketEntityAPI could not be found!");
         }
 
-        this.lineFactory = new LineEntityFactory(packetAPI.getModifierRegistry(),
-                packetAPI.getEntityFactory());
+        this.lineFactory = new LineEntityFactory(packetAPI.getModifierRegistry(), packetAPI.getEntityFactory());
 
         packetAPI.addListener(new PacketListener(this, tags, states, packetAPI));
-        this.getServer().getPluginManager().registerEvents(new ServerListener(this, states, packetAPI), this);
+        Bukkit.getPluginManager().registerEvents(new ServerListener(this, states, packetAPI), this);
 
         this.addDefaultTagController(DemoController.getInst(this));
         this.addDefaultTagController(DemoController2.getInst(this));
@@ -60,23 +67,26 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
     @Override
     public Tag createTagIfMissing(Entity entity) {
         int id = entity.getEntityId();
+
         if (!tags.containsKey(id)) {
             TagRenderer renderer = TagRenderer.createInstance(entity.getType());
-            Tag t = new Tag(entity, renderer, controllersMap.get(entity.getType()), lineFactory, states);
-            tags.put(id, t);
-            renderer.getNearby(t, 1.0).filter(input -> input != entity)
-                    .forEach(player -> renderer.spawnTag(t, player, null));
+            Tag tag = new Tag(entity, renderer, controllersMap.get(entity.getType()), lineFactory, states);
+            tags.put(id, tag);
+
+            renderer.getNearby(tag, 1.0).filter(input -> input != entity).forEach(player -> renderer.spawnTag(tag, player, null));
         }
+
         return tags.get(id);
     }
 
     @Override
     public void deleteTag(Entity entity) {
-        Tag t = tags.remove(entity.getEntityId());
-        if (t == null) return;
-        TagRenderer r = t.getRenderer();
-        r.getNearby(t, 1.1).forEach(player -> r.destroyTag(t, player, null));
-        r.purge(t);
+        Tag tag = tags.remove(entity.getEntityId());
+        if (tag == null) return;
+
+        TagRenderer renderer = tag.getRenderer();
+        renderer.getNearby(tag, 1.1).forEach(player -> renderer.destroyTag(tag, player, null));
+        renderer.purge(tag);
     }
 
     @Override
@@ -85,18 +95,21 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
     }
 
     @Override
-    public void addDefaultTagController(ITagController val) {
-        EntityType[] autoApply = val.getAutoApplyFor();
-        autoApply = autoApply != null ? autoApply : EntityType.values();
-        for (EntityType t : autoApply) {
-            controllersMap.put(t, val);
+    public void addDefaultTagController(ITagController controller) {
+        EntityType[] autoApply = controller.getAutoApplyFor();
+        autoApply = (autoApply != null) ? autoApply : EntityType.values();
+
+        for (EntityType type : autoApply) {
+            this.controllersMap.put(type, controller);
         }
     }
 
     @Override
-    public void removeDefaultTagController(ITagController val) {
+    public void removeDefaultTagController(ITagController controller) {
         Collection<ITagController> values = controllersMap.values();
-        while (values.contains(val)) values.remove(val);
+        while (values.contains(controller)) {
+            values.remove(controller);
+        }
     }
 
     @Override
@@ -111,22 +124,24 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
 
     @Override
     public void update(Entity entity, Player target) {
-        Tag t = tags.get(entity.getEntityId());
-        Preconditions.checkArgument(t != null, "This entity does not have a tag associated with it!");
-        t.update(target);
+        Tag tag = tags.get(entity.getEntityId());
+        Preconditions.checkState(tag != null, "This entity does not have a tag associated with it!");
+
+        tag.update(target);
     }
 
     @Override
     public void update(Entity entity) {
-        Tag t = tags.get(entity.getEntityId());
-        Preconditions.checkArgument(t != null, "This entity does not have a tag associated with it!");
-        t.update();
+        Tag tag = tags.get(entity.getEntityId());
+        Preconditions.checkState(tag != null, "This entity does not have a tag associated with it!");
+
+        tag.update();
     }
 
 
     @Override
     public void update(ITagController controller, Player target) {
-        states.getVisible(target).filter(input -> input.getTagControllers(false).contains(controller))
+        this.states.getVisible(target).filter(input -> input.getTagControllers(false).contains(controller))
                 .forEach(tag -> tag.update(controller));
     }
 
@@ -137,7 +152,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
 
     @Override
     public void update(ITagController.TagLine line, Player target) {
-        states.getVisible(target).forEach(tag -> tag.update(line));
+        this.states.getVisible(target).forEach(tag -> tag.update(line));
     }
 
     @Override
@@ -147,12 +162,12 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
 
     @Override
     public void updateNames(Player target) {
-        states.getVisible(target).forEach(tag -> tag.updateName(target));
+        this.states.getVisible(target).forEach(tag -> tag.updateName(target));
     }
 
     @Override
     public void updateNames() {
-        tags.values().forEach(Tag::updateName);
+        this.tags.values().forEach(Tag::updateName);
     }
 
     public boolean hasDefaultTagControllers(EntityType type) {
@@ -168,14 +183,16 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
     }
 
     public static class DemoController implements ITagController {
+
         private static DemoController inst;
+
         private final MultiLineAPI parent;
         public int refreshes = 15;
+
         private final TagLine line = new TagLine() {
             @Override
             public String getText(Entity target, Player viewer) {
-                if (refreshes % 2 == 0) return null;
-                return "One";
+                return (refreshes % 2 == 0) ? null : "One";
             }
 
             @Override
@@ -183,6 +200,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
                 return false;
             }
         };
+
         private final TagLine line2 = new TagLine() {
             @Override
             public String getText(Entity target, Player viewer) {
@@ -195,6 +213,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
                 return true;
             }
         };
+
         private final TagLine line3 = new TagLine() {
             @Override
             public String getText(Entity target, Player viewer) {
@@ -207,32 +226,29 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
                 return false;
             }
         };
+
         private final Set<Entity> enabledFor;
 
-        DemoController(MultiLineAPI parent) {
+        private DemoController(MultiLineAPI parent) {
             this.parent = parent;
             this.enabledFor = new HashSet<>();
         }
 
         public static DemoController getInst(MultiLineAPI parent) {
-            if (inst == null) inst = new DemoController(parent);
-            return inst;
+            return (inst == null) ? inst = new DemoController(parent) : inst;
         }
 
         @Override
         public List<TagLine> getFor(Entity target) {
-            enabledFor.add(target);
-            return new ArrayList<TagLine>() {{
-                add(line);
-                add(line2);
-                add(line3);
-            }};
+            this.enabledFor.add(target);
+            return Arrays.asList(line, line2, line3);
         }
 
         public void refreshAll() {
-            for (Entity e : enabledFor) {
-                if (parent.getTag(e) == null) continue;
-                parent.getTag(e).update(this);
+            for (Entity entity : enabledFor) {
+                if (parent.getTag(entity) == null) continue;
+
+                this.parent.getTag(entity).update(this);
             }
         }
 
@@ -263,9 +279,11 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
     }
 
     public static class DemoController2 implements ITagController {
+
         private static DemoController2 inst;
+
         private final MultiLineAPI parent;
-        private final int refreshes = 15;
+
         private final TagLine line = new TagLine() {
             @Override
             public String getText(Entity target, Player viewer) {
@@ -277,6 +295,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
                 return false;
             }
         };
+
         private final TagLine line2 = new TagLine() {
             @Override
             public String getText(Entity target, Player viewer) {
@@ -288,6 +307,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
                 return false;
             }
         };
+
         private final TagLine line3 = new TagLine() {
             @Override
             public String getText(Entity target, Player viewer) {
@@ -299,32 +319,29 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
                 return false;
             }
         };
+
         private final Set<Entity> enabledFor;
 
-        DemoController2(MultiLineAPI parent) {
+        private DemoController2(MultiLineAPI parent) {
             this.parent = parent;
             this.enabledFor = new HashSet<>();
         }
 
-        static DemoController2 getInst(MultiLineAPI parent) {
-            if (inst == null) inst = new DemoController2(parent);
-            return inst;
+        public static DemoController2 getInst(MultiLineAPI parent) {
+            return (inst == null) ? inst = new DemoController2(parent) : inst;
         }
 
         @Override
         public List<TagLine> getFor(Entity target) {
-            enabledFor.add(target);
-            return new ArrayList<TagLine>() {{
-                add(line);
-                add(line2);
-                add(line3);
-            }};
+            this.enabledFor.add(target);
+            return Arrays.asList(line, line2, line3);
         }
 
         public void refreshAll() {
-            for (Entity e : enabledFor) {
-                if (parent.getTag(e) == null) continue;
-                parent.getTag(e).update(this);
+            for (Entity entity : enabledFor) {
+                if (parent.getTag(entity) == null) continue;
+
+                this.parent.getTag(entity).update(this);
             }
         }
 

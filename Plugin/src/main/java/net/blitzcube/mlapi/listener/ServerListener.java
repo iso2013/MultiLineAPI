@@ -1,9 +1,12 @@
 package net.blitzcube.mlapi.listener;
 
+import com.google.common.base.Preconditions;
+
 import net.blitzcube.mlapi.MultiLineAPI;
 import net.blitzcube.mlapi.VisibilityStates;
 import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
+
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Entity;
@@ -13,7 +16,11 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.entity.SpawnerSpawnEvent;
-import org.bukkit.event.player.*;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.event.vehicle.VehicleCreateEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
@@ -22,11 +29,16 @@ import org.bukkit.event.world.ChunkUnloadEvent;
  * Created by iso2013 on 6/7/2018.
  */
 public class ServerListener implements Listener {
+
     private final MultiLineAPI parent;
     private final VisibilityStates states;
     private final IPacketEntityAPI packet;
 
     public ServerListener(MultiLineAPI parent, VisibilityStates states, IPacketEntityAPI packet) {
+        Preconditions.checkArgument(parent != null, "MLAPI instance must not be null");
+        Preconditions.checkArgument(states != null, "VisibilityState instance must not be null");
+        Preconditions.checkArgument(packet != null, "PacketEntityAPI instance must not be null");
+
         this.parent = parent;
         this.states = states;
         this.packet = packet;
@@ -34,71 +46,78 @@ public class ServerListener implements Listener {
 
     @EventHandler
     public void onLogin(PlayerLoginEvent e) {
-        onSpawn(e.getPlayer());
+        this.onSpawn(e.getPlayer());
     }
 
     @EventHandler
-    public void onSpawn(CreatureSpawnEvent e) { onSpawn(e.getEntity()); }
+    public void onSpawn(CreatureSpawnEvent e) {
+        this.onSpawn(e.getEntity());
+    }
 
     @EventHandler
-    public void onSpawn(ItemSpawnEvent e) { onSpawn(e.getEntity()); }
+    public void onSpawn(ItemSpawnEvent e) {
+        this.onSpawn(e.getEntity());
+    }
 
     @EventHandler
-    public void onSpawn(SpawnerSpawnEvent e) { onSpawn(e.getEntity()); }
+    public void onSpawn(SpawnerSpawnEvent e) {
+        this.onSpawn(e.getEntity());
+    }
 
     @EventHandler
-    public void onSpawn(ProjectileLaunchEvent e) { onSpawn(e.getEntity()); }
+    public void onSpawn(ProjectileLaunchEvent e) {
+        this.onSpawn(e.getEntity());
+    }
 
     @EventHandler
     public void onSpawn(VehicleCreateEvent e) {
-        onSpawn(e.getVehicle());
+        this.onSpawn(e.getVehicle());
     }
 
     @EventHandler
     public void onChunkLoad(ChunkLoadEvent e) {
-        for (Entity en : e.getChunk().getEntities()) {
-            if (!en.isValid()) continue;
-            onSpawn(en);
+        for (Entity entity : e.getChunk().getEntities()) {
+            if (!entity.isValid()) continue;
+            this.onSpawn(entity);
         }
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
-        states.purge(e.getPlayer());
+        this.states.purge(e.getPlayer());
     }
 
     @EventHandler
     public void onUnload(ChunkUnloadEvent e) {
-        for (Entity en : e.getChunk().getEntities())
-            onDespawn(en);
+        for (Entity entity : e.getChunk().getEntities()) {
+            this.onDespawn(entity);
+        }
     }
 
     @EventHandler
     public void onGameModeChange(PlayerGameModeChangeEvent e) {
         if (e.getNewGameMode() == GameMode.SPECTATOR && e.getPlayer().getGameMode() != GameMode.SPECTATOR) {
-            //Player is changing into SPECTATOR, so we should despawn all tags.
+            // Player is changing into SPECTATOR, so we should despawn all tags.
             TagRenderer.batchDestroyTags(packet, states.getVisible(e.getPlayer()), e.getPlayer());
         } else if (e.getNewGameMode() != GameMode.SPECTATOR && e.getPlayer().getGameMode() == GameMode.SPECTATOR) {
-            //Player is changing out of SPECTATOR, so we should spawn all tags.
-            packet.getVisible(e.getPlayer(), 1, false)
+            // Player is changing out of SPECTATOR, so we should spawn all tags.
+            this.packet.getVisible(e.getPlayer(), 1, false)
                     .map(identifier -> {
-                        Entity e1 = identifier.getEntity().get();
-                        return e1 != null ? parent.getTag(e1) : null;
+                        Entity entity = identifier.getEntity().get();
+                        return entity != null ? parent.getTag(entity) : null;
                     }).filter(tag -> {
-                Boolean v = states.isVisible(tag, e.getPlayer());
-                if (tag == null) return false;
-                if (v == null) v = tag.getDefaultVisible();
-                return v;
-            }).forEach(tag -> tag.getRenderer().spawnTag(tag, e.getPlayer(), null));
+                        Boolean visible = states.isVisible(tag, e.getPlayer());
+                        return tag != null && (visible != null) ? visible : tag.getDefaultVisible();
+                    }).forEach(tag -> tag.getRenderer().spawnTag(tag, e.getPlayer(), null));
         }
     }
 
     @EventHandler
     public void onSneak(PlayerToggleSneakEvent e) {
         if (e.isSneaking()) {
-            MultiLineAPI.DemoController c = MultiLineAPI.DemoController.getInst(null);
-            c.refreshes--;
-            c.refreshAll();
+            MultiLineAPI.DemoController controller = MultiLineAPI.DemoController.getInst(null);
+            controller.refreshes--;
+            controller.refreshAll();
         }
     }
 
@@ -110,8 +129,9 @@ public class ServerListener implements Listener {
     }
 
     private void onSpawn(Entity e) {
-        if (parent.hasDefaultTagControllers(e.getType()))
-            parent.createTagIfMissing(e);
+        if (parent.hasDefaultTagControllers(e.getType())) {
+            this.parent.createTagIfMissing(e);
+        }
     }
 
     private void onDespawn(Entity e) {

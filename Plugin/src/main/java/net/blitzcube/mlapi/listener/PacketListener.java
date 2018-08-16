@@ -1,5 +1,14 @@
 package net.blitzcube.mlapi.listener;
 
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import com.google.common.base.Preconditions;
+
 import net.blitzcube.mlapi.MultiLineAPI;
 import net.blitzcube.mlapi.VisibilityStates;
 import net.blitzcube.mlapi.renderer.TagRenderer;
@@ -10,32 +19,36 @@ import net.blitzcube.peapi.api.entity.modifier.IEntityModifier;
 import net.blitzcube.peapi.api.entity.modifier.IModifiableEntity;
 import net.blitzcube.peapi.api.event.IEntityPacketEvent;
 import net.blitzcube.peapi.api.listener.IListener;
-import net.blitzcube.peapi.api.packet.*;
+import net.blitzcube.peapi.api.packet.IEntityDataPacket;
+import net.blitzcube.peapi.api.packet.IEntityDestroyPacket;
+import net.blitzcube.peapi.api.packet.IEntityMountPacket;
+import net.blitzcube.peapi.api.packet.IEntityPotionAddPacket;
+import net.blitzcube.peapi.api.packet.IEntityPotionRemovePacket;
+
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * Created by iso2013 on 5/24/2018.
  */
 public class PacketListener implements IListener {
+
     private final MultiLineAPI parent;
     private final Map<Integer, Tag> entityTags;
     private final VisibilityStates state;
     private final IPacketEntityAPI packet;
     private final IEntityModifier<Boolean> invisible;
 
-    public PacketListener(MultiLineAPI parent, Map<Integer, Tag> entityTags, VisibilityStates visibilityState,
-                          IPacketEntityAPI
-                                  packet) {
+    public PacketListener(MultiLineAPI parent, Map<Integer, Tag> entityTags, VisibilityStates visibilityState, IPacketEntityAPI packet) {
+        Preconditions.checkArgument(parent != null, "MLAPI instance must not be null");
+        Preconditions.checkArgument(visibilityState != null, "VisibilityState instance must not be null");
+        Preconditions.checkArgument(packet != null, "PacketEntityAPI instance must not be null");
+
         this.parent = parent;
-        this.entityTags = entityTags;
+        this.entityTags = (entityTags != null) ? entityTags : new HashMap<>();
         this.state = visibilityState;
         this.packet = packet;
         this.invisible = packet.getModifierRegistry().lookup(EntityType.SHEEP, "INVISIBLE", Boolean.class);
@@ -44,85 +57,97 @@ public class PacketListener implements IListener {
     @Override
     public void onEvent(IEntityPacketEvent e) {
         if (e.getPacketType() == IEntityPacketEvent.EntityPacketType.DESTROY) {
-            manageDestroyPacket((IEntityDestroyPacket) e.getPacket(), e.getPlayer());
+            this.manageDestroyPacket((IEntityDestroyPacket) e.getPacket(), e.getPlayer());
             return;
         }
-        IEntityIdentifier i = e.getPacket().getIdentifier();
-        if (i == null) return;
-        i.moreSpecific();
-        if (i.isFakeEntity()) return;
-        Tag t = entityTags.get(i.getEntityID());
-        if (t == null) return;
-        TagRenderer r = t.getRenderer();
+
+        IEntityIdentifier identifier = e.getPacket().getIdentifier();
+        if (identifier == null) return;
+
+        identifier.moreSpecific();
+        if (identifier.isFakeEntity()) return;
+
+        Tag tag = entityTags.get(identifier.getEntityID());
+        if (tag == null) return;
+
+        TagRenderer renderer = tag.getRenderer();
         switch (e.getPacketType()) {
             case OBJECT_SPAWN:
             case ENTITY_SPAWN:
-                r.spawnTag(t, e.getPlayer(), null);
+                renderer.spawnTag(tag, e.getPlayer(), null);
                 break;
             case MOUNT:
-                checkMount((IEntityMountPacket) e.getPacket(), i, t, e.getPlayer());
+                this.checkMount((IEntityMountPacket) e.getPacket(), identifier, tag, e.getPlayer());
                 break;
             case DATA:
-                checkData((IEntityDataPacket) e.getPacket(), t, e.getPlayer());
+                this.checkData((IEntityDataPacket) e.getPacket(), tag, e.getPlayer());
                 break;
             case ADD_EFFECT:
-                IEntityPotionAddPacket p2 = (IEntityPotionAddPacket) e.getPacket();
-                if (p2.getEffect().getType() == PotionEffectType.INVISIBILITY) {
-                    r.destroyTag(t, e.getPlayer(), null);
+                IEntityPotionAddPacket potionAddPacket = (IEntityPotionAddPacket) e.getPacket();
+                if (potionAddPacket.getEffect().getType() == PotionEffectType.INVISIBILITY) {
+                    renderer.destroyTag(tag, e.getPlayer(), null);
                 }
                 break;
             case REMOVE_EFFECT:
-                IEntityPotionRemovePacket p3 = (IEntityPotionRemovePacket) e.getPacket();
-                if (p3.getEffectType() == PotionEffectType.INVISIBILITY) {
-                    r.spawnTag(t, e.getPlayer(), null);
+                IEntityPotionRemovePacket potionRemovePacket = (IEntityPotionRemovePacket) e.getPacket();
+                if (potionRemovePacket.getEffectType() == PotionEffectType.INVISIBILITY) {
+                    renderer.spawnTag(tag, e.getPlayer(), null);
                 }
                 break;
+            default: break;
         }
     }
 
-    private void checkData(IEntityDataPacket p, Tag t, Player target) {
-        TagRenderer r = t.getRenderer();
-        IModifiableEntity m = packet.wrap(p.getMetadata());
-        if (!invisible.specifies(m)) return;
-        if (invisible.getValue(m) && state.isSpawned(target, t)) {
-            r.destroyTag(t, target, null);
-        } else if (!invisible.getValue(m) && !state.isSpawned(target, t)) {
-            r.spawnTag(t, target, null);
+    private void checkData(IEntityDataPacket dataPacket, Tag tag, Player target) {
+        TagRenderer renderer = tag.getRenderer();
+        IModifiableEntity modifiable = packet.wrap(dataPacket.getMetadata());
+        if (!invisible.specifies(modifiable)) return;
+
+        if (invisible.getValue(modifiable) && state.isSpawned(target, tag)) {
+            renderer.destroyTag(tag, target, null);
+        } else if (!invisible.getValue(modifiable) && !state.isSpawned(target, tag)) {
+            renderer.spawnTag(tag, target, null);
         }
     }
 
-    private void checkMount(IEntityMountPacket p, IEntityIdentifier i, Tag t, Player target) {
-        TagRenderer r = t.getRenderer();
-        boolean tagEntities = p.getGroup().stream().allMatch(i1 -> {
+    private void checkMount(IEntityMountPacket mountPacket, IEntityIdentifier identifier, Tag tag, Player target) {
+        TagRenderer renderer = tag.getRenderer();
+        boolean tagEntities = mountPacket.getGroup().stream().allMatch(i1 -> {
             i1.moreSpecific();
             return i1.isFakeEntity();
         });
-        Entity e = i.getEntity() != null ? i.getEntity().get() : null;
-        if (e != null && e.getPassengers().size() > 0)
+
+        Optional<WeakReference<Entity>> entity = Optional.ofNullable(identifier.getEntity());
+        if (entity.isPresent() && entity.get().get().getPassengers().size() > 0) {
             tagEntities = false;
-        boolean isSpawned = state.isSpawned(target, t);
-        Boolean shouldSpawn = state.isVisible(t, target);
-        shouldSpawn = shouldSpawn != null ? shouldSpawn : t.getDefaultVisible();
+        }
+
+        boolean isSpawned = state.isSpawned(target, tag);
+        Boolean shouldSpawn = state.isVisible(tag, target);
+        shouldSpawn = (shouldSpawn != null) ? shouldSpawn : tag.getDefaultVisible();
         if (!shouldSpawn) return;
+
         if (!tagEntities && isSpawned) {
-            r.destroyTag(t, target, null);
+            renderer.destroyTag(tag, target, null);
         } else if (tagEntities && !isSpawned) {
-            r.spawnTag(t, target, p);
+            renderer.spawnTag(tag, target, mountPacket);
         }
     }
 
-    private void manageDestroyPacket(IEntityDestroyPacket packet, Player player) {
+    private void manageDestroyPacket(IEntityDestroyPacket destroyPacket, Player player) {
         Set<Tag> possibleDeletions = new HashSet<>();
-        packet.getGroup().forEach(identifier -> {
-            Tag t1 = entityTags.get(identifier.getEntityID());
-            if (t1 == null) return;
-            t1.getRenderer().destroyTag(t1, player, packet);
-            possibleDeletions.add(t1);
+        destroyPacket.getGroup().forEach(identifier -> {
+            Tag tag = entityTags.get(identifier.getEntityID());
+            if (tag == null) return;
+
+            tag.getRenderer().destroyTag(tag, player, destroyPacket);
+            possibleDeletions.add(tag);
         });
+
         Bukkit.getScheduler().runTaskLater(parent, () -> {
-            for (Tag t : possibleDeletions) {
-                if (!t.getTarget().isValid()) {
-                    parent.deleteTag(t.getTarget());
+            for (Tag tag : possibleDeletions) {
+                if (!tag.getTarget().isValid()) {
+                    parent.deleteTag(tag.getTarget());
                 }
             }
         }, 1L);

@@ -1,20 +1,33 @@
 package net.blitzcube.mlapi.structure;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
+
 import net.blitzcube.mlapi.api.tag.ITagController;
 import net.blitzcube.mlapi.renderer.TagRenderer;
-import net.blitzcube.mlapi.structure.transactions.*;
+import net.blitzcube.mlapi.structure.transactions.AddTransaction;
+import net.blitzcube.mlapi.structure.transactions.MoveTransaction;
+import net.blitzcube.mlapi.structure.transactions.NameTransaction;
+import net.blitzcube.mlapi.structure.transactions.RemoveTransaction;
+import net.blitzcube.mlapi.structure.transactions.StructureTransaction;
 import net.blitzcube.mlapi.tag.RenderedTagLine;
 import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.mlapi.util.RangeSeries;
 import net.blitzcube.peapi.api.entity.IEntityIdentifier;
-import org.bukkit.entity.Player;
 
-import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import org.bukkit.entity.Player;
 
 /**
  * Created by iso2013 on 6/12/2018.
@@ -35,30 +48,32 @@ public class TagStructure {
         this.renderer = tag.getRenderer();
     }
 
-    public Stream<Map.Entry<Player, Collection<StructureTransaction>>> addTagController(ITagController c,
-                                                                                        Stream<Player> players) {
-        int idx = 0;
+    public Stream<Map.Entry<Player, Collection<StructureTransaction>>> addTagController(ITagController controller, Stream<Player> players) {
+        int index = 0;
         for (int i = 0; i < lines.size(); i++) {
-            int comp = CONTROLLER_COMPARATOR.compare(c, lines.get(i).getController());
+            int comp = CONTROLLER_COMPARATOR.compare(controller, lines.get(i).getController());
+
             if (comp > 0) {
-                idx = i + 1;
+                index = i + 1;
             }
         }
 
         RangeSeries added = new RangeSeries();
-        int lIdx = idx;
+        int lineIndex = index;
         List<RenderedTagLine> newLines = new LinkedList<>();
-        for (ITagController.TagLine line : c.getFor(tag.getTarget())) {
-            added.put(lIdx);
-            newLines.add(new RenderedTagLine(c, line, tag.getTarget(), renderer.createStack(tag, lIdx)));
-            lIdx++;
+
+        for (ITagController.TagLine line : controller.getFor(tag.getTarget())) {
+            added.put(lineIndex);
+            newLines.add(new RenderedTagLine(controller, line, tag.getTarget(), renderer.createStack(tag, lineIndex)));
+            lineIndex++;
         }
-        Collections.reverse(newLines);
+
         if (newLines.size() == 0) return null;
 
-        lines.addAll(idx, newLines);
+        Collections.reverse(newLines);
+        this.lines.addAll(index, newLines);
 
-        int fIdx = idx;
+        int fIdx = index;
         Map<Player, Collection<StructureTransaction>> transactions = new HashMap<>();
 
         players.forEach(p -> transactions.put(p, Collections.singleton(new AddTransaction(
@@ -70,22 +85,23 @@ public class TagStructure {
         return transactions.entrySet().stream();
     }
 
-    public Stream<Map.Entry<Player, Collection<StructureTransaction>>> removeTagController(ITagController c,
-                                                                                           Stream<Player> players) {
-        int idx = -1;
-
+    public Stream<Map.Entry<Player, Collection<StructureTransaction>>> removeTagController(ITagController controller, Stream<Player> players) {
+        int index = -1;
         for (int i = 0; i < lines.size(); i++)
-            if (lines.get(i).getController() == c) {
-                idx = i;
+            if (lines.get(i).getController() == controller) {
+                index = i;
                 break;
             }
-        if (idx == -1) return null;
 
-        List<RenderedTagLine> removed = lines.stream().filter(l -> l.getController() == c).collect(Collectors.toList());
-        lines.removeAll(removed);
+        if (index == -1) {
+            return null;
+        }
+
+        List<RenderedTagLine> removed = lines.stream().filter(l -> l.getController() == controller).collect(Collectors.toList());
+        this.lines.removeAll(removed);
         removed.forEach(line -> line.getStack().forEach(renderer::purge));
 
-        int fIdx = idx;
+        int fIdx = index;
         Map<Player, Collection<StructureTransaction>> transactions = new HashMap<>();
 
         players.forEach(p -> transactions.put(p, Collections.singleton(new RemoveTransaction(
@@ -97,49 +113,56 @@ public class TagStructure {
         return transactions.entrySet().stream();
     }
 
-    public Collection<StructureTransaction> createUpdateTransactions(Predicate<RenderedTagLine> matcher, Player
-            player) {
+    public Collection<StructureTransaction> createUpdateTransactions(Predicate<RenderedTagLine> matcher, Player player) {
         List<StructureTransaction> transactions = new LinkedList<>();
         Map<RenderedTagLine, String> lines = new HashMap<>();
 
         RangeSeries added = new RangeSeries(), removed = new RangeSeries();
-        RenderedTagLine l;
-        for (int i = 0; i < this.lines.size(); i++) {
-            l = this.lines.get(i);
-            if (matcher != null && !matcher.test(l)) continue;
-            boolean v = visible.containsEntry(player, l);
-            String newVal = l.get(player);
-            if (newVal == null && v && l.shouldRemoveSpaceWhenNull()) {
+        RenderedTagLine line;
+        for (int i = 0; i < lines.size(); i++) {
+            line = this.lines.get(i);
+
+            if (matcher != null && !matcher.test(line)) continue;
+            boolean visible = this.visible.containsEntry(player, line);
+            String newValue = line.get(player);
+
+            if (newValue == null && visible && line.shouldRemoveSpaceWhenNull()) {
                 removed.put(i);
-                lines.put(l, null);
-            } else if (newVal != null && !v) {
+                lines.put(line, null);
+            } else if (newValue != null && !visible) {
                 added.put(i);
-                lines.put(l, newVal);
+                lines.put(line, newValue);
             } else {
-                lines.put(l, newVal);
+                lines.put(line, newValue);
             }
         }
 
         transactions.add(new NameTransaction(lines));
 
         List<RenderedTagLine> subjectLines = new LinkedList<>();
-        for (RangeSeries.Range r : removed.getRanges()) {
-            for (int j : r) subjectLines.add(this.lines.get(j));
+        for (RangeSeries.Range range : removed.getRanges()) {
+            for (int i : range) {
+                subjectLines.add(this.lines.get(i));
+            }
+
             transactions.add(new MoveTransaction(
-                    getBelow(r.getLower() - 1, player, added, removed),
-                    getAbove(r.getUpper() + 1, player, added, removed),
+                    getBelow(range.getLower() - 1, player, added, removed),
+                    getAbove(range.getUpper() + 1, player, added, removed),
                     ImmutableList.copyOf(subjectLines),
                     true
             ));
             subjectLines.clear();
         }
 
-        for (RangeSeries.Range r : added.getRanges()) {
+        for (RangeSeries.Range range : added.getRanges()) {
             subjectLines = new LinkedList<>();
-            for (int j : r) subjectLines.add(this.lines.get(j));
+            for (int j : range) {
+                subjectLines.add(this.lines.get(j));
+            }
+
             transactions.add(new MoveTransaction(
-                    getBelow(r.getLower() - 1, player, added, removed),
-                    getAbove(r.getUpper() + 1, player, added, removed),
+                    getBelow(range.getLower() - 1, player, added, removed),
+                    getAbove(range.getUpper() + 1, player, added, removed),
                     subjectLines,
                     false
             ));
@@ -155,6 +178,7 @@ public class TagStructure {
                     || (added != null && added.contains(i)))
                 return lines.get(i).getBottom().getIdentifier();
         }
+
         return tag.getTop().getIdentifier();
     }
 
@@ -165,6 +189,7 @@ public class TagStructure {
                     || (added != null && added.contains(i)))
                 return lines.get(i).getStack().getLast().getIdentifier();
         }
+
         return tag.getBottom().getIdentifier();
     }
 

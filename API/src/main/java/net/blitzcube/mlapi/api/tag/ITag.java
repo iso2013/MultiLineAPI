@@ -1,6 +1,7 @@
 package net.blitzcube.mlapi.api.tag;
 
 import com.google.common.collect.ImmutableList;
+
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
@@ -8,13 +9,14 @@ import org.bukkit.entity.Player;
  * Created by iso2013 on 5/24/2018.
  */
 public interface ITag {
-    ImmutableList<ITagController> getTagControllers(boolean b);
+
+    ImmutableList<ITagController> getTagControllers(boolean sortByLines);
 
     void addTagController(ITagController controller);
 
     void removeTagController(ITagController controller);
 
-    void setVisible(Player target, boolean val);
+    void setVisible(Player target, boolean visible);
 
     void clearVisible(Player target);
 
@@ -22,7 +24,7 @@ public interface ITag {
 
     boolean getDefaultVisible();
 
-    void setDefaultVisible(boolean val);
+    void setDefaultVisible(boolean visible);
 
     void update(Player target);
 

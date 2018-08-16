@@ -1,46 +1,56 @@
 package net.blitzcube.mlapi.util;
 
-
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.stream.IntStream;
 
 /**
  * Created by iso2013 on 6/7/2018.
  */
 public class RangeSeries {
+
     private final SortedMap<Integer, Integer> backingMap = new TreeMap<>();
 
     public void put(int i) {
-        Integer v = backingMap.get(i - 1);
-        v = v != null ? v : i;
-        backingMap.put(i, v);
+        Integer value = backingMap.get(i - 1);
+        value = value != null ? value : i;
+
+        this.backingMap.put(i, value);
         int n = 1;
         while (backingMap.containsKey(i + n)) {
-            backingMap.put(i + n, v);
+            this.backingMap.put(i + n, value);
             n++;
         }
     }
 
     public Collection<Range> getRanges() {
-        Map<Integer, Range> r = new HashMap<>();
-        backingMap.forEach((k, v) -> {
-            if (!r.containsKey(v)) r.put(v, new Range(v));
-            r.get(v).expand(k);
+        Map<Integer, Range> ranges = new HashMap<>();
+
+        this.backingMap.forEach((k, v) -> {
+            if (!ranges.containsKey(v)) {
+                ranges.put(v, new Range(v));
+            }
+
+            ranges.get(v).expand(k);
         });
-        return r.values();
+
+        return ranges.values();
     }
 
-    public boolean contains(int idx) {
-        return backingMap.containsKey(idx);
+    public boolean contains(int i) {
+        return backingMap.containsKey(i);
     }
 
     public static class Range implements Iterable<Integer> {
-        private int lower;
-        private int upper;
 
-        Range(int i) {
-            upper = i;
-            lower = upper;
+        private int lower, upper;
+
+        private Range(int i) {
+            this.upper = lower = i;
         }
 
         private void expand(int i) {
@@ -57,6 +67,8 @@ public class RangeSeries {
             return lower;
         }
 
-        public int getUpper() { return upper; }
+        public int getUpper() {
+            return upper;
+        }
     }
 }

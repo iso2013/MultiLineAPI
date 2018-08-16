@@ -1,18 +1,20 @@
 package net.blitzcube.mlapi.api;
 
+import java.util.Collection;
+import java.util.Set;
+
 import net.blitzcube.mlapi.api.tag.ITag;
 import net.blitzcube.mlapi.api.tag.ITagController;
+
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-
-import java.util.Collection;
-import java.util.Set;
 
 /**
  * Created by iso2013 on 5/23/2018.
  */
 public interface IMultiLineAPI {
+
     ITag getTag(Entity entity);
 
     ITag createTagIfMissing(Entity entity);
@@ -21,9 +23,9 @@ public interface IMultiLineAPI {
 
     boolean hasTag(Entity entity);
 
-    void addDefaultTagController(ITagController val);
+    void addDefaultTagController(ITagController controller);
 
-    void removeDefaultTagController(ITagController val);
+    void removeDefaultTagController(ITagController controller);
 
     Set<ITagController> getDefaultTagControllers();
 
