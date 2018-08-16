@@ -1,5 +1,11 @@
 package net.blitzcube.mlapi.renderer;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.stream.Stream;
+
 import net.blitzcube.mlapi.MultiLineAPI;
 import net.blitzcube.mlapi.VisibilityStates;
 import net.blitzcube.mlapi.api.tag.ITagController;
@@ -11,80 +17,79 @@ import net.blitzcube.peapi.api.IPacketEntityAPI;
 import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
 import net.blitzcube.peapi.api.packet.IEntityDestroyPacket;
 import net.blitzcube.peapi.api.packet.IEntityMountPacket;
+
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.stream.Stream;
-
 /**
  * Created by iso2013 on 8/7/2018.
  */
 public abstract class TagRenderer {
-    protected static double LINE_HEIGHT = 0.275;
-    protected static double BOTTOM_LINE_HEIGHT = 0.12;
-    private static final Map<EntityType, TagRenderer> renderers = new HashMap<>();
+
+    protected static double LINE_HEIGHT = 0.275D, BOTTOM_LINE_HEIGHT = 0.12D;
+    private static final Map<EntityType, TagRenderer> RENDERERS = new HashMap<>();
+
     protected final IPacketEntityAPI packetAPI;
     protected final VisibilityStates state;
     protected final LineEntityFactory lineFactory;
     protected final JavaPlugin parent;
 
-    protected TagRenderer(IPacketEntityAPI packet, LineEntityFactory lineFactory, VisibilityStates state, JavaPlugin
-            parent) {
+    protected TagRenderer(IPacketEntityAPI packet, LineEntityFactory lineFactory, VisibilityStates state, JavaPlugin parent) {
         this.packetAPI = packet;
         this.state = state;
         this.lineFactory = lineFactory;
         this.parent = parent;
     }
 
-    public static void init(IPacketEntityAPI packetAPI, LineEntityFactory lineFactory, VisibilityStates states,
-                            MultiLineAPI parent, FileConfiguration config) {
+    public static void init(IPacketEntityAPI packetAPI, LineEntityFactory lineFactory, VisibilityStates states, MultiLineAPI parent, FileConfiguration config) {
         LINE_HEIGHT = config.getDouble("options.lineHeight", LINE_HEIGHT);
         BOTTOM_LINE_HEIGHT = config.getDouble("options.bottomLineHeight", BOTTOM_LINE_HEIGHT);
 
-        TagRenderer mtr = null, tptr = null;
+        TagRenderer mountRenderer = null, teleportRenderer = null;
 
-        String defVal = config.getString("defaultRenderer", "mount");
-        TagRenderer def = null;
-        if (defVal.equalsIgnoreCase("mount")) {
-            def = new MountTagRenderer(packetAPI, lineFactory, states, parent);
-            mtr = def;
-        } else if (defVal.equalsIgnoreCase("teleport")) {
-            def = new TeleportTagRenderer(packetAPI, lineFactory, states, parent, config.getBoolean("options.teleport" +
-                    ".animated", true));
-            tptr = def;
+        String defaultValue = config.getString("defaultRenderer", "mount");
+        TagRenderer defaultRenderer = null;
+
+        if (defaultValue.equalsIgnoreCase("mount")) {
+            defaultRenderer = new MountTagRenderer(packetAPI, lineFactory, states, parent);
+            mountRenderer = defaultRenderer;
+        } else if (defaultValue.equalsIgnoreCase("teleport")) {
+            defaultRenderer = new TeleportTagRenderer(packetAPI, lineFactory, states, parent, config.getBoolean("options.teleport.animated", true));
+            teleportRenderer = defaultRenderer;
         } else {
-            parent.getLogger().severe("Could not find renderer for name `" + defVal + "`!");
+            parent.getLogger().severe("Could not find renderer for name `" + defaultValue + "`!");
         }
 
-        for (EntityType t : EntityType.values()) {
-            String val = config.getString("typeRenderers." + t.name());
-            if (val != null) {
-                if (val.equalsIgnoreCase("mount")) {
-                    if (mtr == null) mtr = new MountTagRenderer(packetAPI, lineFactory, states, parent);
-                    renderers.put(t, mtr);
-                } else if (val.equalsIgnoreCase("teleport")) {
-                    if (tptr == null)
-                        tptr = new TeleportTagRenderer(packetAPI, lineFactory, states, parent,
-                                config.getBoolean("options.teleport.animated"));
-                    renderers.put(t, tptr);
+        for (EntityType type : EntityType.values()) {
+            String value = config.getString("typeRenderers." + type.name());
+
+            if (value != null) {
+                if (value.equalsIgnoreCase("mount")) {
+                    if (mountRenderer == null) {
+                        mountRenderer = new MountTagRenderer(packetAPI, lineFactory, states, parent);
+                    }
+
+                    RENDERERS.put(type, mountRenderer);
+                } else if (value.equalsIgnoreCase("teleport")) {
+                    if (teleportRenderer == null) {
+                        teleportRenderer = new TeleportTagRenderer(packetAPI, lineFactory, states, parent, config.getBoolean("options.teleport.animated"));
+                    }
+
+                    RENDERERS.put(type, teleportRenderer);
                 } else {
-                    parent.getLogger().severe("Could not find renderer for name `" + val + "`!");
+                    parent.getLogger().severe("Could not find renderer for name `" + value + "`!");
                 }
             } else {
-                renderers.put(t, def);
+                RENDERERS.put(type, defaultRenderer);
             }
         }
     }
 
     public static TagRenderer createInstance(EntityType type) {
-        return renderers.get(type);
+        return RENDERERS.get(type);
     }
 
     public static void batchDestroyTags(IPacketEntityAPI packetAPI, Stream<Tag> tags, Player player) {
@@ -99,39 +104,43 @@ public abstract class TagRenderer {
 
     public abstract void processTransactions(Collection<StructureTransaction> transactions, Tag tag, Player target);
 
-    public abstract void spawnTag(Tag t, Player p, IEntityMountPacket mountPacket);
+    public abstract void spawnTag(Tag tag, Player player, IEntityMountPacket mountPacket);
 
-    public void destroyTag(Tag t, Player p, IEntityDestroyPacket destroyPacket) {
-        boolean event = destroyPacket != null;
-        IEntityDestroyPacket finalDestroyPacket =
-                destroyPacket == null ? packetAPI.getPacketFactory().createDestroyPacket() : destroyPacket;
-        t.getLines().forEach(l -> l.getStack().forEach(e -> finalDestroyPacket.addToGroup(e.getIdentifier())));
-        state.getSpawnedLines(p).removeAll(t.getLines());
-        finalDestroyPacket.addToGroup(t.getBottom().getIdentifier());
-        finalDestroyPacket.addToGroup(t.getTop().getIdentifier());
+    public void destroyTag(Tag tag, Player player, IEntityDestroyPacket destroyPacket) {
+        boolean event = (destroyPacket != null);
+        IEntityDestroyPacket finalDestroyPacket = (destroyPacket == null) ? packetAPI.getPacketFactory().createDestroyPacket() : destroyPacket;
+        tag.getLines().forEach(l -> l.getStack().forEach(e -> finalDestroyPacket.addToGroup(e.getIdentifier())));
+
+        this.state.getSpawnedLines(player).removeAll(tag.getLines());
+        finalDestroyPacket.addToGroup(tag.getBottom().getIdentifier());
+        finalDestroyPacket.addToGroup(tag.getTop().getIdentifier());
+
         if (!event) {
-            packetAPI.dispatchPacket(finalDestroyPacket, p, 0);
+            this.packetAPI.dispatchPacket(finalDestroyPacket, player, 0);
         }
-        state.removeSpawnedTag(p, t);
+
+        this.state.removeSpawnedTag(player, tag);
     }
 
     public void updateName(Tag tag, Player viewer) {
-        String name;
-        name = tag.getTarget() instanceof Player ? ((Player) tag.getTarget()).getDisplayName() : tag.getTarget()
-                .getCustomName();
-        for (ITagController tc : tag.getTagControllers(false)) {
-            name = tc.getName(tag.getTarget(), viewer, name);
-            if (name != null && name.contains(ChatColor.COLOR_CHAR + "")) name += ChatColor.RESET;
+        String name = (tag.getTarget() instanceof Player) ? ((Player) tag.getTarget()).getDisplayName() : tag.getTarget().getCustomName();
+
+        for (ITagController controller : tag.getTagControllers(false)) {
+            name = controller.getName(tag.getTarget(), viewer, name);
+            if (name != null && name.contains(ChatColor.COLOR_CHAR + "")) {
+                name += ChatColor.RESET;
+            }
         }
-        lineFactory.updateName(tag.getTop(), name);
-        packetAPI.dispatchPacket(packetAPI.getPacketFactory().createDataPacket(tag.getTop().getIdentifier()), viewer);
+
+        this.lineFactory.updateName(tag.getTop(), name);
+        this.packetAPI.dispatchPacket(packetAPI.getPacketFactory().createDataPacket(tag.getTop().getIdentifier()), viewer);
     }
 
     public abstract IFakeEntity createBottom(Tag target);
 
     public abstract IFakeEntity createTop(Tag target);
 
-    public abstract void purge(Tag t);
+    public abstract void purge(Tag tag);
 
     public abstract LinkedList<IFakeEntity> createStack(Tag tag, int addIndex);
 
