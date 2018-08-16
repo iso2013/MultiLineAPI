@@ -1,14 +1,6 @@
 package net.blitzcube.mlapi.tag;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.stream.Stream;
-
 import com.google.common.collect.ImmutableList;
-
 import net.blitzcube.mlapi.VisibilityStates;
 import net.blitzcube.mlapi.api.tag.ITag;
 import net.blitzcube.mlapi.api.tag.ITagController;
@@ -17,10 +9,12 @@ import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.structure.TagStructure;
 import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
 import net.blitzcube.peapi.api.entity.hitbox.IHitbox;
-
 import org.bukkit.GameMode;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+
+import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Created by iso2013 on 6/4/2018.

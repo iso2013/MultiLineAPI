@@ -1,35 +1,26 @@
 package net.blitzcube.mlapi.renderer.teleport;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-
 import net.blitzcube.mlapi.MultiLineAPI;
 import net.blitzcube.mlapi.VisibilityStates;
 import net.blitzcube.mlapi.api.tag.ITagController;
 import net.blitzcube.mlapi.renderer.LineEntityFactory;
 import net.blitzcube.mlapi.renderer.TagRenderer;
-import net.blitzcube.mlapi.structure.transactions.AddTransaction;
-import net.blitzcube.mlapi.structure.transactions.MoveTransaction;
-import net.blitzcube.mlapi.structure.transactions.NameTransaction;
-import net.blitzcube.mlapi.structure.transactions.RemoveTransaction;
-import net.blitzcube.mlapi.structure.transactions.StructureTransaction;
+import net.blitzcube.mlapi.structure.transactions.*;
 import net.blitzcube.mlapi.tag.RenderedTagLine;
 import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
 import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
 import net.blitzcube.peapi.api.entity.hitbox.IHitbox;
-import net.blitzcube.peapi.api.packet.IEntityDestroyPacket;
-import net.blitzcube.peapi.api.packet.IEntityMountPacket;
-import net.blitzcube.peapi.api.packet.IEntityMovePacket;
-import net.blitzcube.peapi.api.packet.IEntityPacket;
-import net.blitzcube.peapi.api.packet.IEntityPacketFactory;
-
+import net.blitzcube.peapi.api.packet.*;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by iso2013 on 8/7/2018.
@@ -47,8 +38,7 @@ public class TeleportTagRenderer extends TagRenderer {
 
     @Override
     public void processTransactions(Collection<StructureTransaction> transactions, Tag tag, Player target) {
-        if (tag.getTarget() == target) return;
-        if (!state.isSpawned(target, tag)) return;
+        if (tag.getTarget() == target || !state.isSpawned(target, tag)) return;
 
         IEntityPacketFactory factory = packetAPI.getPacketFactory();
         List<IEntityPacket> firstPhase = null, secondPhase = null, thirdPhase = null;
@@ -67,7 +57,7 @@ public class TeleportTagRenderer extends TagRenderer {
                 }
             }
 
-            else if (transaction instanceof AddTransaction || transaction instanceof RemoveTransaction) {
+            if (transaction instanceof AddTransaction || transaction instanceof RemoveTransaction) {
                 boolean add = transaction instanceof AddTransaction;
                 Collection<RenderedTagLine> changed = add
                         ? ((AddTransaction) transaction).getAdded()

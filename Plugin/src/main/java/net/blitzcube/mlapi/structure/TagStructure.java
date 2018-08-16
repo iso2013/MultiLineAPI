@@ -1,33 +1,20 @@
 package net.blitzcube.mlapi.structure;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
-
 import net.blitzcube.mlapi.api.tag.ITagController;
 import net.blitzcube.mlapi.renderer.TagRenderer;
-import net.blitzcube.mlapi.structure.transactions.AddTransaction;
-import net.blitzcube.mlapi.structure.transactions.MoveTransaction;
-import net.blitzcube.mlapi.structure.transactions.NameTransaction;
-import net.blitzcube.mlapi.structure.transactions.RemoveTransaction;
-import net.blitzcube.mlapi.structure.transactions.StructureTransaction;
+import net.blitzcube.mlapi.structure.transactions.*;
 import net.blitzcube.mlapi.tag.RenderedTagLine;
 import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.mlapi.util.RangeSeries;
 import net.blitzcube.peapi.api.entity.IEntityIdentifier;
-
 import org.bukkit.entity.Player;
+
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by iso2013 on 6/12/2018.
@@ -115,7 +102,7 @@ public class TagStructure {
 
     public Collection<StructureTransaction> createUpdateTransactions(Predicate<RenderedTagLine> matcher, Player player) {
         List<StructureTransaction> transactions = new LinkedList<>();
-        Map<RenderedTagLine, String> lines = new HashMap<>();
+        Map<RenderedTagLine, String> lineNames = new HashMap<>();
 
         RangeSeries added = new RangeSeries(), removed = new RangeSeries();
         RenderedTagLine line;
@@ -128,16 +115,16 @@ public class TagStructure {
 
             if (newValue == null && visible && line.shouldRemoveSpaceWhenNull()) {
                 removed.put(i);
-                lines.put(line, null);
+                lineNames.put(line, null);
             } else if (newValue != null && !visible) {
                 added.put(i);
-                lines.put(line, newValue);
+                lineNames.put(line, newValue);
             } else {
-                lines.put(line, newValue);
+                lineNames.put(line, newValue);
             }
         }
 
-        transactions.add(new NameTransaction(lines));
+        transactions.add(new NameTransaction(lineNames));
 
         List<RenderedTagLine> subjectLines = new LinkedList<>();
         for (RangeSeries.Range range : removed.getRanges()) {

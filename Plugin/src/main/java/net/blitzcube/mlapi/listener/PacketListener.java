@@ -1,14 +1,6 @@
 package net.blitzcube.mlapi.listener;
 
-import java.lang.ref.WeakReference;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
 import com.google.common.base.Preconditions;
-
 import net.blitzcube.mlapi.MultiLineAPI;
 import net.blitzcube.mlapi.VisibilityStates;
 import net.blitzcube.mlapi.renderer.TagRenderer;
@@ -19,17 +11,15 @@ import net.blitzcube.peapi.api.entity.modifier.IEntityModifier;
 import net.blitzcube.peapi.api.entity.modifier.IModifiableEntity;
 import net.blitzcube.peapi.api.event.IEntityPacketEvent;
 import net.blitzcube.peapi.api.listener.IListener;
-import net.blitzcube.peapi.api.packet.IEntityDataPacket;
-import net.blitzcube.peapi.api.packet.IEntityDestroyPacket;
-import net.blitzcube.peapi.api.packet.IEntityMountPacket;
-import net.blitzcube.peapi.api.packet.IEntityPotionAddPacket;
-import net.blitzcube.peapi.api.packet.IEntityPotionRemovePacket;
-
+import net.blitzcube.peapi.api.packet.*;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
+
+import java.lang.ref.WeakReference;
+import java.util.*;
 
 /**
  * Created by iso2013 on 5/24/2018.

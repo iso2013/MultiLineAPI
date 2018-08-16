@@ -1,24 +1,10 @@
 package net.blitzcube.mlapi.renderer.mount;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.BiFunction;
-
 import net.blitzcube.mlapi.VisibilityStates;
 import net.blitzcube.mlapi.api.tag.ITagController;
 import net.blitzcube.mlapi.renderer.LineEntityFactory;
 import net.blitzcube.mlapi.renderer.TagRenderer;
-import net.blitzcube.mlapi.structure.transactions.AddTransaction;
-import net.blitzcube.mlapi.structure.transactions.MoveTransaction;
-import net.blitzcube.mlapi.structure.transactions.NameTransaction;
-import net.blitzcube.mlapi.structure.transactions.RemoveTransaction;
-import net.blitzcube.mlapi.structure.transactions.StructureTransaction;
+import net.blitzcube.mlapi.structure.transactions.*;
 import net.blitzcube.mlapi.tag.RenderedTagLine;
 import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
@@ -29,13 +15,15 @@ import net.blitzcube.peapi.api.packet.IEntityDestroyPacket;
 import net.blitzcube.peapi.api.packet.IEntityMountPacket;
 import net.blitzcube.peapi.api.packet.IEntityPacket;
 import net.blitzcube.peapi.api.packet.IEntityPacketFactory;
-
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.*;
+import java.util.function.BiFunction;
 
 /**
  * Created by iso2013 on 6/4/2018.
@@ -54,7 +42,7 @@ public class MountTagRenderer extends TagRenderer {
         List<IEntityPacket> firstPhase = new LinkedList<>(), secondPhase = new LinkedList<>();
 
         for (StructureTransaction transaction : transactions) {
-            this.processTransaction(transaction, firstPhase, secondPhase, tag, target);
+            this.processTransaction(transaction, firstPhase, secondPhase, tag, target, false);
         }
 
         if (!firstPhase.isEmpty()) {
@@ -65,8 +53,9 @@ public class MountTagRenderer extends TagRenderer {
         }
     }
 
-    private void processTransaction(StructureTransaction transaction, List<IEntityPacket> firstPhase, List<IEntityPacket> secondPhase, Tag tag, Player target) {
-        if (tag.getTarget() == target || !state.isSpawned(target, tag)) return;
+    private void processTransaction(StructureTransaction transaction, List<IEntityPacket> firstPhase,
+                                    List<IEntityPacket> secondPhase, Tag tag, Player target, boolean spawn) {
+        if (tag.getTarget() == target || (!state.isSpawned(target, tag) && !spawn)) return;
 
         IEntityPacketFactory factory = packetAPI.getPacketFactory();
         if (transaction instanceof AddTransaction) {
@@ -195,7 +184,7 @@ public class MountTagRenderer extends TagRenderer {
         Location location = target.getLocation();
         IHitbox hitbox = tag.getTargetHitbox();
         if (hitbox != null) {
-            location.add(0, (hitbox.getMax().getY() - hitbox.getMin().getY()) + BOTTOM_LINE_HEIGHT - LINE_HEIGHT, 0);
+            location.add(0, (hitbox.getMax().getY() - hitbox.getMin().getY()) + BOTTOM_LINE_HEIGHT, 0);
         }
 
         IFakeEntity top = tag.getTop(), bottom = tag.getBottom();
@@ -224,7 +213,7 @@ public class MountTagRenderer extends TagRenderer {
         }
 
         this.processTransaction(new AddTransaction(bottom.getIdentifier(), top.getIdentifier(), tag.getLines()),
-                firstPhase, secondPhase, tag, player);
+                firstPhase, secondPhase, tag, player, true);
 
         firstPhase.forEach(ep -> packetAPI.dispatchPacket(ep, player, 0));
         Bukkit.getScheduler().runTask(parent, () -> secondPhase.forEach(ep -> packetAPI.dispatchPacket(ep, player, 0)));

@@ -1,12 +1,10 @@
 package net.blitzcube.mlapi.listener;
 
 import com.google.common.base.Preconditions;
-
 import net.blitzcube.mlapi.MultiLineAPI;
 import net.blitzcube.mlapi.VisibilityStates;
 import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
-
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Entity;
@@ -16,11 +14,7 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.entity.SpawnerSpawnEvent;
-import org.bukkit.event.player.PlayerGameModeChangeEvent;
-import org.bukkit.event.player.PlayerInteractAtEntityEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.event.vehicle.VehicleCreateEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
@@ -107,7 +101,7 @@ public class ServerListener implements Listener {
                         return entity != null ? parent.getTag(entity) : null;
                     }).filter(tag -> {
                         Boolean visible = states.isVisible(tag, e.getPlayer());
-                        return tag != null && (visible != null) ? visible : tag.getDefaultVisible();
+                return tag != null && ((visible != null) ? visible : tag.getDefaultVisible());
                     }).forEach(tag -> tag.getRenderer().spawnTag(tag, e.getPlayer(), null));
         }
     }
