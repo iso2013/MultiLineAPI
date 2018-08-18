@@ -58,7 +58,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
     }
 
     @Override
-    public Tag createTagIfMissing(Entity entity) {
+    public Tag getOrCreateTag(Entity entity) {
         int id = entity.getEntityId();
 
         if (!tags.containsKey(id)) {
