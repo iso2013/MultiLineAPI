@@ -7,13 +7,16 @@ import net.blitzcube.mlapi.api.tag.ITagController;
 import net.blitzcube.mlapi.renderer.LineEntityFactory;
 import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.structure.TagStructure;
+import net.blitzcube.mlapi.util.SortedList;
 import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
 import net.blitzcube.peapi.api.entity.hitbox.IHitbox;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -31,7 +34,7 @@ public class Tag implements ITag {
     private final TagStructure structure;
 
     // Tag controller information
-    private final SortedSet<ITagController> sortedControllers;
+    private final SortedList<ITagController> sortedControllers;
     // Bottom and top entities
     private final IFakeEntity bottom;
     private final IFakeEntity top;
@@ -49,7 +52,7 @@ public class Tag implements ITag {
 
         // Sorted collections
         this.structure = new TagStructure(this, state.getVisibilityMap());
-        this.sortedControllers = new TreeSet<>(Comparator.comparingInt(ITagController::getNamePriority));
+        this.sortedControllers = new SortedList<>(Comparator.comparingInt(ITagController::getNamePriority));
 
         // Bottom and top of stack
         this.bottom = renderer.createBottom(this);
