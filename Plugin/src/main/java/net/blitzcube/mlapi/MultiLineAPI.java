@@ -5,6 +5,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import net.blitzcube.mlapi.api.IMultiLineAPI;
 import net.blitzcube.mlapi.api.tag.ITagController;
+import net.blitzcube.mlapi.demo.DemoController;
 import net.blitzcube.mlapi.listener.PacketListener;
 import net.blitzcube.mlapi.listener.ServerListener;
 import net.blitzcube.mlapi.renderer.LineEntityFactory;
@@ -12,7 +13,6 @@ import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -43,10 +43,11 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
         packetAPI.addListener(new PacketListener(this, tags, states, packetAPI));
         Bukkit.getPluginManager().registerEvents(new ServerListener(this, states, packetAPI), this);
 
-        this.addDefaultTagController(DemoController.getInst(this));
-        this.addDefaultTagController(DemoController2.getInst(this));
-
         this.saveDefaultConfig();
+
+        if (this.getConfig().getBoolean("demoMode", false)) {
+            this.addDefaultTagController(new DemoController(this));
+        }
 
         TagRenderer.init(packetAPI, lineFactory, states, this, this.getConfig());
     }
@@ -164,194 +165,5 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
 
     public boolean hasDefaultTagControllers(EntityType type) {
         return controllersMap.containsKey(type);
-    }
-
-    public static class DemoController implements ITagController {
-
-        private static DemoController inst;
-
-        private final MultiLineAPI parent;
-        public int refreshes = 15;
-
-        private final TagLine line = new TagLine() {
-            @Override
-            public String getText(Entity target, Player viewer) {
-                return (refreshes % 2 == 0) ? null : "One";
-            }
-
-            @Override
-            public boolean keepSpaceWhenNull(Entity target) {
-                return false;
-            }
-        };
-
-        private final TagLine line2 = new TagLine() {
-            @Override
-            public String getText(Entity target, Player viewer) {
-                if (refreshes % 3 == 0) return null;
-                return refreshes % 2 == 0 ? ChatColor.GREEN + "Two" : "Two";
-            }
-
-            @Override
-            public boolean keepSpaceWhenNull(Entity target) {
-                return true;
-            }
-        };
-
-        private final TagLine line3 = new TagLine() {
-            @Override
-            public String getText(Entity target, Player viewer) {
-                if (refreshes % 4 == 0) return null;
-                return refreshes % 2 == 0 ? ChatColor.GREEN + "Three" : "Three";
-            }
-
-            @Override
-            public boolean keepSpaceWhenNull(Entity target) {
-                return false;
-            }
-        };
-
-        private final Set<Entity> enabledFor;
-
-        private DemoController(MultiLineAPI parent) {
-            this.parent = parent;
-            this.enabledFor = new HashSet<>();
-        }
-
-        public static DemoController getInst(MultiLineAPI parent) {
-            return (inst == null) ? inst = new DemoController(parent) : inst;
-        }
-
-        @Override
-        public List<TagLine> getFor(Entity target) {
-            this.enabledFor.add(target);
-            return Arrays.asList(line, line2, line3);
-        }
-
-        public void refreshAll() {
-            for (Entity entity : enabledFor) {
-                if (parent.getTag(entity) == null) continue;
-
-                this.parent.getTag(entity).update(this);
-            }
-        }
-
-        @Override
-        public String getName(Entity target, Player viewer, String previous) {
-            return "- " + previous + " -";
-        }
-
-        @Override
-        public EntityType[] getAutoApplyFor() {
-            return EntityType.values();
-        }
-
-        @Override
-        public JavaPlugin getPlugin() {
-            return parent;
-        }
-
-        @Override
-        public int getPriority() {
-            return 0;
-        }
-
-        @Override
-        public int getNamePriority() {
-            return 0;
-        }
-    }
-
-    public static class DemoController2 implements ITagController {
-
-        private static DemoController2 inst;
-
-        private final MultiLineAPI parent;
-
-        private final TagLine line = new TagLine() {
-            @Override
-            public String getText(Entity target, Player viewer) {
-                return "One TWO";
-            }
-
-            @Override
-            public boolean keepSpaceWhenNull(Entity target) {
-                return false;
-            }
-        };
-
-        private final TagLine line2 = new TagLine() {
-            @Override
-            public String getText(Entity target, Player viewer) {
-                return null;
-            }
-
-            @Override
-            public boolean keepSpaceWhenNull(Entity target) {
-                return false;
-            }
-        };
-
-        private final TagLine line3 = new TagLine() {
-            @Override
-            public String getText(Entity target, Player viewer) {
-                return "Three TWO";
-            }
-
-            @Override
-            public boolean keepSpaceWhenNull(Entity target) {
-                return false;
-            }
-        };
-
-        private final Set<Entity> enabledFor;
-
-        private DemoController2(MultiLineAPI parent) {
-            this.parent = parent;
-            this.enabledFor = new HashSet<>();
-        }
-
-        public static DemoController2 getInst(MultiLineAPI parent) {
-            return (inst == null) ? inst = new DemoController2(parent) : inst;
-        }
-
-        @Override
-        public List<TagLine> getFor(Entity target) {
-            this.enabledFor.add(target);
-            return Arrays.asList(line, line2, line3);
-        }
-
-        public void refreshAll() {
-            for (Entity entity : enabledFor) {
-                if (parent.getTag(entity) == null) continue;
-
-                this.parent.getTag(entity).update(this);
-            }
-        }
-
-        @Override
-        public String getName(Entity target, Player viewer, String previous) {
-            return ChatColor.AQUA + "! " + previous + " !";
-        }
-
-        @Override
-        public EntityType[] getAutoApplyFor() {
-            return EntityType.values();
-        }
-
-        @Override
-        public JavaPlugin getPlugin() {
-            return parent;
-        }
-
-        @Override
-        public int getPriority() {
-            return 50;
-        }
-
-        @Override
-        public int getNamePriority() {
-            return -10;
-        }
     }
 }

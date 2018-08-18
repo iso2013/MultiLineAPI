@@ -1,6 +1,9 @@
 #MUST be 'MOUNT' or 'TELEPORT'
 defaultRenderer: "MOUNT"
 
+#Enables demo mode, which will demo the implementation shown on the wiki page.
+demoMode: false
+
 #Here are the options for each renderer
 options:
     lineHeight: 0.28
