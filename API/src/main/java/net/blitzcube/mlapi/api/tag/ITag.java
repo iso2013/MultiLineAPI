@@ -1,7 +1,6 @@
 package net.blitzcube.mlapi.api.tag;
 
 import com.google.common.collect.ImmutableList;
-
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
@@ -16,7 +15,7 @@ public interface ITag {
 	/**
 	 * Get an immutable List of all tag controllers applied on this tag.
 	 *
-	 * @param sortByLines whether or not to sort by lines
+     * @param sortByLines whether or not to sort by lines. If this is false, it sorts by the name priority instead.
 	 *
 	 * @return all active tag controllers
 	 */
@@ -37,7 +36,7 @@ public interface ITag {
     void removeTagController(ITagController controller);
 
     /**
-     * Set whether this tag should be visible to the specified player or not.
+     * Set whether or not this tag should be visible to the specified player.
      *
      * @param target the target for whom to update visibility
      * @param visible the new visibility state
@@ -77,7 +76,7 @@ public interface ITag {
     /**
      * Update this tag for the specified player.
      *
-     * @param target the target for whom to receive the update
+     * @param target the player who the update should be sent to
      *
      * @see #update()
      */
@@ -91,17 +90,17 @@ public interface ITag {
     void update();
 
     /**
-     * Update this tag for the specified player with respect to the specified tag controller.
+     * Update this tag for the specified player with respect to the lines of the specified tag controller.
      *
-     * @param controller the controller context with which to update
-     * @param target the target for whom to receive the update
+     * @param controller the controller whose lines should be updated
+     * @param target the player who the update should be sent to
      *
      * @see #update(ITagController)
      */
     void update(ITagController controller, Player target);
 
     /**
-     * Update this tag for all players with respect to the specified tag controller.
+     * Update this tag for all players with respect to the lines of the specified tag controller.
      *
      * @param controller the controller context with which to update
      *
@@ -131,7 +130,7 @@ public interface ITag {
     /**
      * Update this tag's name for the specified player.
      *
-     * @param target the target for whom to receive the update
+     * @param target the player who the update should be sent to
      *
      * @see #updateName()
      */

@@ -1,14 +1,13 @@
 package net.blitzcube.mlapi.api;
 
-import java.util.Collection;
-import java.util.Set;
-
 import net.blitzcube.mlapi.api.tag.ITag;
 import net.blitzcube.mlapi.api.tag.ITagController;
-
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * Represents the core of MultiLineAPI providing various utility methods and functionality
@@ -24,7 +23,7 @@ public interface IMultiLineAPI {
 	 *
 	 * @param entity the entity whose tag to retrieve
 	 *
-	 * @return the tag. null if none
+     * @return the tag or null if none
 	 */
     ITag getTag(Entity entity);
 
@@ -32,7 +31,7 @@ public interface IMultiLineAPI {
      * Get the tag associated with the specified entity. If no tag has yet been associated,
      * create one instead.
      *
-     * @param entity the entity whose tag to retrieve
+     * @param entity the entity whose tag to retrieve or create
      *
      * @return the created tag
      */
@@ -89,8 +88,8 @@ public interface IMultiLineAPI {
     /**
      * Update an entity's tag for the specified player.
      *
-     * @param entity the entity whose tag to update
-     * @param target the player for whom to receive the update
+     * @param entity the entity whose tag should be updated
+     * @param target the player who the update should be sent to
      *
      * @see #update(Entity)
      */
@@ -99,7 +98,7 @@ public interface IMultiLineAPI {
     /**
      * Update an entity's tag for all players
      *
-     * @param entity the entity whose tag to update
+     * @param entity the entity whose tag should be updated
      *
      * @see #update(Entity, Player)
      */
@@ -109,7 +108,7 @@ public interface IMultiLineAPI {
      * Update a tag controller for the specified player.
      *
      * @param controller the controller to update
-     * @param target the player for whom to receive the update
+     * @param target the player who the update should be sent to
      *
      * @see #update(ITagController)
      */
@@ -128,7 +127,7 @@ public interface IMultiLineAPI {
      * Update a specific tag line for the specified player.
      *
      * @param line the line to update
-     * @param target the player for whom to receive the update
+     * @param target the player who the update should be sent to
      *
      * @see #update(ITagController.TagLine)
      */
@@ -144,14 +143,14 @@ public interface IMultiLineAPI {
     void update(ITagController.TagLine line);
 
     /**
-     * Update all names for the specified player.
+     * Update all tag names for the specified player.
      *
-     * @param target the player for whom to update names
+     * @param target the player who the update should be sent to
      */
     void updateNames(Player target);
 
     /**
-     * Update all names for all players.
+     * Update all tag names for all players.
      */
     void updateNames();
 }

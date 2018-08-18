@@ -1,5 +1,6 @@
 package net.blitzcube.mlapi.api.tag;
 
+import com.sun.istack.internal.NotNull;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -22,7 +23,7 @@ public interface ITagController {
 	/**
 	 * Get a List of tag lines to be shown for the specified entity. The value returned by
 	 * this method should never be modified during the lifetime of a single instance of the
-	 * server. The value should be constant.
+     * server. The values should be constant.
 	 *
 	 * @param target the entity for which to retrieve tag lines
 	 *
@@ -32,7 +33,7 @@ public interface ITagController {
 
     /**
      * Get the name to be displayed for the {@code target} with respect to the {@code viewer}.
-     * This method will be called when an entity's tag has been update for any reason.
+     * This method will be called when an entity's tag has been updated for any reason.
      *
      * @param target the entity for which to retrieve the name
      * @param viewer the player for whom to retrieve the name
@@ -45,7 +46,7 @@ public interface ITagController {
     }
 
     /**
-     * Get an array of entity types to which this tag controller will be automatically applied.
+     * Get an array of entity types which this tag controller will be automatically applied for.
      *
      * @return the entity types
      */
@@ -56,6 +57,7 @@ public interface ITagController {
      *
      * @return the controlling plugin
      */
+    @NotNull
     JavaPlugin getPlugin();
 
     /**
