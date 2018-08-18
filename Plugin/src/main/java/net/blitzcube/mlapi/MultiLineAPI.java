@@ -166,14 +166,6 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
         return controllersMap.containsKey(type);
     }
 
-    public boolean hasTag(int entityID) {
-        return tags.containsKey(entityID);
-    }
-
-    public Collection<Tag> getTags() {
-        return tags.values();
-    }
-
     public static class DemoController implements ITagController {
 
         private static DemoController inst;
