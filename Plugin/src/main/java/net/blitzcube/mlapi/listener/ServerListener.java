@@ -124,7 +124,7 @@ public class ServerListener implements Listener {
 
     private void onSpawn(Entity e) {
         if (parent.hasDefaultTagControllers(e.getType())) {
-            this.parent.createTagIfMissing(e);
+            this.parent.getOrCreateTag(e);
         }
     }
 
