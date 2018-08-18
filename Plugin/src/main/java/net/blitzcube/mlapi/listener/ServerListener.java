@@ -14,7 +14,10 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.entity.SpawnerSpawnEvent;
-import org.bukkit.event.player.*;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.vehicle.VehicleCreateEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
@@ -103,15 +106,6 @@ public class ServerListener implements Listener {
                         Boolean visible = states.isVisible(tag, e.getPlayer());
                 return tag != null && ((visible != null) ? visible : tag.getDefaultVisible());
                     }).forEach(tag -> tag.getRenderer().spawnTag(tag, e.getPlayer(), null));
-        }
-    }
-
-    @EventHandler
-    public void onSneak(PlayerToggleSneakEvent e) {
-        if (e.isSneaking()) {
-            MultiLineAPI.DemoController controller = MultiLineAPI.DemoController.getInst(null);
-            controller.refreshes--;
-            controller.refreshAll();
         }
     }
 
