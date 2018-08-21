@@ -202,8 +202,6 @@ public class TeleportTagRenderer extends TagRenderer {
             location.add(0, (hitbox.getMax().getY() - hitbox.getMin().getY()) + BOTTOM_LINE_HEIGHT, 0);
         }
 
-        this.lineFactory.updateLocation(location, tag.getBottom());
-
         if (tag.getTarget().isCustomNameVisible() || tag.getTarget() instanceof Player) {
             String name = (tag.getTarget() instanceof Player)
                     ? ((Player) tag.getTarget()).getDisplayName()
@@ -243,16 +241,14 @@ public class TeleportTagRenderer extends TagRenderer {
 
         this.lineFactory.updateLocation(location, tag.getTop());
         Collections.addAll(packets, factory.createObjectSpawnPacket(tag.getTop().getIdentifier()));
-        Collections.addAll(packets, factory.createObjectSpawnPacket(tag.getBottom().getIdentifier()));
 
         packets.forEach(p -> packetAPI.dispatchPacket(p, player, 0));
-        this.packetAPI.dispatchPacket(factory.createMountPacket(packetAPI.wrap(tag.getTarget()), tag.getBottom().getIdentifier()), player, 1);
         this.state.addSpawnedTag(player, tag);
     }
 
     @Override
     public IFakeEntity createBottom(Tag tag) {
-        return createTop(tag);
+        return null;
     }
 
     @Override

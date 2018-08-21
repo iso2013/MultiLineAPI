@@ -177,6 +177,7 @@ public class TagStructure {
                 return lines.get(i).getStack().getLast().getIdentifier();
         }
 
+        if (tag.getBottom() == null) return null;
         return tag.getBottom().getIdentifier();
     }
 

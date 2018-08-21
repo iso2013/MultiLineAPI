@@ -107,11 +107,13 @@ public abstract class TagRenderer {
 
     public void destroyTag(Tag tag, Player player, IEntityDestroyPacket destroyPacket) {
         boolean event = (destroyPacket != null);
-        IEntityDestroyPacket finalDestroyPacket = (destroyPacket == null) ? packetAPI.getPacketFactory().createDestroyPacket() : destroyPacket;
+        IEntityDestroyPacket finalDestroyPacket = (!event) ? packetAPI.getPacketFactory().createDestroyPacket() :
+                destroyPacket;
         tag.getLines().forEach(l -> l.getStack().forEach(e -> finalDestroyPacket.addToGroup(e.getIdentifier())));
 
         this.state.getSpawnedLines(player).removeAll(tag.getLines());
-        finalDestroyPacket.addToGroup(tag.getBottom().getIdentifier());
+        if (tag.getBottom() != null)
+            finalDestroyPacket.addToGroup(tag.getBottom().getIdentifier());
         finalDestroyPacket.addToGroup(tag.getTop().getIdentifier());
 
         if (!event) {
