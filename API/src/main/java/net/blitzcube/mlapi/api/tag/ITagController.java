@@ -1,6 +1,5 @@
 package net.blitzcube.mlapi.api.tag;
 
-import com.sun.istack.internal.NotNull;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -57,7 +56,6 @@ public interface ITagController {
      *
      * @return the controlling plugin
      */
-    @NotNull
     JavaPlugin getPlugin();
 
     /**
