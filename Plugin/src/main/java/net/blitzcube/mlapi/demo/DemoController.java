@@ -29,6 +29,7 @@ public class DemoController implements ITagController {
 
     @Override
     public String getName(Entity target, Player viewer, String previous) {
+        if (previous == null) return null;
         return ChatColor.BLUE + previous;
     }
 
