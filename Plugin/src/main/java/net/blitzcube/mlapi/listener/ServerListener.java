@@ -6,7 +6,9 @@ import net.blitzcube.mlapi.VisibilityStates;
 import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.GameMode;
+import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -15,7 +17,6 @@ import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.entity.SpawnerSpawnEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
-import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.vehicle.VehicleCreateEvent;
@@ -73,10 +74,7 @@ public class ServerListener implements Listener {
 
     @EventHandler
     public void onChunkLoad(ChunkLoadEvent e) {
-        for (Entity entity : e.getChunk().getEntities()) {
-            if (!entity.isValid()) continue;
-            this.onSpawn(entity);
-        }
+        loadChunkEntities(e.getChunk());
     }
 
     @EventHandler
@@ -124,5 +122,20 @@ public class ServerListener implements Listener {
 
     private void onDespawn(Entity e) {
         Bukkit.getScheduler().runTaskLater(parent, () -> parent.deleteTag(e), 1);
+    }
+
+    public void loadAllWorldEntities() {
+        for (World w : Bukkit.getWorlds()) loadWorldEntities(w);
+    }
+
+    private void loadWorldEntities(World w) {
+        for (Chunk c : w.getLoadedChunks()) loadChunkEntities(c);
+    }
+
+    private void loadChunkEntities(Chunk c) {
+        for (Entity entity : c.getEntities()) {
+            if (!entity.isValid()) continue;
+            this.onSpawn(entity);
+        }
     }
 }

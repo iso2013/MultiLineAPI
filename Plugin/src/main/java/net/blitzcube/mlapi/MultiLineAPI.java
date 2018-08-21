@@ -41,7 +41,9 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
         this.lineFactory = new LineEntityFactory(packetAPI.getModifierRegistry(), packetAPI.getEntityFactory());
 
         packetAPI.addListener(new PacketListener(this, tags, states, packetAPI));
-        Bukkit.getPluginManager().registerEvents(new ServerListener(this, states, packetAPI), this);
+        ServerListener listener = new ServerListener(this, states, packetAPI);
+        Bukkit.getPluginManager().registerEvents(listener, this);
+        Bukkit.getScheduler().runTask(this, listener::loadAllWorldEntities);
 
         this.saveDefaultConfig();
 
