@@ -137,7 +137,8 @@ public class PacketListener implements IListener {
         });
 
         Optional<WeakReference<Entity>> entity = Optional.ofNullable(identifier.getEntity());
-        if (entity.isPresent() && entity.get().get().getPassengers().size() > 0) {
+        Entity e;
+        if (entity.isPresent() && (e = entity.get().get()) != null && e.getPassengers().size() > 0) {
             tagEntities = false;
         }
 
