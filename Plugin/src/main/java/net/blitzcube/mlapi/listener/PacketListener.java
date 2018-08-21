@@ -12,6 +12,7 @@ import net.blitzcube.peapi.api.entity.modifier.IModifiableEntity;
 import net.blitzcube.peapi.api.event.IEntityPacketEvent;
 import net.blitzcube.peapi.api.listener.IListener;
 import net.blitzcube.peapi.api.packet.*;
+import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -30,9 +31,13 @@ public class PacketListener implements IListener {
     private final Map<Integer, Tag> entityTags;
     private final VisibilityStates state;
     private final IPacketEntityAPI packet;
-    private final IEntityModifier<Boolean> invisible;
 
-    public PacketListener(MultiLineAPI parent, Map<Integer, Tag> entityTags, VisibilityStates visibilityState, IPacketEntityAPI packet) {
+    private final IEntityModifier<Boolean> invisible;
+    private final IEntityModifier<Optional<BaseComponent[]>> name;
+    private final IEntityModifier<String> legacyName;
+
+    public PacketListener(MultiLineAPI parent, Map<Integer, Tag> entityTags, VisibilityStates visibilityState,
+                          IPacketEntityAPI packet) {
         Preconditions.checkArgument(parent != null, "MLAPI instance must not be null");
         Preconditions.checkArgument(visibilityState != null, "VisibilityState instance must not be null");
         Preconditions.checkArgument(packet != null, "PacketEntityAPI instance must not be null");
@@ -42,6 +47,15 @@ public class PacketListener implements IListener {
         this.state = visibilityState;
         this.packet = packet;
         this.invisible = packet.getModifierRegistry().lookup(EntityType.SHEEP, "INVISIBLE", Boolean.class);
+        //FIXME
+        //this.name = packet.getModifierRegistry().lookupOptional(EntityType.SHEEP, "CUSTOM_NAME", BaseComponent[]
+        // .class);
+        this.name = null;
+        if (this.name == null) {
+            this.legacyName = packet.getModifierRegistry().lookup(EntityType.SHEEP, "CUSTOM_NAME", String.class);
+        } else {
+            this.legacyName = null;
+        }
     }
 
     @Override
@@ -70,7 +84,9 @@ public class PacketListener implements IListener {
                 this.checkMount((IEntityMountPacket) e.getPacket(), identifier, tag, e.getPlayer());
                 break;
             case DATA:
-                this.checkData((IEntityDataPacket) e.getPacket(), tag, e.getPlayer());
+                IEntityDataPacket dataPacket = (IEntityDataPacket) e.getPacket();
+                this.checkDataInvisible(dataPacket, tag, e.getPlayer());
+                this.checkDataNames(dataPacket, tag, e.getPlayer());
                 break;
             case ADD_EFFECT:
                 IEntityPotionAddPacket potionAddPacket = (IEntityPotionAddPacket) e.getPacket();
@@ -84,11 +100,26 @@ public class PacketListener implements IListener {
                     renderer.spawnTag(tag, e.getPlayer(), null);
                 }
                 break;
-            default: break;
+            default:
+                break;
         }
     }
 
-    private void checkData(IEntityDataPacket dataPacket, Tag tag, Player target) {
+    private void checkDataNames(IEntityDataPacket dataPacket, Tag tag, Player player) {
+        IModifiableEntity modifiable = packet.wrap(dataPacket.getMetadata());
+        if (name != null) {
+            if (!name.specifies(modifiable)) return;
+            name.setValue(modifiable, Optional.empty());
+        } else {
+            if (!legacyName.specifies(modifiable)) return;
+            legacyName.setValue(modifiable, "");
+        }
+        dataPacket.setMetadata(modifiable.getWatchableObjects());
+        dataPacket.rewriteMetadata();
+        tag.updateName(player);
+    }
+
+    private void checkDataInvisible(IEntityDataPacket dataPacket, Tag tag, Player target) {
         TagRenderer renderer = tag.getRenderer();
         IModifiableEntity modifiable = packet.wrap(dataPacket.getMetadata());
         if (!invisible.specifies(modifiable)) return;

@@ -107,13 +107,6 @@ public class ServerListener implements Listener {
         }
     }
 
-    @EventHandler
-    public void onNameChange(PlayerInteractAtEntityEvent e) {
-        if (parent.hasTag(e.getRightClicked())) {
-            Bukkit.getScheduler().runTaskLater(parent, () -> parent.getTag(e.getRightClicked()).updateName(), 1L);
-        }
-    }
-
     private void onSpawn(Entity e) {
         if (parent.hasDefaultTagControllers(e.getType())) {
             this.parent.getOrCreateTag(e);
