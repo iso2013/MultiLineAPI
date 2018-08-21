@@ -47,10 +47,8 @@ public class PacketListener implements IListener {
         this.state = visibilityState;
         this.packet = packet;
         this.invisible = packet.getModifierRegistry().lookup(EntityType.SHEEP, "INVISIBLE", Boolean.class);
-        //FIXME
-        //this.name = packet.getModifierRegistry().lookupOptional(EntityType.SHEEP, "CUSTOM_NAME", BaseComponent[]
-        // .class);
-        this.name = null;
+        this.name = packet.getModifierRegistry().lookupOptional(EntityType.SHEEP, "CUSTOM_NAME", BaseComponent[]
+                .class);
         if (this.name == null) {
             this.legacyName = packet.getModifierRegistry().lookup(EntityType.SHEEP, "CUSTOM_NAME", String.class);
         } else {

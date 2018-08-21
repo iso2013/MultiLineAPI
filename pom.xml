@@ -54,7 +54,7 @@
         <dependency>
             <groupId>net.blitzcube.peapi</groupId>
             <artifactId>API</artifactId>
-            <version>0.6.0-SNAPSHOT</version>
+            <version>0.7.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
