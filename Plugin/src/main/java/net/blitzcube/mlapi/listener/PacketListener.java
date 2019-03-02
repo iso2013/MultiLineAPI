@@ -8,6 +8,7 @@ import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
 import net.blitzcube.peapi.api.entity.IEntityIdentifier;
 import net.blitzcube.peapi.api.entity.modifier.IEntityModifier;
+import net.blitzcube.peapi.api.entity.modifier.IEntityModifierRegistry;
 import net.blitzcube.peapi.api.entity.modifier.IModifiableEntity;
 import net.blitzcube.peapi.api.event.IEntityPacketEvent;
 import net.blitzcube.peapi.api.listener.IListener;
@@ -34,6 +35,7 @@ public class PacketListener implements IListener {
 
     private final IEntityModifier<Boolean> invisible;
     private final IEntityModifier<Optional<BaseComponent[]>> name;
+    private final IEntityModifier<Boolean> nameVisible;
     private final IEntityModifier<String> legacyName;
 
     public PacketListener(MultiLineAPI parent, Map<Integer, Tag> entityTags, VisibilityStates visibilityState,
@@ -46,11 +48,15 @@ public class PacketListener implements IListener {
         this.entityTags = (entityTags != null) ? entityTags : new HashMap<>();
         this.state = visibilityState;
         this.packet = packet;
-        this.invisible = packet.getModifierRegistry().lookup(EntityType.SHEEP, "INVISIBLE", Boolean.class);
-        this.name = packet.getModifierRegistry().lookupOptional(EntityType.SHEEP, "CUSTOM_NAME", BaseComponent[]
+
+        IEntityModifierRegistry reg = packet.getModifierRegistry();
+
+        this.invisible = reg.lookup(EntityType.SHEEP, "INVISIBLE", Boolean.class);
+        this.name = reg.lookupOptional(EntityType.SHEEP, "CUSTOM_NAME", BaseComponent[]
                 .class);
+        this.nameVisible = reg.lookup(EntityType.SHEEP, "CUSTOM_NAME_VISIBLE", Boolean.class);
         if (this.name == null) {
-            this.legacyName = packet.getModifierRegistry().lookup(EntityType.SHEEP, "CUSTOM_NAME", String.class);
+            this.legacyName = reg.lookup(EntityType.SHEEP, "CUSTOM_NAME", String.class);
         } else {
             this.legacyName = null;
         }
@@ -74,8 +80,9 @@ public class PacketListener implements IListener {
 
         TagRenderer renderer = tag.getRenderer();
         switch (e.getPacketType()) {
-            case OBJECT_SPAWN:
             case ENTITY_SPAWN:
+                this.clearNameData(((IEntitySpawnPacket) e.getPacket()));
+            case OBJECT_SPAWN:
                 renderer.spawnTag(tag, e.getPlayer(), null);
                 break;
             case MOUNT:
@@ -103,15 +110,29 @@ public class PacketListener implements IListener {
         }
     }
 
+    private void clearNameData(IEntitySpawnPacket spawnPacket) {
+        IModifiableEntity modifiable = packet.wrap(spawnPacket.getMetadata());
+        if (name != null) {
+            name.setValue(modifiable, Optional.empty());
+        } else {
+            Bukkit.broadcastMessage("using legacy modifier");
+            if (!legacyName.specifies(modifiable)) return;
+            legacyName.setValue(modifiable, "");
+        }
+        nameVisible.setValue(modifiable, false);
+        spawnPacket.setMetadata(modifiable.getWatchableObjects());
+        spawnPacket.rewriteMetadata();
+    }
+
     private void checkDataNames(IEntityDataPacket dataPacket, Tag tag, Player player) {
         IModifiableEntity modifiable = packet.wrap(dataPacket.getMetadata());
         if (name != null) {
-            if (!name.specifies(modifiable)) return;
             name.setValue(modifiable, Optional.empty());
         } else {
             if (!legacyName.specifies(modifiable)) return;
             legacyName.setValue(modifiable, "");
         }
+        nameVisible.setValue(modifiable, false);
         dataPacket.setMetadata(modifiable.getWatchableObjects());
         dataPacket.rewriteMetadata();
         tag.updateName(player);

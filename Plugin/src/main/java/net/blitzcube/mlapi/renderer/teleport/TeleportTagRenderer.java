@@ -15,6 +15,7 @@ import net.blitzcube.peapi.api.packet.*;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
 import java.util.Collection;
@@ -29,7 +30,8 @@ public class TeleportTagRenderer extends TagRenderer {
 
     private final boolean animated;
 
-    public TeleportTagRenderer(IPacketEntityAPI packet, LineEntityFactory lineFactory, VisibilityStates state, MultiLineAPI parent, boolean animated) {
+    public TeleportTagRenderer(IPacketEntityAPI packet, LineEntityFactory lineFactory, VisibilityStates state,
+                               MultiLineAPI parent, boolean animated) {
         super(packet, lineFactory, state, parent);
 
         this.animated = animated;
@@ -51,9 +53,11 @@ public class TeleportTagRenderer extends TagRenderer {
                 MoveTransaction transactionMove = (MoveTransaction) transaction;
 
                 if (transactionMove.isToSameLevel()) {
-                    transaction = new RemoveTransaction(transactionMove.getBelow(), transactionMove.getAbove(), transactionMove.getMoved());
+                    transaction = new RemoveTransaction(transactionMove.getBelow(), transactionMove.getAbove(),
+                            transactionMove.getMoved());
                 } else {
-                    transaction = new AddTransaction(transactionMove.getBelow(), transactionMove.getAbove(), transactionMove.getMoved());
+                    transaction = new AddTransaction(transactionMove.getBelow(), transactionMove.getAbove(),
+                            transactionMove.getMoved());
                 }
             }
 
@@ -89,13 +93,14 @@ public class TeleportTagRenderer extends TagRenderer {
                             }
 
                             this.lineFactory.updateName(line.getBottom(), value);
-                            this.lineFactory.updateLocation(location.clone().add(0, LINE_HEIGHT * index, 0), line.getBottom());
+                            this.lineFactory.updateLocation(location.clone().add(0, LINE_HEIGHT * index, 0),
+                                    line.getBottom());
                             index++;
 
-                            Collections.addAll(thirdPhase, factory.createObjectSpawnPacket(line.getBottom().getIdentifier()));
+                            Collections.addAll(thirdPhase,
+                                    factory.createObjectSpawnPacket(line.getBottom().getIdentifier()));
                             this.state.addSpawnedLine(target, line);
-                        }
-                        else {
+                        } else {
                             if (destroyPacket == null) {
                                 destroyPacket = factory.createDestroyPacket();
                             }
@@ -105,11 +110,9 @@ public class TeleportTagRenderer extends TagRenderer {
                                 index++;
                             }
                         }
-                    }
-                    else if (!state.isLineSpawned(target, line) && !line.shouldRemoveSpaceWhenNull()) {
+                    } else if (!state.isLineSpawned(target, line) && !line.shouldRemoveSpaceWhenNull()) {
                         index++;
-                    }
-                    else {
+                    } else {
                         index++;
                     }
                 }
@@ -122,9 +125,7 @@ public class TeleportTagRenderer extends TagRenderer {
                     firstPhase.add(destroyPacket);
                     this.state.getSpawnedLines(target).removeAll(changed);
                 }
-            }
-
-            else if (transaction instanceof NameTransaction) {
+            } else if (transaction instanceof NameTransaction) {
                 if (firstPhase == null) {
                     firstPhase = new LinkedList<>();
                 }
@@ -176,12 +177,14 @@ public class TeleportTagRenderer extends TagRenderer {
         } else {
             if (secondPhase != null && !secondPhase.isEmpty()) {
                 List<IEntityPacket> finalSecondPhase = secondPhase;
-                Bukkit.getScheduler().runTaskLater(parent, () -> finalSecondPhase.forEach(packet -> packetAPI.dispatchPacket(packet, target, 0)), 1L);
+                Bukkit.getScheduler().runTaskLater(parent,
+                        () -> finalSecondPhase.forEach(packet -> packetAPI.dispatchPacket(packet, target, 0)), 1L);
             }
 
             if (thirdPhase != null && !thirdPhase.isEmpty()) {
                 List<IEntityPacket> finalThirdPhase = thirdPhase;
-                Bukkit.getScheduler().runTaskLater(parent, () -> finalThirdPhase.forEach(packet -> packetAPI.dispatchPacket(packet, target, 0)), 2L);
+                Bukkit.getScheduler().runTaskLater(parent,
+                        () -> finalThirdPhase.forEach(packet -> packetAPI.dispatchPacket(packet, target, 0)), 2L);
             }
         }
     }
@@ -220,6 +223,16 @@ public class TeleportTagRenderer extends TagRenderer {
             this.lineFactory.updateName(tag.getTop(), null);
         }
 
+        if (tag.getBottom() != null) {
+            this.lineFactory.updateLocation(location, tag.getBottom());
+            Collections.addAll(packets, factory.createEntitySpawnPacket(tag.getBottom().getIdentifier()));
+            packetAPI.dispatchPacket(
+                    factory.createMountPacket(packetAPI.wrap(tag.getTarget()), tag.getBottom().getIdentifier()),
+                    player,
+                    1
+            );
+        }
+
         for (RenderedTagLine line : tag.getLines()) {
             String value = line.get(player);
 
@@ -248,6 +261,11 @@ public class TeleportTagRenderer extends TagRenderer {
 
     @Override
     public IFakeEntity createBottom(Tag tag) {
+        if (tag.getTarget().getType() == EntityType.PLAYER) {
+            IHitbox hitbox = tag.getTargetHitbox();
+            double y = (hitbox != null) ? (hitbox.getMax().getY() - hitbox.getMin().getY()) + BOTTOM_LINE_HEIGHT : 0;
+            return lineFactory.createSilverfish(tag.getTarget().getLocation().add(0, y, 0));
+        }
         return null;
     }
 
