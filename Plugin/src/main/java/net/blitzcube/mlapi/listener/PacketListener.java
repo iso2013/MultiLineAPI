@@ -115,7 +115,6 @@ public class PacketListener implements IListener {
         if (name != null) {
             name.setValue(modifiable, Optional.empty());
         } else {
-            Bukkit.broadcastMessage("using legacy modifier");
             if (!legacyName.specifies(modifiable)) return;
             legacyName.setValue(modifiable, "");
         }
