@@ -55,7 +55,7 @@ public class TagStructure {
             lineIndex++;
         }
 
-        if (newLines.size() == 0) return null;
+        if (newLines.size() == 0) return Stream.empty();
 
         Collections.reverse(newLines);
         this.lines.addAll(index, newLines);
