@@ -1,7 +1,6 @@
 package net.blitzcube.mlapi.renderer.teleport;
 
 import com.google.common.base.Preconditions;
-
 import net.blitzcube.mlapi.MultiLineAPI;
 import net.blitzcube.mlapi.VisibilityStates;
 import net.blitzcube.mlapi.tag.RenderedTagLine;
@@ -12,7 +11,6 @@ import net.blitzcube.peapi.api.event.IEntityPacketEvent;
 import net.blitzcube.peapi.api.listener.IListener;
 import net.blitzcube.peapi.api.packet.IEntityMovePacket;
 import net.blitzcube.peapi.api.packet.IEntityPacket;
-
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.util.Vector;
@@ -42,14 +40,13 @@ public class TeleportTagPacketListener implements IListener {
         IEntityIdentifier id = packet.getIdentifier();
         if (id == null) return;
 
-        id.moreSpecific();
         if (id.isFakeEntity()) return;
 
         if (e.getPacket() instanceof IEntityMovePacket) {
             IEntityMovePacket movePacket = (IEntityMovePacket) e.getPacket();
             if (movePacket.getMoveType() == IEntityMovePacket.MoveType.LOOK || id.getEntity() == null) return;
 
-            Entity entity = id.getEntity().get();
+            Entity entity = id.getEntity();
             if (entity == null) return;
 
             Tag tag = parent.getTag(entity);

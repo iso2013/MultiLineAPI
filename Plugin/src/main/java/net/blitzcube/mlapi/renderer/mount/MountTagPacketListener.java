@@ -1,11 +1,6 @@
 package net.blitzcube.mlapi.renderer.mount;
 
-import java.lang.ref.WeakReference;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.google.common.base.Preconditions;
-
 import net.blitzcube.mlapi.renderer.LineEntityFactory;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
 import net.blitzcube.peapi.api.entity.IEntityIdentifier;
@@ -13,10 +8,12 @@ import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
 import net.blitzcube.peapi.api.entity.hitbox.IHitbox;
 import net.blitzcube.peapi.api.event.IEntityPacketEvent;
 import net.blitzcube.peapi.api.listener.IListener;
-
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by iso2013 on 8/7/2018.
@@ -42,11 +39,9 @@ public class MountTagPacketListener implements IListener {
             IEntityIdentifier identifier = e.getPacket().getIdentifier();
             if (identifier == null) return;
 
-            identifier.moreSpecific();
-            WeakReference<IFakeEntity> fakeEntity = identifier.getFakeEntity();
-            if (fakeEntity == null || fakeEntity.get() == null) return;
+            if (!identifier.isFakeEntity()) return;
 
-            Entity newEntity = tagEntities.get(fakeEntity.get());
+            Entity newEntity = tagEntities.get(identifier.getFakeEntity());
             if (newEntity == null) return;
 
             IHitbox hitbox = lineFactory.getHitbox(newEntity);

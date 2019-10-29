@@ -1,14 +1,12 @@
 package net.blitzcube.mlapi.renderer;
 
 import com.google.common.base.Preconditions;
-
 import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
 import net.blitzcube.peapi.api.entity.fake.IFakeEntityFactory;
 import net.blitzcube.peapi.api.entity.hitbox.IHitbox;
 import net.blitzcube.peapi.api.entity.modifier.IEntityModifier;
 import net.blitzcube.peapi.api.entity.modifier.IEntityModifierRegistry;
 import net.blitzcube.peapi.api.entity.modifier.IModifiableEntity;
-
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -44,7 +42,7 @@ public class LineEntityFactory {
         this.name = registry.lookup(EntityType.ARMOR_STAND, "CUSTOM_NAME", String.class);
         this.nameVisible = registry.lookup(EntityType.ARMOR_STAND, "CUSTOM_NAME_VISIBLE", Boolean.class);
         this.size = registry.lookup(EntityType.SLIME, "SIZE", Integer.class);
-        this.marker = registry.lookup(EntityType.ARMOR_STAND, "MARKER", Boolean.class);
+        this.marker = registry.lookup(EntityType.ARMOR_STAND, "SET_MARKER", Boolean.class);
         this.entityInvisible = registry.lookup(EntityType.SILVERFISH, "INVISIBLE", Boolean.class);
         this.armorStandInvisible = registry.lookup(EntityType.ARMOR_STAND, "INVISIBLE", Boolean.class);
         this.noAI = registry.lookup(EntityType.SILVERFISH, "NO_AI", Boolean.class);

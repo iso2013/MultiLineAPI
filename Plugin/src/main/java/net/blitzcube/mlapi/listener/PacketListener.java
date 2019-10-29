@@ -20,7 +20,6 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 
-import java.lang.ref.WeakReference;
 import java.util.*;
 
 /**
@@ -72,7 +71,6 @@ public class PacketListener implements IListener {
         IEntityIdentifier identifier = e.getPacket().getIdentifier();
         if (identifier == null) return;
 
-        identifier.moreSpecific();
         if (identifier.isFakeEntity()) return;
 
         Tag tag = entityTags.get(identifier.getEntityID());
@@ -151,14 +149,10 @@ public class PacketListener implements IListener {
 
     private void checkMount(IEntityMountPacket mountPacket, IEntityIdentifier identifier, Tag tag, Player target) {
         TagRenderer renderer = tag.getRenderer();
-        boolean tagEntities = mountPacket.getGroup().stream().allMatch(i1 -> {
-            i1.moreSpecific();
-            return i1.isFakeEntity();
-        });
+        boolean tagEntities = mountPacket.getGroup().stream().allMatch(IEntityIdentifier::isFakeEntity);
 
-        Optional<WeakReference<Entity>> entity = Optional.ofNullable(identifier.getEntity());
-        Entity e;
-        if (entity.isPresent() && (e = entity.get().get()) != null && e.getPassengers().size() > 0) {
+        Optional<Entity> entity = Optional.ofNullable(identifier.getEntity());
+        if (entity.isPresent() && entity.get().getPassengers().size() > 0) {
             tagEntities = false;
         }
 

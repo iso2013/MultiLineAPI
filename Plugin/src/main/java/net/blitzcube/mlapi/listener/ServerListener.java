@@ -98,7 +98,7 @@ public class ServerListener implements Listener {
             // Player is changing out of SPECTATOR, so we should spawn all tags.
             this.packet.getVisible(e.getPlayer(), 1, false)
                     .map(identifier -> {
-                        Entity entity = identifier.getEntity().get();
+                        Entity entity = identifier.getEntity();
                         return entity != null ? parent.getTag(entity) : null;
                     }).filter(tag -> {
                         Boolean visible = states.isVisible(tag, e.getPlayer());
