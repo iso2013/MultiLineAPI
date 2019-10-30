@@ -52,10 +52,10 @@ public abstract class TagRenderer {
         String defaultValue = config.getString("defaultRenderer", "mount");
         TagRenderer defaultRenderer = null;
 
-        if (defaultValue.equalsIgnoreCase("mount")) {
+        if ("mount".equalsIgnoreCase(defaultValue)) {
             defaultRenderer = new MountTagRenderer(packetAPI, lineFactory, states, parent);
             mountRenderer = defaultRenderer;
-        } else if (defaultValue.equalsIgnoreCase("teleport")) {
+        } else if ("teleport".equalsIgnoreCase(defaultValue)) {
             defaultRenderer = new TeleportTagRenderer(packetAPI, lineFactory, states, parent, config.getBoolean("options.teleport.animated", true));
             teleportRenderer = defaultRenderer;
         } else {
@@ -109,12 +109,12 @@ public abstract class TagRenderer {
         boolean event = (destroyPacket != null);
         IEntityDestroyPacket finalDestroyPacket = (!event) ? packetAPI.getPacketFactory().createDestroyPacket() :
                 destroyPacket;
-        tag.getLines().forEach(l -> l.getStack().forEach(e -> finalDestroyPacket.addToGroup(e.getIdentifier())));
+        tag.getLines().forEach(l -> l.getStack().forEach(finalDestroyPacket::addToGroup));
 
         this.state.getSpawnedLines(player).removeAll(tag.getLines());
         if (tag.getBottom() != null)
-            finalDestroyPacket.addToGroup(tag.getBottom().getIdentifier());
-        finalDestroyPacket.addToGroup(tag.getTop().getIdentifier());
+            finalDestroyPacket.addToGroup(tag.getBottom());
+        finalDestroyPacket.addToGroup(tag.getTop());
 
         if (!event) {
             this.packetAPI.dispatchPacket(finalDestroyPacket, player, 0);
@@ -134,7 +134,7 @@ public abstract class TagRenderer {
         }
 
         this.lineFactory.updateName(tag.getTop(), name);
-        this.packetAPI.dispatchPacket(packetAPI.getPacketFactory().createDataPacket(tag.getTop().getIdentifier()), viewer);
+        this.packetAPI.dispatchPacket(packetAPI.getPacketFactory().createDataPacket(tag.getTop()), viewer);
     }
 
     public abstract IFakeEntity createBottom(Tag target);

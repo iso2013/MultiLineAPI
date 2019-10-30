@@ -98,14 +98,14 @@ public class TeleportTagRenderer extends TagRenderer {
                             index++;
 
                             Collections.addAll(thirdPhase,
-                                    factory.createObjectSpawnPacket(line.getBottom().getIdentifier()));
+                                    factory.createObjectSpawnPacket(line.getBottom()));
                             this.state.addSpawnedLine(target, line);
                         } else {
                             if (destroyPacket == null) {
                                 destroyPacket = factory.createDestroyPacket();
                             }
 
-                            destroyPacket.addToGroup(line.getBottom().getIdentifier());
+                            destroyPacket.addToGroup(line.getBottom());
                             if (!line.shouldRemoveSpaceWhenNull()) {
                                 index++;
                             }
@@ -134,7 +134,7 @@ public class TeleportTagRenderer extends TagRenderer {
                 ((NameTransaction) transaction).getQueuedNames()
                         .forEach((key, value) -> {
                             this.lineFactory.updateName(key.getBottom(), value);
-                            finalFirstPhase.add(factory.createDataPacket(key.getBottom().getIdentifier()));
+                            finalFirstPhase.add(factory.createDataPacket(key.getBottom()));
                         });
             }
         }
@@ -151,13 +151,13 @@ public class TeleportTagRenderer extends TagRenderer {
                     continue;
                 }
 
-                secondPhase.add(factory.createMovePacket(line.getBottom().getIdentifier(), location.toVector(),
+                secondPhase.add(factory.createMovePacket(line.getBottom(), location.toVector(),
                         null, false, IEntityMovePacket.MoveType.TELEPORT
                 ));
                 location.setY(location.getY() + LINE_HEIGHT);
             }
 
-            secondPhase.add(factory.createMovePacket(tag.getTop().getIdentifier(), location.toVector(),
+            secondPhase.add(factory.createMovePacket(tag.getTop(), location.toVector(),
                     null, false, IEntityMovePacket.MoveType.TELEPORT
             ));
         }
@@ -225,9 +225,9 @@ public class TeleportTagRenderer extends TagRenderer {
 
         if (tag.getBottom() != null) {
             this.lineFactory.updateLocation(location, tag.getBottom());
-            Collections.addAll(packets, factory.createEntitySpawnPacket(tag.getBottom().getIdentifier()));
+            Collections.addAll(packets, factory.createEntitySpawnPacket(tag.getBottom()));
             packetAPI.dispatchPacket(
-                    factory.createMountPacket(packetAPI.wrap(tag.getTarget()), tag.getBottom().getIdentifier()),
+                    factory.createMountPacket(packetAPI.wrap(tag.getTarget()), tag.getBottom()),
                     player,
                     1
             );
@@ -247,13 +247,13 @@ public class TeleportTagRenderer extends TagRenderer {
             this.lineFactory.updateName(line.getBottom(), value);
             this.lineFactory.updateLocation(location, line.getBottom());
 
-            Collections.addAll(packets, factory.createObjectSpawnPacket(line.getBottom().getIdentifier()));
+            Collections.addAll(packets, factory.createObjectSpawnPacket(line.getBottom()));
             location.add(0, LINE_HEIGHT, 0);
             this.state.addSpawnedLine(player, line);
         }
 
         this.lineFactory.updateLocation(location, tag.getTop());
-        Collections.addAll(packets, factory.createObjectSpawnPacket(tag.getTop().getIdentifier()));
+        Collections.addAll(packets, factory.createObjectSpawnPacket(tag.getTop()));
 
         packets.forEach(p -> packetAPI.dispatchPacket(p, player, 0));
         this.state.addSpawnedTag(player, tag);

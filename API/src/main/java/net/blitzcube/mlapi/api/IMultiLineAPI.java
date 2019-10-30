@@ -33,9 +33,10 @@ public interface IMultiLineAPI {
      *
      * @param entity the entity whose tag to retrieve or create
      *
+     * @param notifyPlayers
      * @return the created tag
      */
-    ITag getOrCreateTag(Entity entity);
+    ITag getOrCreateTag(Entity entity, boolean notifyPlayers);
 
     /**
      * Delete the specified entity's tag (if present). If the entity has no tag, this method

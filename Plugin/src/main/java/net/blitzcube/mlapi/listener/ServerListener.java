@@ -5,6 +5,7 @@ import net.blitzcube.mlapi.MultiLineAPI;
 import net.blitzcube.mlapi.VisibilityStates;
 import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
+import net.blitzcube.peapi.api.entity.IRealEntityIdentifier;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.GameMode;
@@ -98,8 +99,10 @@ public class ServerListener implements Listener {
             // Player is changing out of SPECTATOR, so we should spawn all tags.
             this.packet.getVisible(e.getPlayer(), 1, false)
                     .map(identifier -> {
-                        Entity entity = identifier.getEntity();
-                        return entity != null ? parent.getTag(entity) : null;
+                        if (identifier instanceof IRealEntityIdentifier) {
+                            return parent.getTag(((IRealEntityIdentifier) identifier).getEntity());
+                        }
+                        return null;
                     }).filter(tag -> {
                         Boolean visible = states.isVisible(tag, e.getPlayer());
                 return tag != null && ((visible != null) ? visible : tag.getDefaultVisible());
@@ -109,7 +112,7 @@ public class ServerListener implements Listener {
 
     private void onSpawn(Entity e) {
         if (parent.hasDefaultTagControllers(e.getType())) {
-            this.parent.getOrCreateTag(e);
+            this.parent.getOrCreateTag(e, false);
         }
     }
 

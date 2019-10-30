@@ -76,39 +76,40 @@ public class MountTagRenderer extends TagRenderer {
 
                 this.lineFactory.updateName(line.getBottom(), value);
                 this.lineFactory.updateLocation(location, line.getBottom());
-                Collections.addAll(firstPhase, factory.createObjectSpawnPacket(line.getBottom().getIdentifier()));
+                Collections.addAll(firstPhase, factory.createObjectSpawnPacket(line.getBottom()));
 
                 if (value != null || !line.shouldRemoveSpaceWhenNull()) {
-                    IEntityIdentifier vehicle = (last == null) ? transactionAdd.getBelow() : last.getStack().getLast().getIdentifier();
+                    IEntityIdentifier vehicle = (last == null) ? transactionAdd.getBelow() : last.getStack().getLast();
 
                     if (!passengers.isEmpty()) {
-                        passengers.add(line.getBottom().getIdentifier());
+                        passengers.add(line.getBottom());
                         secondPhase.add(factory.createMountPacket(vehicle, passengers.toArray(new IEntityIdentifier[0])));
                         passengers.clear();
                     } else {
-                        secondPhase.add(factory.createMountPacket(vehicle, line.getBottom().getIdentifier()));
+                        secondPhase.add(factory.createMountPacket(vehicle, line.getBottom()));
                     }
                     
                     last = line;
                 } else {
-                    passengers.add(line.getBottom().getIdentifier());
+                    passengers.add(line.getBottom());
                 }
 
                 IEntityIdentifier previousIdentifier = null;
                 for (IFakeEntity fe : line.getStack()) {
                     if (previousIdentifier != null) {
                         this.lineFactory.updateLocation(location, fe);
-                        firstPhase.add(factory.createEntitySpawnPacket(fe.getIdentifier()));
-                        secondPhase.add(factory.createMountPacket(previousIdentifier, fe.getIdentifier()));
+                        firstPhase.add(factory.createEntitySpawnPacket(fe));
+                        secondPhase.add(factory.createMountPacket(previousIdentifier, fe));
                     }
 
-                    previousIdentifier = fe.getIdentifier();
+                    previousIdentifier = fe;
                 }
 
-                this.state.addSpawnedLine(target, line);
+                if (value != null || !line.shouldRemoveSpaceWhenNull())
+                    this.state.addSpawnedLine(target, line);
             }
 
-            IEntityIdentifier vehicle = last == null ? transactionAdd.getBelow() : last.getStack().getLast().getIdentifier();
+            IEntityIdentifier vehicle = last == null ? transactionAdd.getBelow() : last.getStack().getLast();
             if (!passengers.isEmpty()) {
                 passengers.add(transactionAdd.getAbove());
                 secondPhase.add(factory.createMountPacket(vehicle, passengers.toArray(new IEntityIdentifier[0])));
@@ -123,9 +124,9 @@ public class MountTagRenderer extends TagRenderer {
             if (transactionMove.isToSameLevel()) {
                 List<IEntityIdentifier> identifiers = new LinkedList<>();
                 transactionMove.getMoved().forEach(renderedTagLine -> {
-                    identifiers.add(renderedTagLine.getBottom().getIdentifier());
+                    identifiers.add(renderedTagLine.getBottom());
                     this.lineFactory.updateName(renderedTagLine.getBottom(), null);
-                    firstPhase.add(factory.createDataPacket(renderedTagLine.getBottom().getIdentifier()));
+                    firstPhase.add(factory.createDataPacket(renderedTagLine.getBottom()));
                 });
 
                 identifiers.add(transactionMove.getAbove());
@@ -136,8 +137,8 @@ public class MountTagRenderer extends TagRenderer {
                 RenderedTagLine lastTagLine = null;
                 for (RenderedTagLine line : transactionMove.getMoved()) {
                     firstPhase.add(factory.createMountPacket(
-                            (lastTagLine != null) ? lastTagLine.getStack().getLast().getIdentifier() : transactionMove.getBelow(),
-                            line.getBottom().getIdentifier()
+                            (lastTagLine != null) ? lastTagLine.getStack().getLast() : transactionMove.getBelow(),
+                            line.getBottom()
                     ));
 
                     lastTagLine = line;
@@ -145,7 +146,8 @@ public class MountTagRenderer extends TagRenderer {
                 }
 
                 if (lastTagLine != null) {
-                    firstPhase.add(factory.createMountPacket(lastTagLine.getStack().getLast().getIdentifier(), transactionMove.getAbove()));
+                    firstPhase.add(factory.createMountPacket(lastTagLine.getStack().getLast(),
+                            transactionMove.getAbove()));
                 }
             }
         }
@@ -154,14 +156,14 @@ public class MountTagRenderer extends TagRenderer {
             ((NameTransaction) transaction).getQueuedNames()
                     .forEach((key, value) -> {
                         this.lineFactory.updateName(key.getBottom(), value);
-                        secondPhase.add(factory.createDataPacket(key.getBottom().getIdentifier()));
+                        secondPhase.add(factory.createDataPacket(key.getBottom()));
                     });
         }
 
         else if (transaction instanceof RemoveTransaction) {
             RemoveTransaction transactionRemove = (RemoveTransaction) transaction;
             IEntityDestroyPacket destroyPacket = packetAPI.getPacketFactory().createDestroyPacket();
-            transactionRemove.getRemoved().forEach(r -> r.getStack().forEach(e -> destroyPacket.addToGroup(e.getIdentifier())));
+            transactionRemove.getRemoved().forEach(r -> r.getStack().forEach(destroyPacket::addToGroup));
 
             firstPhase.add(destroyPacket);
             this.state.getSpawnedLines(target).removeAll(transactionRemove.getRemoved());
@@ -203,16 +205,16 @@ public class MountTagRenderer extends TagRenderer {
             this.lineFactory.updateName(top, null);
         }
 
-        firstPhase.add(factory.createEntitySpawnPacket(bottom.getIdentifier()));
-        Collections.addAll(firstPhase, factory.createObjectSpawnPacket(top.getIdentifier()));
+        firstPhase.add(factory.createEntitySpawnPacket(bottom));
+        Collections.addAll(firstPhase, factory.createObjectSpawnPacket(top));
 
         if (mountPacket == null) {
-            secondPhase.add(factory.createMountPacket(packetAPI.wrap(tag.getTarget()), bottom.getIdentifier()));
+            secondPhase.add(factory.createMountPacket(packetAPI.wrap(tag.getTarget()), bottom));
         } else {
-            mountPacket.addToGroup(bottom.getIdentifier());
+            mountPacket.addToGroup(bottom);
         }
 
-        this.processTransaction(new AddTransaction(bottom.getIdentifier(), top.getIdentifier(), tag.getLines()),
+        this.processTransaction(new AddTransaction(bottom, top, tag.getLines()),
                 firstPhase, secondPhase, tag, player, true);
 
         firstPhase.forEach(ep -> packetAPI.dispatchPacket(ep, player, 0));

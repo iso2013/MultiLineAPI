@@ -163,10 +163,10 @@ public class TagStructure {
             if ((visible.containsEntry(player, lines.get(i))
                     && (removed == null || !removed.contains(i)))
                     || (added != null && added.contains(i)))
-                return lines.get(i).getBottom().getIdentifier();
+                return lines.get(i).getBottom();
         }
 
-        return tag.getTop().getIdentifier();
+        return tag.getTop();
     }
 
     private IEntityIdentifier getBelow(int idx, Player player, RangeSeries added, RangeSeries removed) {
@@ -174,11 +174,11 @@ public class TagStructure {
             if ((visible.containsEntry(player, lines.get(i))
                     && (removed == null || !removed.contains(i)))
                     || (added != null && added.contains(i)))
-                return lines.get(i).getStack().getLast().getIdentifier();
+                return lines.get(i).getStack().getLast();
         }
 
         if (tag.getBottom() == null) return null;
-        return tag.getBottom().getIdentifier();
+        return tag.getBottom();
     }
 
     public ImmutableList<RenderedTagLine> getLines() {

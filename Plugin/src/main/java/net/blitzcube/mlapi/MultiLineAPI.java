@@ -56,11 +56,12 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
 
     @Override
     public Tag getTag(Entity entity) {
+        if (entity == null) return null;
         return tags.get(entity.getEntityId());
     }
 
     @Override
-    public Tag getOrCreateTag(Entity entity) {
+    public Tag getOrCreateTag(Entity entity, boolean notifyPlayers) {
         int id = entity.getEntityId();
 
         if (!tags.containsKey(id)) {
@@ -68,7 +69,9 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
             Tag tag = new Tag(entity, renderer, controllersMap.get(entity.getType()), lineFactory, states);
             tags.put(id, tag);
 
-            renderer.getNearby(tag, 1.0).filter(input -> input != entity).forEach(player -> renderer.spawnTag(tag, player, null));
+            if (notifyPlayers)
+                renderer.getNearby(tag, 1.0).filter(input -> input != entity).forEach(player -> renderer.spawnTag(tag
+                        , player, null));
         }
 
         return tags.get(id);

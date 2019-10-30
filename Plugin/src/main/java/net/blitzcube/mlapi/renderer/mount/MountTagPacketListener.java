@@ -39,9 +39,9 @@ public class MountTagPacketListener implements IListener {
             IEntityIdentifier identifier = e.getPacket().getIdentifier();
             if (identifier == null) return;
 
-            if (!identifier.isFakeEntity()) return;
+            if (!(identifier instanceof IFakeEntity)) return;
 
-            Entity newEntity = tagEntities.get(identifier.getFakeEntity());
+            Entity newEntity = tagEntities.get(identifier);
             if (newEntity == null) return;
 
             IHitbox hitbox = lineFactory.getHitbox(newEntity);

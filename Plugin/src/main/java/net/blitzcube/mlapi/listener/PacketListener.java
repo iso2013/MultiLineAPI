@@ -7,6 +7,8 @@ import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.peapi.api.IPacketEntityAPI;
 import net.blitzcube.peapi.api.entity.IEntityIdentifier;
+import net.blitzcube.peapi.api.entity.IRealEntityIdentifier;
+import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
 import net.blitzcube.peapi.api.entity.modifier.IEntityModifier;
 import net.blitzcube.peapi.api.entity.modifier.IEntityModifierRegistry;
 import net.blitzcube.peapi.api.entity.modifier.IModifiableEntity;
@@ -71,7 +73,7 @@ public class PacketListener implements IListener {
         IEntityIdentifier identifier = e.getPacket().getIdentifier();
         if (identifier == null) return;
 
-        if (identifier.isFakeEntity()) return;
+        if (identifier instanceof IFakeEntity) return;
 
         Tag tag = entityTags.get(identifier.getEntityID());
         if (tag == null) return;
@@ -148,11 +150,13 @@ public class PacketListener implements IListener {
     }
 
     private void checkMount(IEntityMountPacket mountPacket, IEntityIdentifier identifier, Tag tag, Player target) {
-        TagRenderer renderer = tag.getRenderer();
-        boolean tagEntities = mountPacket.getGroup().stream().allMatch(IEntityIdentifier::isFakeEntity);
+        if (!(identifier instanceof IRealEntityIdentifier)) return;
 
-        Optional<Entity> entity = Optional.ofNullable(identifier.getEntity());
-        if (entity.isPresent() && entity.get().getPassengers().size() > 0) {
+        TagRenderer renderer = tag.getRenderer();
+        boolean tagEntities = mountPacket.getGroup().stream().allMatch(i -> i instanceof IFakeEntity);
+
+        Entity entity = ((IRealEntityIdentifier) identifier).getEntity();
+        if (entity.getPassengers().size() > 0) {
             tagEntities = false;
         }
 

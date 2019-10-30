@@ -6,6 +6,7 @@ import net.blitzcube.mlapi.VisibilityStates;
 import net.blitzcube.mlapi.tag.RenderedTagLine;
 import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.peapi.api.entity.IEntityIdentifier;
+import net.blitzcube.peapi.api.entity.IRealEntityIdentifier;
 import net.blitzcube.peapi.api.entity.hitbox.IHitbox;
 import net.blitzcube.peapi.api.event.IEntityPacketEvent;
 import net.blitzcube.peapi.api.listener.IListener;
@@ -24,7 +25,8 @@ public class TeleportTagPacketListener implements IListener {
     private final MultiLineAPI parent;
     private final VisibilityStates state;
 
-    protected TeleportTagPacketListener(double lineHeight, double bottomLineHeight, MultiLineAPI parent, VisibilityStates state) {
+    protected TeleportTagPacketListener(double lineHeight, double bottomLineHeight, MultiLineAPI parent,
+                                        VisibilityStates state) {
         Preconditions.checkArgument(parent != null, "MLAPI instance must not be null");
         Preconditions.checkArgument(state != null, "VisibilityState instance must not be null");
 
@@ -40,14 +42,15 @@ public class TeleportTagPacketListener implements IListener {
         IEntityIdentifier id = packet.getIdentifier();
         if (id == null) return;
 
-        if (id.isFakeEntity()) return;
+        if (!(id instanceof IRealEntityIdentifier)) return;
 
         if (e.getPacket() instanceof IEntityMovePacket) {
             IEntityMovePacket movePacket = (IEntityMovePacket) e.getPacket();
-            if (movePacket.getMoveType() == IEntityMovePacket.MoveType.LOOK || id.getEntity() == null) return;
 
-            Entity entity = id.getEntity();
-            if (entity == null) return;
+            Entity entity;
+            if (movePacket.getMoveType() == IEntityMovePacket.MoveType.LOOK ||
+                    (entity = ((IRealEntityIdentifier) id).getEntity()) == null)
+                return;
 
             Tag tag = parent.getTag(entity);
             if (tag == null) return;
@@ -69,28 +72,27 @@ public class TeleportTagPacketListener implements IListener {
                     }
 
                     IEntityMovePacket newMovePacket = (IEntityMovePacket) movePacket.clone();
-                    newMovePacket.setIdentifier(line.getBottom().getIdentifier());
+                    newMovePacket.setIdentifier(line.getBottom());
                     newMovePacket.setNewPosition(location, true);
                     e.context().queueDispatch(newMovePacket, 0);
                     location.setY(location.getY() + lineHeight);
                 }
 
                 IEntityMovePacket newMovePacket = (IEntityMovePacket) movePacket.clone();
-                newMovePacket.setIdentifier(tag.getTop().getIdentifier());
+                newMovePacket.setIdentifier(tag.getTop());
                 newMovePacket.setNewPosition(location, true);
                 e.context().queueDispatch(newMovePacket, 0);
-            }
-            else {
+            } else {
                 for (RenderedTagLine line : tag.getLines()) {
                     if (!state.isLineSpawned(e.getPlayer(), line)) continue;
 
                     IEntityMovePacket newMovePacket = (IEntityMovePacket) movePacket.clone();
-                    newMovePacket.setIdentifier(line.getBottom().getIdentifier());
+                    newMovePacket.setIdentifier(line.getBottom());
                     e.context().queueDispatch(newMovePacket, 0);
                 }
 
                 IEntityMovePacket newMovePacket = (IEntityMovePacket) movePacket.clone();
-                newMovePacket.setIdentifier(tag.getTop().getIdentifier());
+                newMovePacket.setIdentifier(tag.getTop());
                 e.context().queueDispatch(newMovePacket, 0);
             }
         }

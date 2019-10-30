@@ -6,7 +6,6 @@ import net.blitzcube.peapi.api.entity.fake.IFakeEntityFactory;
 import net.blitzcube.peapi.api.entity.hitbox.IHitbox;
 import net.blitzcube.peapi.api.entity.modifier.IEntityModifier;
 import net.blitzcube.peapi.api.entity.modifier.IEntityModifierRegistry;
-import net.blitzcube.peapi.api.entity.modifier.IModifiableEntity;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -53,11 +52,10 @@ public class LineEntityFactory {
         IFakeEntity entity = factory.createFakeEntity(EntityType.ARMOR_STAND);
         entity.setLocation(location);
 
-        IModifiableEntity modifiableEntity = entity.getModifiableEntity();
-        this.armorStandInvisible.setValue(modifiableEntity, true);
-        this.marker.setValue(modifiableEntity, true);
-        this.nameVisible.setValue(modifiableEntity, false);
-        this.name.setValue(modifiableEntity, "");
+        this.armorStandInvisible.setValue(entity, true);
+        this.marker.setValue(entity, true);
+        this.nameVisible.setValue(entity, false);
+        this.name.setValue(entity, "");
 
         return entity;
     }
@@ -66,9 +64,8 @@ public class LineEntityFactory {
         IFakeEntity entity = factory.createFakeEntity(EntityType.SLIME);
         entity.setLocation(location);
 
-        IModifiableEntity modifiable = entity.getModifiableEntity();
-        this.entityInvisible.setValue(modifiable, true);
-        this.size.setValue(modifiable, -1);
+        this.entityInvisible.setValue(entity, true);
+        this.size.setValue(entity, -1);
 
         return entity;
     }
@@ -77,21 +74,20 @@ public class LineEntityFactory {
         IFakeEntity entity = factory.createFakeEntity(EntityType.SILVERFISH);
         entity.setLocation(location);
 
-        IModifiableEntity modifiable = entity.getModifiableEntity();
-        this.entityInvisible.setValue(modifiable, true);
-        this.silent.setValue(modifiable, true);
-        this.noAI.setValue(modifiable, true);
+        this.entityInvisible.setValue(entity, true);
+        this.silent.setValue(entity, true);
+        this.noAI.setValue(entity, true);
 
         return entity;
     }
 
     public void updateName(IFakeEntity entity, String newName) {
         if (newName != null) {
-            this.nameVisible.setValue(entity.getModifiableEntity(), true);
-            this.name.setValue(entity.getModifiableEntity(), newName);
+            this.nameVisible.setValue(entity, true);
+            this.name.setValue(entity, newName);
         } else {
-            this.name.setValue(entity.getModifiableEntity(), ":D");
-            this.nameVisible.setValue(entity.getModifiableEntity(), false);
+            this.name.setValue(entity, ":D");
+            this.nameVisible.setValue(entity, false);
         }
     }
 
