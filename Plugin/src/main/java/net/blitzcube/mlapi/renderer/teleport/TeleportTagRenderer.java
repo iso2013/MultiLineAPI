@@ -8,10 +8,10 @@ import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.structure.transactions.*;
 import net.blitzcube.mlapi.tag.RenderedTagLine;
 import net.blitzcube.mlapi.tag.Tag;
-import net.blitzcube.peapi.api.IPacketEntityAPI;
-import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
-import net.blitzcube.peapi.api.entity.hitbox.IHitbox;
-import net.blitzcube.peapi.api.packet.*;
+import net.iso2013.peapi.api.PacketEntityAPI;
+import net.iso2013.peapi.api.entity.fake.FakeEntity;
+import net.iso2013.peapi.api.entity.hitbox.Hitbox;
+import net.iso2013.peapi.api.packet.*;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -30,7 +30,7 @@ public class TeleportTagRenderer extends TagRenderer {
 
     private final boolean animated;
 
-    public TeleportTagRenderer(IPacketEntityAPI packet, LineEntityFactory lineFactory, VisibilityStates state,
+    public TeleportTagRenderer(PacketEntityAPI packet, LineEntityFactory lineFactory, VisibilityStates state,
                                MultiLineAPI parent, boolean animated) {
         super(packet, lineFactory, state, parent);
 
@@ -42,11 +42,11 @@ public class TeleportTagRenderer extends TagRenderer {
     public void processTransactions(Collection<StructureTransaction> transactions, Tag tag, Player target) {
         if (tag.getTarget() == target || !state.isSpawned(target, tag)) return;
 
-        IEntityPacketFactory factory = packetAPI.getPacketFactory();
-        List<IEntityPacket> firstPhase = null, secondPhase = null, thirdPhase = null;
+        EntityPacketFactory factory = packetAPI.getPacketFactory();
+        List<EntityPacket> firstPhase = null, secondPhase = null, thirdPhase = null;
 
         Location location = null;
-        IHitbox hitbox;
+        Hitbox hitbox;
 
         for (StructureTransaction transaction : transactions) {
             if (transaction instanceof MoveTransaction) {
@@ -77,7 +77,7 @@ public class TeleportTagRenderer extends TagRenderer {
                 }
 
                 int index = 0;
-                IEntityDestroyPacket destroyPacket = null;
+                EntityDestroyPacket destroyPacket = null;
                 for (RenderedTagLine line : tag.getLines()) {
                     String value = line.get(target);
 
@@ -130,7 +130,7 @@ public class TeleportTagRenderer extends TagRenderer {
                     firstPhase = new LinkedList<>();
                 }
 
-                List<IEntityPacket> finalFirstPhase = firstPhase;
+                List<EntityPacket> finalFirstPhase = firstPhase;
                 ((NameTransaction) transaction).getQueuedNames()
                         .forEach((key, value) -> {
                             this.lineFactory.updateName(key.getBottom(), value);
@@ -152,13 +152,13 @@ public class TeleportTagRenderer extends TagRenderer {
                 }
 
                 secondPhase.add(factory.createMovePacket(line.getBottom(), location.toVector(),
-                        null, false, IEntityMovePacket.MoveType.TELEPORT
+                        null, false, EntityMovePacket.MoveType.TELEPORT
                 ));
                 location.setY(location.getY() + LINE_HEIGHT);
             }
 
             secondPhase.add(factory.createMovePacket(tag.getTop(), location.toVector(),
-                    null, false, IEntityMovePacket.MoveType.TELEPORT
+                    null, false, EntityMovePacket.MoveType.TELEPORT
             ));
         }
 
@@ -176,13 +176,13 @@ public class TeleportTagRenderer extends TagRenderer {
             }
         } else {
             if (secondPhase != null && !secondPhase.isEmpty()) {
-                List<IEntityPacket> finalSecondPhase = secondPhase;
+                List<EntityPacket> finalSecondPhase = secondPhase;
                 Bukkit.getScheduler().runTaskLater(parent,
                         () -> finalSecondPhase.forEach(packet -> packetAPI.dispatchPacket(packet, target, 0)), 1L);
             }
 
             if (thirdPhase != null && !thirdPhase.isEmpty()) {
-                List<IEntityPacket> finalThirdPhase = thirdPhase;
+                List<EntityPacket> finalThirdPhase = thirdPhase;
                 Bukkit.getScheduler().runTaskLater(parent,
                         () -> finalThirdPhase.forEach(packet -> packetAPI.dispatchPacket(packet, target, 0)), 2L);
             }
@@ -190,17 +190,17 @@ public class TeleportTagRenderer extends TagRenderer {
     }
 
     @Override
-    public void spawnTag(Tag tag, Player player, IEntityMountPacket mountPacket) {
+    public void spawnTag(Tag tag, Player player, EntityMountPacket mountPacket) {
         if (tag.getTarget() == player) return;
         Boolean visible = state.isVisible(tag, player);
         visible = (visible != null) ? visible : tag.getDefaultVisible();
         if (!visible) return;
 
-        IEntityPacketFactory factory = packetAPI.getPacketFactory();
-        List<IEntityPacket> packets = new LinkedList<>();
+        EntityPacketFactory factory = packetAPI.getPacketFactory();
+        List<EntityPacket> packets = new LinkedList<>();
 
         Location location = tag.getTarget().getLocation();
-        IHitbox hitbox = tag.getTargetHitbox();
+        Hitbox hitbox = tag.getTargetHitbox();
         if (hitbox != null) {
             location.add(0, (hitbox.getMax().getY() - hitbox.getMin().getY()) + BOTTOM_LINE_HEIGHT, 0);
         }
@@ -260,9 +260,9 @@ public class TeleportTagRenderer extends TagRenderer {
     }
 
     @Override
-    public IFakeEntity createBottom(Tag tag) {
+    public FakeEntity createBottom(Tag tag) {
         if (tag.getTarget().getType() == EntityType.PLAYER) {
-            IHitbox hitbox = tag.getTargetHitbox();
+            Hitbox hitbox = tag.getTargetHitbox();
             double y = (hitbox != null) ? (hitbox.getMax().getY() - hitbox.getMin().getY()) + BOTTOM_LINE_HEIGHT : 0;
             return lineFactory.createSilverfish(tag.getTarget().getLocation().add(0, y, 0));
         }
@@ -270,8 +270,8 @@ public class TeleportTagRenderer extends TagRenderer {
     }
 
     @Override
-    public IFakeEntity createTop(Tag tag) {
-        IHitbox hitbox = tag.getTargetHitbox();
+    public FakeEntity createTop(Tag tag) {
+        Hitbox hitbox = tag.getTargetHitbox();
         double y = (hitbox != null) ? (hitbox.getMax().getY() - hitbox.getMin().getY()) + BOTTOM_LINE_HEIGHT : 0;
 
         y += tag.getLines().size() * LINE_HEIGHT;
@@ -279,9 +279,9 @@ public class TeleportTagRenderer extends TagRenderer {
     }
 
     @Override
-    public LinkedList<IFakeEntity> createStack(Tag tag, int addIndex) {
-        LinkedList<IFakeEntity> stack = new LinkedList<>();
-        IHitbox hitbox = tag.getTargetHitbox();
+    public LinkedList<FakeEntity> createStack(Tag tag, int addIndex) {
+        LinkedList<FakeEntity> stack = new LinkedList<>();
+        Hitbox hitbox = tag.getTargetHitbox();
         double y = (hitbox != null) ? (hitbox.getMax().getY() - hitbox.getMin().getY()) + BOTTOM_LINE_HEIGHT : 0;
 
         y += addIndex * LINE_HEIGHT;
@@ -293,5 +293,5 @@ public class TeleportTagRenderer extends TagRenderer {
     public void purge(Tag tag) {}
 
     @Override
-    public void purge(IFakeEntity entity) {}
+    public void purge(FakeEntity entity) {}
 }

@@ -1,7 +1,7 @@
 package net.blitzcube.mlapi.tag;
 
 import net.blitzcube.mlapi.api.tag.ITagController;
-import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
+import net.iso2013.peapi.api.entity.fake.FakeEntity;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
@@ -12,8 +12,8 @@ import java.util.LinkedList;
  * Created by iso2013 on 6/4/2018.
  */
 public class RenderedTagLine {
-    private final LinkedList<IFakeEntity> stack;
-    private final IFakeEntity bottom;
+    private final LinkedList<FakeEntity> stack;
+    private final FakeEntity bottom;
 
     private final ITagController controller;
     private final ITagController.TagLine lineGenerator;
@@ -21,7 +21,7 @@ public class RenderedTagLine {
     private final boolean spaceWhenNull;
 
     public RenderedTagLine(ITagController controller, ITagController.TagLine tagLine, Entity target,
-                           LinkedList<IFakeEntity> stack) {
+                           LinkedList<FakeEntity> stack) {
         this.controller = controller;
         this.lineGenerator = tagLine;
         this.target = target;
@@ -35,11 +35,11 @@ public class RenderedTagLine {
         return lineGenerator.getText(target, viewer);
     }
 
-    public IFakeEntity getBottom() {
+    public FakeEntity getBottom() {
         return bottom;
     }
 
-    public Deque<IFakeEntity> getStack() {
+    public Deque<FakeEntity> getStack() {
         return stack;
     }
 

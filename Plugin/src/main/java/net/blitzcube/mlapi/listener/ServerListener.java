@@ -4,8 +4,8 @@ import com.google.common.base.Preconditions;
 import net.blitzcube.mlapi.MultiLineAPI;
 import net.blitzcube.mlapi.VisibilityStates;
 import net.blitzcube.mlapi.renderer.TagRenderer;
-import net.blitzcube.peapi.api.IPacketEntityAPI;
-import net.blitzcube.peapi.api.entity.IRealEntityIdentifier;
+import net.iso2013.peapi.api.PacketEntityAPI;
+import net.iso2013.peapi.api.entity.RealEntityIdentifier;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.GameMode;
@@ -31,9 +31,9 @@ public class ServerListener implements Listener {
 
     private final MultiLineAPI parent;
     private final VisibilityStates states;
-    private final IPacketEntityAPI packet;
+    private final PacketEntityAPI packet;
 
-    public ServerListener(MultiLineAPI parent, VisibilityStates states, IPacketEntityAPI packet) {
+    public ServerListener(MultiLineAPI parent, VisibilityStates states, PacketEntityAPI packet) {
         Preconditions.checkArgument(parent != null, "MLAPI instance must not be null");
         Preconditions.checkArgument(states != null, "VisibilityState instance must not be null");
         Preconditions.checkArgument(packet != null, "PacketEntityAPI instance must not be null");
@@ -99,8 +99,8 @@ public class ServerListener implements Listener {
             // Player is changing out of SPECTATOR, so we should spawn all tags.
             this.packet.getVisible(e.getPlayer(), 1, false)
                     .map(identifier -> {
-                        if (identifier instanceof IRealEntityIdentifier) {
-                            return parent.getTag(((IRealEntityIdentifier) identifier).getEntity());
+                        if (identifier instanceof RealEntityIdentifier) {
+                            return parent.getTag(((RealEntityIdentifier) identifier).getEntity());
                         }
                         return null;
                     }).filter(tag -> {

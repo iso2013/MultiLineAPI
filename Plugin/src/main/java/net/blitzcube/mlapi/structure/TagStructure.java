@@ -8,7 +8,7 @@ import net.blitzcube.mlapi.structure.transactions.*;
 import net.blitzcube.mlapi.tag.RenderedTagLine;
 import net.blitzcube.mlapi.tag.Tag;
 import net.blitzcube.mlapi.util.RangeSeries;
-import net.blitzcube.peapi.api.entity.IEntityIdentifier;
+import net.iso2013.peapi.api.entity.EntityIdentifier;
 import org.bukkit.entity.Player;
 
 import java.util.*;
@@ -158,7 +158,7 @@ public class TagStructure {
         return transactions;
     }
 
-    private IEntityIdentifier getAbove(int idx, Player player, RangeSeries added, RangeSeries removed) {
+    private EntityIdentifier getAbove(int idx, Player player, RangeSeries added, RangeSeries removed) {
         for (int i = idx; i < lines.size(); i++) {
             if ((visible.containsEntry(player, lines.get(i))
                     && (removed == null || !removed.contains(i)))
@@ -169,7 +169,7 @@ public class TagStructure {
         return tag.getTop();
     }
 
-    private IEntityIdentifier getBelow(int idx, Player player, RangeSeries added, RangeSeries removed) {
+    private EntityIdentifier getBelow(int idx, Player player, RangeSeries added, RangeSeries removed) {
         for (int i = idx; i >= 0; i--) {
             if ((visible.containsEntry(player, lines.get(i))
                     && (removed == null || !removed.contains(i)))

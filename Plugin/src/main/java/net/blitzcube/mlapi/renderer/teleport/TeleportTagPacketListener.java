@@ -5,13 +5,13 @@ import net.blitzcube.mlapi.MultiLineAPI;
 import net.blitzcube.mlapi.VisibilityStates;
 import net.blitzcube.mlapi.tag.RenderedTagLine;
 import net.blitzcube.mlapi.tag.Tag;
-import net.blitzcube.peapi.api.entity.IEntityIdentifier;
-import net.blitzcube.peapi.api.entity.IRealEntityIdentifier;
-import net.blitzcube.peapi.api.entity.hitbox.IHitbox;
-import net.blitzcube.peapi.api.event.IEntityPacketEvent;
-import net.blitzcube.peapi.api.listener.IListener;
-import net.blitzcube.peapi.api.packet.IEntityMovePacket;
-import net.blitzcube.peapi.api.packet.IEntityPacket;
+import net.iso2013.peapi.api.entity.EntityIdentifier;
+import net.iso2013.peapi.api.entity.RealEntityIdentifier;
+import net.iso2013.peapi.api.entity.hitbox.Hitbox;
+import net.iso2013.peapi.api.event.EntityPacketEvent;
+import net.iso2013.peapi.api.listener.Listener;
+import net.iso2013.peapi.api.packet.EntityMovePacket;
+import net.iso2013.peapi.api.packet.EntityPacket;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.util.Vector;
@@ -19,7 +19,7 @@ import org.bukkit.util.Vector;
 /**
  * Created by iso2013 on 8/7/2018.
  */
-public class TeleportTagPacketListener implements IListener {
+public class TeleportTagPacketListener implements Listener {
 
     private final double lineHeight, bottomLineHeight;
     private final MultiLineAPI parent;
@@ -37,27 +37,27 @@ public class TeleportTagPacketListener implements IListener {
     }
 
     @Override
-    public void onEvent(IEntityPacketEvent e) {
-        IEntityPacket packet = e.getPacket();
-        IEntityIdentifier id = packet.getIdentifier();
+    public void onEvent(EntityPacketEvent e) {
+        EntityPacket packet = e.getPacket();
+        EntityIdentifier id = packet.getIdentifier();
         if (id == null) return;
 
-        if (!(id instanceof IRealEntityIdentifier)) return;
+        if (!(id instanceof RealEntityIdentifier)) return;
 
-        if (e.getPacket() instanceof IEntityMovePacket) {
-            IEntityMovePacket movePacket = (IEntityMovePacket) e.getPacket();
+        if (e.getPacket() instanceof EntityMovePacket) {
+            EntityMovePacket movePacket = (EntityMovePacket) e.getPacket();
 
             Entity entity;
-            if (movePacket.getMoveType() == IEntityMovePacket.MoveType.LOOK ||
-                    (entity = ((IRealEntityIdentifier) id).getEntity()) == null)
+            if (movePacket.getMoveType() == EntityMovePacket.MoveType.LOOK ||
+                    (entity = ((RealEntityIdentifier) id).getEntity()) == null)
                 return;
 
             Tag tag = parent.getTag(entity);
             if (tag == null) return;
 
-            if (movePacket.getMoveType() == IEntityMovePacket.MoveType.TELEPORT) {
+            if (movePacket.getMoveType() == EntityMovePacket.MoveType.TELEPORT) {
                 Vector location = movePacket.getNewPosition().clone();
-                IHitbox hitbox = tag.getTargetHitbox();
+                Hitbox hitbox = tag.getTargetHitbox();
                 if (hitbox != null) {
                     location.setY(location.getY() + (hitbox.getMax().getY() - hitbox.getMin().getY()) + bottomLineHeight);
                 }
@@ -71,14 +71,14 @@ public class TeleportTagPacketListener implements IListener {
                         continue;
                     }
 
-                    IEntityMovePacket newMovePacket = (IEntityMovePacket) movePacket.clone();
+                    EntityMovePacket newMovePacket = (EntityMovePacket) movePacket.clone();
                     newMovePacket.setIdentifier(line.getBottom());
                     newMovePacket.setNewPosition(location, true);
                     e.context().queueDispatch(newMovePacket, 0);
                     location.setY(location.getY() + lineHeight);
                 }
 
-                IEntityMovePacket newMovePacket = (IEntityMovePacket) movePacket.clone();
+                EntityMovePacket newMovePacket = (EntityMovePacket) movePacket.clone();
                 newMovePacket.setIdentifier(tag.getTop());
                 newMovePacket.setNewPosition(location, true);
                 e.context().queueDispatch(newMovePacket, 0);
@@ -86,12 +86,12 @@ public class TeleportTagPacketListener implements IListener {
                 for (RenderedTagLine line : tag.getLines()) {
                     if (!state.isLineSpawned(e.getPlayer(), line)) continue;
 
-                    IEntityMovePacket newMovePacket = (IEntityMovePacket) movePacket.clone();
+                    EntityMovePacket newMovePacket = (EntityMovePacket) movePacket.clone();
                     newMovePacket.setIdentifier(line.getBottom());
                     e.context().queueDispatch(newMovePacket, 0);
                 }
 
-                IEntityMovePacket newMovePacket = (IEntityMovePacket) movePacket.clone();
+                EntityMovePacket newMovePacket = (EntityMovePacket) movePacket.clone();
                 newMovePacket.setIdentifier(tag.getTop());
                 e.context().queueDispatch(newMovePacket, 0);
             }

@@ -1,11 +1,11 @@
 package net.blitzcube.mlapi.renderer;
 
 import com.google.common.base.Preconditions;
-import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
-import net.blitzcube.peapi.api.entity.fake.IFakeEntityFactory;
-import net.blitzcube.peapi.api.entity.hitbox.IHitbox;
-import net.blitzcube.peapi.api.entity.modifier.IEntityModifier;
-import net.blitzcube.peapi.api.entity.modifier.IEntityModifierRegistry;
+import net.iso2013.peapi.api.entity.fake.FakeEntity;
+import net.iso2013.peapi.api.entity.fake.FakeEntityFactory;
+import net.iso2013.peapi.api.entity.hitbox.Hitbox;
+import net.iso2013.peapi.api.entity.modifier.EntityModifier;
+import net.iso2013.peapi.api.entity.modifier.EntityModifierRegistry;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -16,24 +16,24 @@ import org.bukkit.entity.EntityType;
 public class LineEntityFactory {
 
     //Armor stand modifiers
-    private final IEntityModifier<Boolean> armorStandInvisible;
-    private final IEntityModifier<String> name;
-    private final IEntityModifier<Boolean> nameVisible;
-    private final IEntityModifier<Boolean> marker;
+    private final EntityModifier<Boolean> armorStandInvisible;
+    private final EntityModifier<String> name;
+    private final EntityModifier<Boolean> nameVisible;
+    private final EntityModifier<Boolean> marker;
 
     //Slime modifiers
-    private final IEntityModifier<Integer> size;
+    private final EntityModifier<Integer> size;
 
     //Silverfish modifiers
-    private final IEntityModifier<Boolean> silent;
-    private final IEntityModifier<Boolean> noAI;
+    private final EntityModifier<Boolean> silent;
+    private final EntityModifier<Boolean> noAI;
 
     //Entity modifiers
-    private final IEntityModifier<Boolean> entityInvisible;
+    private final EntityModifier<Boolean> entityInvisible;
 
-    private final IFakeEntityFactory factory;
+    private final FakeEntityFactory factory;
 
-    public LineEntityFactory(IEntityModifierRegistry registry, IFakeEntityFactory factory) {
+    public LineEntityFactory(EntityModifierRegistry registry, FakeEntityFactory factory) {
         Preconditions.checkArgument(registry != null, "Modifier registry must not be null");
         Preconditions.checkArgument(factory != null, "Fake entity factory must not be null");
 
@@ -48,8 +48,8 @@ public class LineEntityFactory {
         this.silent = registry.lookup(EntityType.SILVERFISH, "SILENT", Boolean.class);
     }
 
-    public IFakeEntity createArmorStand(Location location) {
-        IFakeEntity entity = factory.createFakeEntity(EntityType.ARMOR_STAND);
+    public FakeEntity createArmorStand(Location location) {
+        FakeEntity entity = factory.createFakeEntity(EntityType.ARMOR_STAND);
         entity.setLocation(location);
 
         this.armorStandInvisible.setValue(entity, true);
@@ -60,8 +60,8 @@ public class LineEntityFactory {
         return entity;
     }
 
-    public IFakeEntity createSlime(Location location) {
-        IFakeEntity entity = factory.createFakeEntity(EntityType.SLIME);
+    public FakeEntity createSlime(Location location) {
+        FakeEntity entity = factory.createFakeEntity(EntityType.SLIME);
         entity.setLocation(location);
 
         this.entityInvisible.setValue(entity, true);
@@ -70,8 +70,8 @@ public class LineEntityFactory {
         return entity;
     }
 
-    public IFakeEntity createSilverfish(Location location) {
-        IFakeEntity entity = factory.createFakeEntity(EntityType.SILVERFISH);
+    public FakeEntity createSilverfish(Location location) {
+        FakeEntity entity = factory.createFakeEntity(EntityType.SILVERFISH);
         entity.setLocation(location);
 
         this.entityInvisible.setValue(entity, true);
@@ -81,7 +81,7 @@ public class LineEntityFactory {
         return entity;
     }
 
-    public void updateName(IFakeEntity entity, String newName) {
+    public void updateName(FakeEntity entity, String newName) {
         if (newName != null) {
             this.nameVisible.setValue(entity, true);
             this.name.setValue(entity, newName);
@@ -91,11 +91,11 @@ public class LineEntityFactory {
         }
     }
 
-    public void updateLocation(Location location, IFakeEntity entity) {
+    public void updateLocation(Location location, FakeEntity entity) {
         entity.setLocation(location);
     }
 
-    public IHitbox getHitbox(Entity newEntity) {
+    public Hitbox getHitbox(Entity newEntity) {
         return factory.createHitboxFromEntity(newEntity);
     }
 }

@@ -11,7 +11,7 @@ import net.blitzcube.mlapi.listener.ServerListener;
 import net.blitzcube.mlapi.renderer.LineEntityFactory;
 import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.tag.Tag;
-import net.blitzcube.peapi.api.IPacketEntityAPI;
+import net.iso2013.peapi.api.PacketEntityAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -33,7 +33,7 @@ public final class MultiLineAPI extends JavaPlugin implements IMultiLineAPI {
 
     @Override
     public void onEnable() {
-        IPacketEntityAPI packetAPI = (IPacketEntityAPI) Bukkit.getPluginManager().getPlugin("PacketEntityAPI");
+        PacketEntityAPI packetAPI = (PacketEntityAPI) Bukkit.getPluginManager().getPlugin("PacketEntityAPI");
         if (packetAPI == null) {
             throw new IllegalStateException("Failed to start MultiLineAPI! PacketEntityAPI could not be found!");
         }

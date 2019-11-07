@@ -3,30 +3,30 @@ package net.blitzcube.mlapi.structure.transactions;
 import java.util.List;
 
 import net.blitzcube.mlapi.tag.RenderedTagLine;
-import net.blitzcube.peapi.api.entity.IEntityIdentifier;
+import net.iso2013.peapi.api.entity.EntityIdentifier;
 
 /**
  * Created by iso2013 on 7/31/2018.
  */
 public class MoveTransaction extends StructureTransaction {
 
-    private final IEntityIdentifier below;
-    private final IEntityIdentifier above;
+    private final EntityIdentifier below;
+    private final EntityIdentifier above;
     private final List<RenderedTagLine> moved;
     private final boolean toSameLevel;
 
-    public MoveTransaction(IEntityIdentifier below, IEntityIdentifier above, List<RenderedTagLine> moved, boolean toSameLevel) {
+    public MoveTransaction(EntityIdentifier below, EntityIdentifier above, List<RenderedTagLine> moved, boolean toSameLevel) {
         this.below = below;
         this.above = above;
         this.moved = moved;
         this.toSameLevel = toSameLevel;
     }
 
-    public IEntityIdentifier getBelow() {
+    public EntityIdentifier getBelow() {
         return below;
     }
 
-    public IEntityIdentifier getAbove() {
+    public EntityIdentifier getAbove() {
         return above;
     }
 

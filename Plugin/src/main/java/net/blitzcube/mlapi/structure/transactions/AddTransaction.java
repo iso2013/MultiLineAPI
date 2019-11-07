@@ -1,30 +1,30 @@
 package net.blitzcube.mlapi.structure.transactions;
 
-import java.util.List;
-
 import net.blitzcube.mlapi.tag.RenderedTagLine;
-import net.blitzcube.peapi.api.entity.IEntityIdentifier;
+import net.iso2013.peapi.api.entity.EntityIdentifier;
+
+import java.util.List;
 
 /**
  * Created by iso2013 on 6/13/2018.
  */
 public class AddTransaction extends StructureTransaction {
 
-    private final IEntityIdentifier below;
-    private final IEntityIdentifier above;
+    private final EntityIdentifier below;
+    private final EntityIdentifier above;
     private final List<RenderedTagLine> added;
 
-    public AddTransaction(IEntityIdentifier below, IEntityIdentifier above, List<RenderedTagLine> added) {
+    public AddTransaction(EntityIdentifier below, EntityIdentifier above, List<RenderedTagLine> added) {
         this.below = below;
         this.above = above;
         this.added = added;
     }
 
-    public IEntityIdentifier getBelow() {
+    public EntityIdentifier getBelow() {
         return below;
     }
 
-    public IEntityIdentifier getAbove() {
+    public EntityIdentifier getAbove() {
         return above;
     }
 

@@ -8,8 +8,8 @@ import net.blitzcube.mlapi.renderer.LineEntityFactory;
 import net.blitzcube.mlapi.renderer.TagRenderer;
 import net.blitzcube.mlapi.structure.TagStructure;
 import net.blitzcube.mlapi.util.SortedList;
-import net.blitzcube.peapi.api.entity.fake.IFakeEntity;
-import net.blitzcube.peapi.api.entity.hitbox.IHitbox;
+import net.iso2013.peapi.api.entity.fake.FakeEntity;
+import net.iso2013.peapi.api.entity.hitbox.Hitbox;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -36,13 +36,13 @@ public class Tag implements ITag {
     // Tag controller information
     private final SortedList<ITagController> sortedControllers;
     // Bottom and top entities
-    private final IFakeEntity bottom;
-    private final IFakeEntity top;
+    private final FakeEntity bottom;
+    private final FakeEntity top;
     private final VisibilityStates state;
     // Default visibility state
     private boolean defaultVisible = true;
 
-    private final IHitbox hitbox;
+    private final Hitbox hitbox;
 
     public Tag(Entity target, TagRenderer renderer, Collection<ITagController> controllers, LineEntityFactory lineFactory, VisibilityStates state) {
         // Constructor parameters
@@ -199,11 +199,11 @@ public class Tag implements ITag {
         return target;
     }
 
-    public IFakeEntity getBottom() {
+    public FakeEntity getBottom() {
         return bottom;
     }
 
-    public IFakeEntity getTop() {
+    public FakeEntity getTop() {
         return top;
     }
 
@@ -211,7 +211,7 @@ public class Tag implements ITag {
         return structure.getLines();
     }
 
-    public IHitbox getTargetHitbox() {
+    public Hitbox getTargetHitbox() {
         return hitbox;
     }
 
