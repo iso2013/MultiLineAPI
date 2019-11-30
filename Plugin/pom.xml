@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>net.blitzcube.mlapi</groupId>
+        <groupId>net.iso2013.mlapi</groupId>
         <artifactId>MultiLineAPI</artifactId>
         <version>2.1.1-SNAPSHOT</version>
     </parent>
@@ -57,7 +57,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>net.blitzcube.mlapi</groupId>
+            <groupId>net.iso2013.mlapi</groupId>
             <artifactId>API</artifactId>
             <version>2.1.1-SNAPSHOT</version>
             <scope>compile</scope>
