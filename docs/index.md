@@ -115,7 +115,7 @@ You may report issues [here](https://github.com/iso2013/MultiLineAPI/issues). Pl
 * Steps to reproduce
 * Expected behaviour
 * Actual outcome
-* Minecraft version (Only 1.12 is officially supported)
+* Minecraft version (Only 1.14 is officially supported)
 
 ## Source Code
 Source code is available [here](https://github.com/iso2013/MultiLineAPI)!
