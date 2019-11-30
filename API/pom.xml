@@ -34,8 +34,8 @@
                 <configuration>
                     <reportOutputDirectory>../docs</reportOutputDirectory>
                     <destDir>javadocs</destDir>
-                    <doctitle>PacketEntityAPI docs v${project.version}</doctitle>
-                    <windowtitle>PacketEntityAPI docs v${project.version}</windowtitle>
+                    <doctitle>MultiLineAPI docs v${project.version}</doctitle>
+                    <windowtitle>MultiLineAPI docs v${project.version}</windowtitle>
                 </configuration>
             </plugin>
         </plugins>
