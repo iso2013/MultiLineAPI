@@ -29,11 +29,10 @@ public interface IMultiLineAPI {
 
     /**
      * Get the tag associated with the specified entity. If no tag has yet been associated,
-     * create one instead.
+     * create one instead. Optionally sends the new tag to players.
      *
      * @param entity the entity whose tag to retrieve or create
-     *
-     * @param notifyPlayers
+     * @param notifyPlayers whether or not to send the new tag to players (should almost always be true).
      * @return the created tag
      */
     ITag getOrCreateTag(Entity entity, boolean notifyPlayers);
