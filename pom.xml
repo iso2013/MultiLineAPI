@@ -5,32 +5,46 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.iso2013.mlapi</groupId>
-    <artifactId>MultiLineAPI</artifactId>
+    <artifactId>MultiLineAPI-Parent</artifactId>
     <packaging>pom</packaging>
     <version>2.1.2-SNAPSHOT</version>
     <modules>
-        <module>API</module>
-        <module>Plugin</module>
+        <module>MultiLineAPI</module>
+        <module>MultiLineAPI-Plugin</module>
     </modules>
 
     <properties>
         <github.global.server>github</github.global.server>
     </properties>
 
-    <distributionManagement>
+<!--    <distributionManagement>
         <repository>
             <id>internal.repo</id>
             <name>Temporary Staging Repository</name>
             <url>file://${project.build.directory}/mvn-repo</url>
         </repository>
-    </distributionManagement>
+    </distributionManagement>-->
 
     <repositories>
         <repository>
+            <id>frostalf</id>
+            <url>https://repo.frostalf.net</url>
+        </repository>        
+        <!--<repository>
             <id>spigotmc-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
-        </repository>
+        </repository>-->
     </repositories>
+    
+    <distributionManagement>
+        <repository>
+            <id>FrostRepo</id>
+            <url>sftp://repo.frostalf.net/var/www/repo</url>
+            <uniqueVersion>false</uniqueVersion>
+            <name>FrostRepo</name>
+            <layout>default</layout>
+        </repository>
+    </distributionManagement>
 
     <dependencies>
         <dependency>
@@ -42,6 +56,7 @@
     </dependencies>
 
     <build>
+        <defaultGoal>clean install</defaultGoal>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -52,6 +67,22 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>3.0.0-M1</version>
+                <configuration>
+                    <repositoryId>FrostRepo</repositoryId>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>deploy</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
         <resources>
             <resource>
@@ -59,5 +90,12 @@
                 <filtering>true</filtering>
             </resource>
         </resources>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh</artifactId>
+                <version>3.3.4</version>
+            </extension>
+        </extensions>
     </build>
 </project>

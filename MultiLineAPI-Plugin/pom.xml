@@ -5,14 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>net.iso2013.mlapi</groupId>
-        <artifactId>MultiLineAPI</artifactId>
+        <artifactId>MultiLineAPI-Parent</artifactId>
         <version>2.1.2-SNAPSHOT</version>
     </parent>
 
-    <artifactId>Plugin</artifactId>
+    <artifactId>MultiLineAPI-Plugin</artifactId>
     <packaging>jar</packaging>
-
-    <name>Plugin</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -20,6 +18,7 @@
 
     <build>
         <defaultGoal>clean package</defaultGoal>
+        <finalName>MultilineAPI-Plugin</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
