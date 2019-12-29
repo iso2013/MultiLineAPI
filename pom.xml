@@ -7,7 +7,7 @@
     <groupId>net.iso2013.mlapi</groupId>
     <artifactId>MultiLineAPI</artifactId>
     <packaging>pom</packaging>
-    <version>2.1.1-SNAPSHOT</version>
+    <version>2.1.2-SNAPSHOT</version>
     <modules>
         <module>API</module>
         <module>Plugin</module>
