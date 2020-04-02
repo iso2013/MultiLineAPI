@@ -17,23 +17,11 @@
         <github.global.server>github</github.global.server>
     </properties>
 
-<!--    <distributionManagement>
-        <repository>
-            <id>internal.repo</id>
-            <name>Temporary Staging Repository</name>
-            <url>file://${project.build.directory}/mvn-repo</url>
-        </repository>
-    </distributionManagement>-->
-
     <repositories>
         <repository>
             <id>frostalf</id>
             <url>https://repo.frostalf.net</url>
-        </repository>        
-        <!--<repository>
-            <id>spigotmc-repo</id>
-            <url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
-        </repository>-->
+        </repository>
     </repositories>
     
     <distributionManagement>

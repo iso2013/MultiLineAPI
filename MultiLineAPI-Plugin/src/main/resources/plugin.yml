@@ -1,5 +1,6 @@
 name: MultiLineAPI
 version: ${project.version}
 main: net.iso2013.mlapi.MultiLineAPIPlugin
-depends: [PacketEntityAPI]
+depend: [PacketEntityAPI]
 authors: [iso2013]
+api-version: "1.13"
