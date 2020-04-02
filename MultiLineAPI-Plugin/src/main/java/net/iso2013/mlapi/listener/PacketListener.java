@@ -111,16 +111,18 @@ public class PacketListener implements Listener {
     }
 
     private void clearNameData(EntitySpawnPacket spawnPacket) {
-        ModifiableEntity modifiable = packet.wrap(spawnPacket.getMetadata());
-        if (name != null) {
-            name.setValue(modifiable, Optional.empty());
-        } else {
-            if (!legacyName.specifies(modifiable)) return;
-            legacyName.setValue(modifiable, "");
-        }
-        nameVisible.setValue(modifiable, false);
-        spawnPacket.setMetadata(modifiable.getWatchableObjects());
-        spawnPacket.rewriteMetadata();
+        try {
+            ModifiableEntity modifiable = packet.wrap(spawnPacket.getMetadata());
+            if (name != null) {
+                name.setValue(modifiable, Optional.empty());
+            } else {
+                if (!legacyName.specifies(modifiable)) return;
+                legacyName.setValue(modifiable, "");
+            }
+            nameVisible.setValue(modifiable, false);
+            spawnPacket.setMetadata(modifiable.getWatchableObjects());
+            spawnPacket.rewriteMetadata();
+        } catch (IllegalStateException ignored) {}
     }
 
     private void checkDataNames(EntityDataPacket dataPacket, TagImpl tag, Player player) {

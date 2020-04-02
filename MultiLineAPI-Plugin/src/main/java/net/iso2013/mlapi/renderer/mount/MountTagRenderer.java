@@ -100,7 +100,7 @@ public class MountTagRenderer extends TagRenderer {
                 for (FakeEntity fe : line.getStack()) {
                     if (previousIdentifier != null) {
                         this.lineFactory.updateLocation(location, fe);
-                        firstPhase.add(factory.createEntitySpawnPacket(fe));
+                        Collections.addAll(firstPhase, factory.createEntitySpawnPacket(fe));
                         secondPhase.add(factory.createMountPacket(previousIdentifier, fe));
                     }
 
@@ -207,7 +207,7 @@ public class MountTagRenderer extends TagRenderer {
             this.lineFactory.updateName(top, null);
         }
 
-        firstPhase.add(factory.createEntitySpawnPacket(bottom));
+        Collections.addAll(firstPhase, factory.createEntitySpawnPacket(bottom));
         Collections.addAll(firstPhase, factory.createObjectSpawnPacket(top));
 
         if (mountPacket == null) {
