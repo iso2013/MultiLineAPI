@@ -19,6 +19,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
+import net.iso2013.mlapi.util.Updater;
 
 /**
  * Created by iso2013 on 5/23/2018.
@@ -28,7 +29,9 @@ public final class MultiLineAPIPlugin extends JavaPlugin implements MultiLineAPI
     private final VisibilityStates states = new VisibilityStates();
     private final Map<Integer, TagImpl> tags = new HashMap<>();
     private final Multimap<EntityType, TagController> controllersMap = HashMultimap.create();
-
+    private boolean stopUpdate = false;
+    private Updater updater = new Updater(this, stopUpdate);
+    private Thread updateThread = new Thread(updater);
     private LineEntityFactory lineFactory;
 
     @Override
@@ -52,6 +55,13 @@ public final class MultiLineAPIPlugin extends JavaPlugin implements MultiLineAPI
         }
 
         TagRenderer.init(packetAPI, lineFactory, states, this, this.getConfig());
+        updateThread.start();
+    }
+
+    @Override
+    public void onDisable() {
+        updater.setStop(true);
+        updateThread.interrupt();
     }
 
     @Override
