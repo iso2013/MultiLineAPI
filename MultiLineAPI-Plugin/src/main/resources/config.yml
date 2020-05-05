@@ -22,3 +22,4 @@ typeRenderers:
     
 #Default is to check for update every 24 hours. Time is in seconds.
 updateTime: 1440
+disableUpdater: false

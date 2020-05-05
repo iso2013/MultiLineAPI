@@ -30,8 +30,8 @@ public final class MultiLineAPIPlugin extends JavaPlugin implements MultiLineAPI
     private final Map<Integer, TagImpl> tags = new HashMap<>();
     private final Multimap<EntityType, TagController> controllersMap = HashMultimap.create();
     private boolean stopUpdate = false;
-    private Updater updater = new Updater(this, stopUpdate);
-    private Thread updateThread = new Thread(updater);
+    private Updater updater;
+    private Thread updateThread;
     private LineEntityFactory lineFactory;
 
     @Override
@@ -55,13 +55,21 @@ public final class MultiLineAPIPlugin extends JavaPlugin implements MultiLineAPI
         }
 
         TagRenderer.init(packetAPI, lineFactory, states, this, this.getConfig());
-        updateThread.start();
+        if (!getConfig().getBoolean("disableUpdater")) {
+            updater = new Updater(this, stopUpdate);
+            updateThread = new Thread(updater);
+            updateThread.start();
+        }
+
     }
 
     @Override
     public void onDisable() {
-        updater.setStop(true);
-        updateThread.interrupt();
+        if (!getConfig().getBoolean("disableUpdater")) {
+            updater.setStop(true);
+            updateThread.interrupt();
+        }
+
     }
 
     @Override
