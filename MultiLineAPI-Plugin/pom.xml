@@ -17,7 +17,6 @@
     </properties>
 
     <build>
-        <defaultGoal>clean package</defaultGoal>
         <finalName>MultilineAPI-Plugin</finalName>
         <plugins>
             <plugin>
