@@ -19,3 +19,6 @@ typeRenderers:
     ENDER_PEARL: "TELEPORT"
     ENDER_SIGNAL: "TELEPORT"
     UNKNOWN: "MOUNT"
+    
+#Default is to check for update every 24 hours. Time is in seconds.
+updateTime: 1440
