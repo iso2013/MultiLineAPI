@@ -37,13 +37,6 @@ public class Updater extends Thread {
 
     @Override
     public void run() {
-        try {
-            Thread.sleep(this.plugin.getConfig().getInt("updateTime"), 1440);
-        } catch (InterruptedException ex) {
-            if (stopThread) {
-                return;
-            }
-        }
         while (!stopThread) {
             try {
                 URL url = new URL(HOST);
@@ -56,22 +49,12 @@ public class Updater extends Thread {
                     JSONParser parser = new JSONParser();
                     JSONObject json = (JSONObject) parser.parse(in);
                     String version = (String) json.get("current_version");
-                    String[] remoteVersion = version.replace("version ", "").split(".");
-                    String[] currentVersion = this.plugin.getDescription().getVersion().split(".");
-                    StringBuilder comparedVersionRemote = new StringBuilder(3);
-                    StringBuilder comparedVersionCurrent = new StringBuilder(3);
-
-                    for (String version2 : remoteVersion) {
-                        for (String version3 : currentVersion) {
-                        comparedVersionRemote.append(version2);
-                        comparedVersionCurrent.append(version3);
-                        }
-                    }
-
-                    if (Integer.valueOf(comparedVersionRemote.toString()) > Integer.valueOf(comparedVersionCurrent.toString())) {
-                        this.plugin.getLogger().log(Level.WARNING, "There is a new version avaiable on SpigotMC Resources!");
+                    String remoteVersion = version.replace("Version ", "").replace(".", "");
+                    String pluginVersion = this.plugin.getDescription().getVersion().replace("-SNAPSHOT", "").replace(".", "");
+                    if (Integer.valueOf(remoteVersion) > Integer.valueOf(pluginVersion)) {
+                        this.plugin.getLogger().log(Level.INFO, "There is a new version avaiable on SpigotMC Resources!");
                     } else {
-                        this.plugin.getLogger().log(Level.WARNING, "No updates found.");
+                        this.plugin.getLogger().log(Level.INFO, "No updates found.");
                     }
                 }
             } catch (MalformedURLException ex) {
@@ -80,6 +63,13 @@ public class Updater extends Thread {
                 this.plugin.getLogger().log(Level.WARNING, "Could not establish a connection with SpigotMC!");
             } catch (ParseException ex) {
                 this.plugin.getLogger().log(Level.WARNING, "Established a connection but something went wrong with the payload!");
+            }
+            try {
+                Thread.sleep(this.plugin.getConfig().getInt("updateTime", 1440)*1000);
+            } catch (InterruptedException ex) {
+                if (stopThread) {
+                return;
+                }
             }
         }
     }
