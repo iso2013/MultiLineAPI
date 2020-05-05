@@ -70,6 +70,8 @@ public class Updater extends Thread {
 
                     if (Integer.valueOf(comparedVersionRemote.toString()) > Integer.valueOf(comparedVersionCurrent.toString())) {
                         this.plugin.getLogger().log(Level.WARNING, "There is a new version avaiable on SpigotMC Resources!");
+                    } else {
+                        this.plugin.getLogger().log(Level.WARNING, "No updates found.");
                     }
                 }
             } catch (MalformedURLException ex) {
