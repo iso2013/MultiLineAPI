@@ -3,4 +3,4 @@ version: ${project.version}
 main: net.iso2013.mlapi.MultiLineAPIPlugin
 depend: [PacketEntityAPI]
 authors: [iso2013, frostalf]
-api-version: "1.15"
+api-version: "1.16"
